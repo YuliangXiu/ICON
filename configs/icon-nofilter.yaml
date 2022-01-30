@@ -1,0 +1,25 @@
+name: icon-nofilter
+ckpt_dir: "../data/ckpt/"
+resume_path: "../data/ckpt/icon-nofilter.ckpt"
+normal_path: "../data/ckpt/normal.ckpt"
+
+test_mode: True
+batch_size: 1
+
+net:
+  mlp_dim: [256, 512, 256, 128, 1]
+  res_layers: [2,3,4]
+  num_stack: 2
+  prior_type: "icon" # icon/pamir/icon
+  use_filter: False
+  in_geo: (('normal_F',3), ('normal_B',3))
+  in_nml: (('image',3), ('T_normal_F',3), ('T_normal_B',3))
+  smpl_feats: ['sdf', 'norm', 'vis', 'cmap']
+  gtype: 'HGPIFuNet'
+  norm_mlp: 'batch'
+  hourglass_dim: 6
+  smpl_dim: 7
+
+# user defined
+mcube_res: 512    # occupancy field resolution, higher --> more details
+clean_mesh: False # if True, will remove floating pieces
