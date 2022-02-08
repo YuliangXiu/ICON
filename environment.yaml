@@ -1,0 +1,21 @@
+name: icon
+channels:
+  - pytorch-lts
+  - nvidia
+  - conda-forge
+  - fvcore
+  - iopath
+  - bottler
+  - defaults
+dependencies:
+  - python=3.8
+  - pytorch
+  - torchvision
+  - fvcore
+  - iopath
+  - nvidiacub
+  - pyembree
+  - gdown
+  - pip
+  - pip:
+     - -r requirements.txt

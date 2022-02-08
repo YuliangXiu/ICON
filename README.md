@@ -40,8 +40,6 @@
   </p>
 </p>
 
-[ICON Demo](https://user-images.githubusercontent.com/7944350/146271038-4d571bd1-69c2-46ad-a796-112c480a4173.mp4)
-
 <br />
 <br />
 
@@ -68,9 +66,6 @@
       <a href="#acknowledgments">Acknowledgments</a>
     </li>
     <li>
-      <a href="#disclosure">Disclosure</a>
-    </li>
-    <li>
       <a href="#license">License</a>
     </li>
     <li>
@@ -85,39 +80,38 @@
 
 
 ## Who needs ICON?
-- If you want to reconstruct 3D clothed humans in **unconstrained poses** from in-the-wild images
-  - together with the body under clothing (e.g. SMPL, SMPL-X)
-  - clothed-body normal maps (front/back) predicted from images
+- Given an RGB image, you could get:
+  - image (png): masked out human, normal images (rendered from body, predicted from image)
+  - mesh (obj): SMPL-(X) body, reconstructed clothed human
+  - video (mp4): self-rotated clothed human
 
 |![All Intermedia Results](assets/intermedias.gif)|
 |:--:|
 |*ICON's outputs from single RGB image*|
 
-- If you want to obtain a **realistic and animatable 3D clothed avatar** direclty from video / a sequence of monocular images
+- If you want to create a **realistic and animatable 3D clothed avatar** direclty from video / sequential images
   - fully-textured with per-vertex color
-  - could be animated by SMPL pose parameters
-  - with pose-dependent clothing deformation
-
+  - can be animated by SMPL pose parameters
+  - natural pose-dependent clothing deformation
 
 |![ICON+SCANimate+AIST++](assets/scanimate.gif)|
 |:--:|
 |*3D Clothed Avatar, created from 400+ images using **ICON+SCANimate**, animated by AIST++*|
 
 
-<br/>
-<br/>
 
 ## TODO
 
-- [x] Testing code and pretrained model(*self-implemented version)
+- [x] testing code and pretrained models (*self-implemented version)
   - [x] ICON (w/ & w/o global encoder)
   - [x] PIFu* (RGB image + predicted normal map as input)
   - [x] PaMIR* (RGB image + predicted normal map as input)
-- [x] Colab Notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
+- [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
       <img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'>
     </a>
-- [ ] Training code
-- [ ] Dataset processing code
+- [ ] training code
+- [ ] dataset processing pipeline
+- [ ] Video-to-Avatar module
 
 
 ## Installation
@@ -147,10 +141,6 @@ python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -o
 |![Comparison](assets/compare.gif)|
 |:--:| 
 | *Comparison with other state-of-the-art methods* |
-|![extreme](assets/large-scale.gif)|
-| *Reconstruction on in-the-wild photos with extreme poses (GIF)* |
-|![extreme](assets/demo.png)|
-| *Reconstruction on in-the-wild photos with extreme poses (PNG)* |
 |![extreme](assets/normal-pred.png)|
 | *Predicted normals on in-the-wild images with extreme poses* |
 
@@ -175,7 +165,7 @@ python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -o
 
 We thank [Yao Feng](https://ps.is.mpg.de/person/yfeng), [Soubhik Sanyal](https://ps.is.mpg.de/person/ssanyal), [Qianli Ma](https://ps.is.mpg.de/person/qma), [Xu Chen](https://ait.ethz.ch/people/xu/), [Hongwei Yi](https://ps.is.mpg.de/person/hyi), [Chun-Hao Paul Huang](https://ps.is.mpg.de/person/chuang2), and [Weiyang Liu](https://wyliu.com/) for their feedback and discussions, [Tsvetelina Alexiadis](https://ps.is.mpg.de/person/talexiadis) for her help with the AMT perceptual study, [Taylor McConnell](https://ps.is.mpg.de/person/tmcconnell) for her voice over, [Benjamin Pellkofer](https://is.mpg.de/person/bpellkofer) for webpage, and [Yuanlu Xu](https://web.cs.ucla.edu/~yuanluxu/)'s help in comparing with ARCH and ARCH++.
 
-Special thanks to [Vassilis Choutas](https://ps.is.mpg.de/person/vchoutas) for sharing the code of [bvh-distance-queries](./lib/bvh-distance-queries/README.md)
+Special thanks to [Vassilis Choutas](https://ps.is.mpg.de/person/vchoutas) for sharing the code of [bvh-distance-queries](https://github.com/YuliangXiu/bvh-distance-queries)
 
 Here are some great resources we benefit from:
 
@@ -192,10 +182,6 @@ Some images used in the qualitative examples come from [pinterest.com](https://w
 
 This project has received funding from the European Union’s Horizon 2020 research and innovation programme under the Marie Skłodowska-Curie grant agreement No.860768 ([CLIPE Project](https://www.clipe-itn.eu)). 
 
-
-## Disclosure
-
-MJB has received research gift funds from Adobe, Intel, Nvidia, Facebook, and Amazon. While MJB is a part-time employee of Amazon, his research was performed solely at, and funded solely by, Max Planck. MJB has financial interests in Amazon, Datagen Technologies, and Meshcapade GmbH.
 
 ## License
 This code and model are available for non-commercial scientific research purposes as defined in the [LICENSE](LICENSE) file. By downloading and using the code and model you agree to the terms in the [LICENSE](LICENSE).

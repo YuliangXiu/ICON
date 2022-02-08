@@ -308,24 +308,24 @@ if __name__ == '__main__':
             os.path.join(args.out_dir, cfg.name,
                          f"obj/{data['name']}_recon.obj"))
 
-        # # remeshing for better surface topology (minor improvement, yet time-consuming)
-        # if cfg.net.prior_type == 'icon':
-        #     import pymeshlab
-        #     ms = pymeshlab.MeshSet()
-        #     ms.load_new_mesh(
-        #         os.path.join(args.out_dir, cfg.name,
-        #                      f"obj/{data['name']}_recon.obj"))
-        #     ms.laplacian_smooth()
-        #     ms.remeshing_isotropic_explicit_remeshing(
-        #         targetlen=pymeshlab.Percentage(0.5))
-        #     ms.save_current_mesh(
-        #         os.path.join(args.out_dir, cfg.name,
-        #                      f"obj/{data['name']}_recon.obj"))
-        #     polished_mesh = trimesh.load_mesh(
-        #         os.path.join(args.out_dir, cfg.name,
-        #                      f"obj/{data['name']}_recon.obj"))
-        #     verts_pr = torch.tensor(polished_mesh.vertices).float()
-        #     faces_pr = torch.tensor(polished_mesh.faces).long()
+        # remeshing for better surface topology (minor improvement, yet time-consuming)
+        if cfg.net.prior_type == 'icon':
+            import pymeshlab
+            ms = pymeshlab.MeshSet()
+            ms.load_new_mesh(
+                os.path.join(args.out_dir, cfg.name,
+                             f"obj/{data['name']}_recon.obj"))
+            ms.laplacian_smooth()
+            ms.remeshing_isotropic_explicit_remeshing(
+                targetlen=pymeshlab.Percentage(0.5))
+            ms.save_current_mesh(
+                os.path.join(args.out_dir, cfg.name,
+                             f"obj/{data['name']}_recon.obj"))
+            polished_mesh = trimesh.load_mesh(
+                os.path.join(args.out_dir, cfg.name,
+                             f"obj/{data['name']}_recon.obj"))
+            verts_pr = torch.tensor(polished_mesh.vertices).float()
+            faces_pr = torch.tensor(polished_mesh.faces).long()
 
         deform_verts = torch.full(verts_pr.shape,
                                   0.0,
