@@ -1,0 +1,47 @@
+SOLVER:
+  MAX_ITER: 500000
+  TYPE: Adam
+  BASE_LR: 0.00005
+  GAMMA: 0.1
+  STEPS: [0]
+  EPOCHS: [0]
+DEBUG: False
+LOGDIR: ''
+DEVICE: cuda
+NUM_WORKERS: 8
+SEED_VALUE: -1
+LOSS:
+  KP_2D_W: 300.0
+  KP_3D_W: 300.0
+  SHAPE_W: 0.06
+  POSE_W: 60.0
+  VERT_W: 0.0
+  INDEX_WEIGHTS: 2.0
+  # Loss weights for surface parts. (24 Parts)
+  PART_WEIGHTS: 0.3
+  # Loss weights for UV regression.
+  POINT_REGRESSION_WEIGHTS: 0.5
+TRAIN:
+  NUM_WORKERS: 8
+  BATCH_SIZE: 64
+  PIN_MEMORY: True
+TEST:
+  BATCH_SIZE: 32
+MODEL:
+  PyMAF:
+    BACKBONE: 'res50'
+    MLP_DIM: [256, 128, 64, 5]
+    N_ITER: 3
+    AUX_SUPV_ON: True
+    DP_HEATMAP_SIZE: 56
+RES_MODEL:
+  DECONV_WITH_BIAS: False
+  NUM_DECONV_LAYERS: 3
+  NUM_DECONV_FILTERS:
+  - 256
+  - 256
+  - 256
+  NUM_DECONV_KERNELS:
+  - 4
+  - 4
+  - 4

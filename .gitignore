@@ -1,0 +1,7 @@
+data/*/*
+!data/tbfo.ttf
+__pycache__
+results/*
+.vscode
+!.gitignore
+force_push.sh

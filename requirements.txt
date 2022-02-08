@@ -1,0 +1,25 @@
+matplotlib
+opencv-python
+opencv_contrib_python
+Pillow
+pymeshlab
+PyOpenGL
+PyOpenGL_accelerate
+PyYAML>=6.0
+yacs>=0.1.8
+scikit-image
+termcolor
+tqdm
+loguru
+trimesh
+chumpy
+flatten_dict
+ipykernel
+ipywidgets
+jpeg4py
+rtree
+rembg
+pytorch_lightning
+git+https://github.com/Project-Splinter/human_det
+git+https://github.com/YuliangXiu/smplx.git
+git+https://github.com/YuliangXiu/bvh-distance-queries.git # support cuda <= 11.0, "cudaErrorInvalidDevice: invalid device ordinal" for cuda 11.1
