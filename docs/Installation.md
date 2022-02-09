@@ -13,12 +13,27 @@ cd ICON
   * PyTorch3D (official [INSTALL.md](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md), recommend [install-from-local-clone](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone))
 
 ```bash
+# install conda, skip if already have
+wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh
+chmod +x Miniconda3-py38_4.10.3-Linux-x86_64.sh
+bash Miniconda3-py38_4.10.3-Linux-x86_64.sh -b -f -p /usr/local
+conda config --env --set always_yes true
+rm Miniconda3-py38_4.10.3-Linux-x86_64.sh
+conda update -n base -c defaults conda -y
 
-# create conda env and install required libs
-conda create --name icon python=3.8
-conda activate icon
-conda install -c conda-forge pyembree # used by trimesh
-pip install -r requirements.txt --user
+# Note: 
+# bvh-distance-queries only support cuda <= 11.0
+# Thus, you need to setup suitable "cuda toolkit" firstly 
+# https://developer.nvidia.com/cuda-11.0-download-archive
+# For google colab, refer to ICON/colab.sh
+ln -s {directory of cuda-11.0} /usr/local/cuda
+
+# create conda env and install required libs (~20min)
+cd ICON
+conda env create -f environment.yaml
+conda init bash
+source ~/.bashrc
+source activate icon
 ```
 
 For data generation and training

@@ -22,4 +22,8 @@ rembg
 pytorch_lightning
 git+https://github.com/Project-Splinter/human_det
 git+https://github.com/YuliangXiu/smplx.git
-git+https://github.com/YuliangXiu/bvh-distance-queries.git # support cuda <= 11.0, "cudaErrorInvalidDevice: invalid device ordinal" for cuda 11.1
+git+https://github.com/YuliangXiu/bvh-distance-queries.git
+git+https://github.com/facebookresearch/pytorch3d.git
+
+# bvh-distance-queries only support cuda <= 11.0
+# "cudaErrorInvalidDevice: invalid device ordinal" for cuda 11.1
