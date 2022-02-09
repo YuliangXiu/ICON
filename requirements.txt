@@ -17,6 +17,10 @@ flatten_dict
 ipykernel
 ipywidgets
 jpeg4py
+open3d
+shapely
+vedo
+ipdb
 rtree
 rembg
 pytorch_lightning

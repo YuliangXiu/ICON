@@ -7,38 +7,7 @@ import torch.nn.functional as F
 import numpy as np
 from torch.autograd import Function
 
-from torch.utils.cpp_extension import load
-
-lib_dir = os.path.join(os.path.dirname(__file__), "../")
-
-if os.path.exists(osp.join(lib_dir,'neural_voxelization_layer/cuda/voxelize_cuda.cu')) \
-    and os.path.exists(osp.join(lib_dir, 'neural_voxelization_layer/cuda/voxelize_cuda.cpp')):
-    voxelize_cuda = load(
-        name='voxelize_cuda',
-        sources=[
-            osp.join(lib_dir,
-                     'neural_voxelization_layer/cuda/voxelize_cuda.cpp'),
-            osp.join(lib_dir,
-                     'neural_voxelization_layer/cuda/voxelize_cuda.cu')
-        ],
-        extra_ldflags=['-L/usr/local/cuda/targets/x86_64-linux/lib'],
-        verbose=True)
-elif os.path.exists(osp.join(lib_dir, 'neural_voxelization_layer/cuda/voxelize_cuda.cu')) and \
-    os.path.exists(osp.join(lib_dir, 'neural_voxelization_layer/cuda/voxelize_cuda.cpp')):
-    voxelize_cuda = load(
-        name='voxelize_cuda',
-        sources=[
-            osp.join(lib_dir,
-                     'neural_voxelization_layer/cuda/voxelize_cuda.cpp'),
-            osp.join(lib_dir,
-                     'neural_voxelization_layer/cuda/voxelize_cuda.cu')
-        ],
-        extra_ldflags=['-L/usr/local/cuda/targets/x86_64-linux/lib'],
-        verbose=True)
-else:
-    raise IOError(
-        'Cannot find cuda/voxelize_cuda.cu and ./cuda/voxelize_cuda.cpp')
-
+import voxelize_cuda
 
 class VoxelizationFunction(Function):
     """
