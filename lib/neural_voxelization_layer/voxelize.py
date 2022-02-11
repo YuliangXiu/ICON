@@ -7,8 +7,6 @@ import torch.nn.functional as F
 import numpy as np
 from torch.autograd import Function
 
-from torch.utils.cpp_extension import load
-
 import voxelize_cuda
 
 class VoxelizationFunction(Function):
