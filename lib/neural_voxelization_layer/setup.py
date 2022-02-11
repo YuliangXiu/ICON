@@ -7,7 +7,7 @@ setup(
     name='voxelize_cuda',
     ext_modules=[
         CUDAExtension('voxelize_cuda', [
-            os.path.join("cuda", "voxelize_cuda.cu"),
+            os.path.join("cuda", "voxelize_cuda_kernel.cu"),
             os.path.join("cuda", "voxelize_cuda.cpp"),
         ])
     ],
