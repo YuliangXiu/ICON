@@ -34,6 +34,8 @@ conda env create -f environment.yaml
 conda init bash
 source ~/.bashrc
 source activate icon
+cd ./lib/neural_voxelization_layer
+pip install .
 ```
 
 For data generation and training

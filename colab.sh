@@ -19,6 +19,9 @@ conda env create -f environment.yaml
 conda init bash
 source ~/.bashrc
 source activate icon
+cd ./lib/neural_voxelization_layer
+pip install .
+cd -
 
 # install packages for colab
 pip install ipykernel ipywidgets --user --no-warn-script-location
