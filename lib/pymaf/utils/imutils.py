@@ -14,6 +14,7 @@ from lib.pymaf.core import constants
 from lib.pymaf.utils.streamer import aug_matrix
 from torchvision import transforms
 
+
 def load_img(img_file):
     
     img = cv2.imread(img_file, cv2.IMREAD_UNCHANGED)
@@ -45,12 +46,8 @@ def get_bbox(img, det):
     return bbox
 
 
-def process_image(img_file, det, input_res=512):
-    """Read image, do preprocessing and possibly crop it according to the bounding box.
-    If there are bounding box annotations, use them to crop the image.
-    If no bounding box is specified but openpose detections are available, use them to get the bounding box.
-    """
-
+def get_transformer(input_res):
+    
     image_to_tensor = transforms.Compose([
         transforms.Resize(input_res),
         transforms.ToTensor(),
@@ -68,19 +65,31 @@ def process_image(img_file, det, input_res=512):
         transforms.Normalize(mean=constants.IMG_NORM_MEAN,
                              std=constants.IMG_NORM_STD)
     ])
+    
+    return [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor]
 
-    img = load_img(img_file)
+
+def process_image(img_file, det, input_res=512):
+    """Read image, do preprocessing and possibly crop it according to the bounding box.
+    If there are bounding box annotations, use them to crop the image.
+    If no bounding box is specified but openpose detections are available, use them to get the bounding box.
+    """
+    
+    [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor] = get_transformer(input_res)
+
+    img_ori = load_img(img_file)
 
     if det is not None:
 
-        in_height, in_width, _ = img.shape
-        M = aug_matrix(in_width, in_height, input_res * 2,
-                                input_res * 2, True)
-        img = cv2.warpAffine(img,
-                             M[0:2, :], (input_res * 2, input_res * 2),
-                             flags=cv2.INTER_CUBIC)
-
-        bbox = get_bbox(img, det)
+        in_height, in_width, _ = img_ori.shape
+        M = aug_matrix(in_width, in_height, input_res*2, input_res*2, True)
+        
+        # from rectangle to square
+        img_for_crop = cv2.warpAffine(img_ori, M[0:2, :], 
+                                      (input_res*2, input_res*2), flags=cv2.INTER_CUBIC)
+        
+        # detection for bbox
+        bbox = get_bbox(img_for_crop, det)
 
         width = bbox[2] - bbox[0]
         height = bbox[3] - bbox[1]
@@ -88,19 +97,19 @@ def process_image(img_file, det, input_res=512):
                            (bbox[1] + bbox[3]) / 2.0])
 
     else:
+        
         # Assume that the person is centerered in the image
-        height = img.shape[0]
-        width = img.shape[1]
+        img_for_crop = img_ori.copy()
+        height = img_for_crop.shape[0]
+        width = img_for_crop.shape[1]
         center = np.array([width // 2, height // 2])
 
     scale = max(height, width) / 180
-
-    img_np = crop(img, center, scale, (input_res, input_res))
+    img_np = crop(img_for_crop, center, scale, (input_res, input_res))
     
     with torch.no_grad():
-        img = Image.fromarray(img_np)
         buf = io.BytesIO()
-        img.save(buf, format='png')
+        Image.fromarray(img_np).save(buf, format='png')
         img_pil = Image.open(
             io.BytesIO(remove(buf.getvalue()))).convert("RGBA")
 
@@ -110,48 +119,23 @@ def process_image(img_file, det, input_res=512):
                                     torch.tensor(0.5)).float()
     img_tensor = img_rgb * img_mask
 
-    # for pymaf
-    img = img_np.astype(np.float32) / 255.
-    img = torch.from_numpy(img).permute(2, 0, 1)
-    img_norm = image_to_pymaf_tensor(img.clone())[None]
-    return img_tensor, img_norm, img_np
-
-
-def process_image_naive(img_file, input_res=512):
-    """Read image, do preprocessing and possibly crop it according to the bounding box.
-    If there are bounding box annotations, use them to crop the image.
-    If no bounding box is specified but openpose detections are available, use them to get the bounding box.
-    """
-
+    # for hps
+    img_hps = img_np.astype(np.float32) / 255.
+    img_hps = torch.from_numpy(img_hps).permute(2, 0, 1)
+    img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0)
     
-    det = human_det.Detection()
-    img = load_img(img_file)
-    in_height, in_width, _ = img.shape
+    # uncrop params
+    uncrop_param = {'center': center,
+                    'scale': scale,
+                    'ori_shape': img_ori.shape,
+                    'box_shape': img_np.shape,
+                    'crop_shape': img_for_crop.shape,
+                    'M': M}
     
-    M = aug_matrix(in_width, in_height, input_res * 2,
-                            input_res * 2, True)
-    img = cv2.warpAffine(img,
-                            M[0:2, :], (input_res * 2, input_res * 2),
-                            flags=cv2.INTER_CUBIC)
+    return img_tensor, img_hps, img_ori, img_mask, uncrop_param
 
-    bbox = get_bbox(img, det)
-
-    width = bbox[2] - bbox[0]
-    height = bbox[3] - bbox[1]
-    center = np.array([(bbox[0] + bbox[2]) / 2.0,
-                        (bbox[1] + bbox[3]) / 2.0])
-
-
-    scale = max(height, width) / 180
-
-    img_np = crop(img, center, scale, (input_res, input_res))
-    with torch.no_grad():
-        img_pil = Image.open(io.BytesIO(remove(img_np.copy()))).convert("RGBA")
-
-    return img_pil, img_np
-
-
-def get_transform(center, scale, res, rot=0):
+def get_transform(center, scale, res):
+    
     """Generate transformation matrix."""
     h = 200 * scale
     t = np.zeros((3, 3))
@@ -160,27 +144,13 @@ def get_transform(center, scale, res, rot=0):
     t[0, 2] = res[1] * (-float(center[0]) / h + .5)
     t[1, 2] = res[0] * (-float(center[1]) / h + .5)
     t[2, 2] = 1
-    if not rot == 0:
-        rot = -rot  # To match direction of rotation from cropping
-        rot_mat = np.zeros((3, 3))
-        rot_rad = rot * np.pi / 180
-        sn, cs = np.sin(rot_rad), np.cos(rot_rad)
-        rot_mat[0, :2] = [cs, -sn]
-        rot_mat[1, :2] = [sn, cs]
-        rot_mat[2, 2] = 1
-        # Need to rotate around center
-        t_mat = np.eye(3)
-        t_mat[0, 2] = -res[1] / 2
-        t_mat[1, 2] = -res[0] / 2
-        t_inv = t_mat.copy()
-        t_inv[:2, 2] *= -1
-        t = np.dot(t_inv, np.dot(rot_mat, np.dot(t_mat, t)))
+    
     return t
 
 
-def transform(pt, center, scale, res, invert=0, rot=0):
+def transform(pt, center, scale, res, invert=0):
     """Transform pixel location to different reference."""
-    t = get_transform(center, scale, res, rot=rot)
+    t = get_transform(center, scale, res)
     if invert:
         t = np.linalg.inv(t)
     new_pt = np.array([pt[0] - 1, pt[1] - 1, 1.]).T
@@ -188,29 +158,15 @@ def transform(pt, center, scale, res, invert=0, rot=0):
     return new_pt[:2].astype(int) + 1
 
 
-def transform_pts(coords, center, scale, res, invert=0, rot=0):
-    """Transform coordinates (N x 2) to different reference."""
-    new_coords = coords.copy()
-    for p in range(coords.shape[0]):
-        new_coords[p, 0:2] = transform(coords[p, 0:2], center, scale, res,
-                                       invert, rot)
-    return new_coords
-
-
-def crop(img, center, scale, res, rot=0):
+def crop(img, center, scale, res):
     """Crop image according to the supplied bounding box."""
+    
     # Upper left point
     ul = np.array(transform([1, 1], center, scale, res, invert=1)) - 1
+    
     # Bottom right point
-    br = np.array(
-        transform([res[0] + 1, res[1] + 1], center, scale, res, invert=1)) - 1
-
-    # Padding so that when rotated proper amount of context is included
-    pad = int(np.linalg.norm(br - ul) / 2 - float(br[1] - ul[1]) / 2)
-    if not rot == 0:
-        ul -= pad
-        br += pad
-
+    br = np.array(transform([res[0] + 1, res[1] + 1], center, scale, res, invert=1)) - 1
+    
     new_shape = [br[1] - ul[1], br[0] - ul[0]]
     if len(img.shape) > 2:
         new_shape += [img.shape[2]]
@@ -219,24 +175,19 @@ def crop(img, center, scale, res, rot=0):
     # Range to fill new array
     new_x = max(0, -ul[0]), min(br[0], len(img[0])) - ul[0]
     new_y = max(0, -ul[1]), min(br[1], len(img)) - ul[1]
+    
     # Range to sample from original image
     old_x = max(0, ul[0]), min(len(img[0]), br[0])
     old_y = max(0, ul[1]), min(len(img), br[1])
-    new_img[new_y[0]:new_y[1], new_x[0]:new_x[1]] = img[old_y[0]:old_y[1],
-                                                        old_x[0]:old_x[1]]
-
-    if not rot == 0:
-        # Remove padding
-        new_img = scipy.misc.imrotate(new_img, rot)
-        new_img = new_img[pad:-pad, pad:-pad]
-
-    # new_img = scipy.misc.imresize(new_img, res)
+    
+    new_img[new_y[0]:new_y[1], new_x[0]:new_x[1]] = img[old_y[0]:old_y[1], old_x[0]:old_x[1]]
     new_img = np.array(Image.fromarray(new_img.astype(np.uint8)).resize(res))
 
     return new_img
 
 
-def uncrop(img, center, scale, orig_shape, rot=0, is_rgb=True):
+def uncrop(img, center, scale, orig_shape):
+    
     """'Undo' the image cropping/resizing.
     This function is used when evaluating mask/part segmentation.
     """
@@ -244,24 +195,24 @@ def uncrop(img, center, scale, orig_shape, rot=0, is_rgb=True):
     # Upper left point
     ul = np.array(transform([1, 1], center, scale, res, invert=1)) - 1
     # Bottom right point
-    br = np.array(
-        transform([res[0] + 1, res[1] + 1], center, scale, res, invert=1)) - 1
+    br = np.array(transform([res[0] + 1, res[1] + 1], center, scale, res, invert=1)) - 1
+    
     # size of cropped image
     crop_shape = [br[1] - ul[1], br[0] - ul[0]]
-
-    new_shape = [br[1] - ul[1], br[0] - ul[0]]
-    if len(img.shape) > 2:
-        new_shape += [img.shape[2]]
     new_img = np.zeros(orig_shape, dtype=np.uint8)
+    
     # Range to fill new array
     new_x = max(0, -ul[0]), min(br[0], orig_shape[1]) - ul[0]
     new_y = max(0, -ul[1]), min(br[1], orig_shape[0]) - ul[1]
+    
     # Range to sample from original image
     old_x = max(0, ul[0]), min(orig_shape[1], br[0])
     old_y = max(0, ul[1]), min(orig_shape[0], br[1])
-    img = scipy.misc.imresize(img, crop_shape, interp='nearest')
-    new_img[old_y[0]:old_y[1], old_x[0]:old_x[1]] = img[new_y[0]:new_y[1],
-                                                        new_x[0]:new_x[1]]
+    
+    img = np.array(Image.fromarray(img.astype(np.uint8)).resize(crop_shape))
+    
+    new_img[old_y[0]:old_y[1], old_x[0]:old_x[1]] = img[new_y[0]:new_y[1], new_x[0]:new_x[1]]
+    
     return new_img
 
 

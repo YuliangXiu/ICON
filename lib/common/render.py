@@ -27,6 +27,7 @@ from lib.dataset.mesh_util import SMPLX, get_visibility
 import lib.common.render_utils as util
 import torch
 import numpy as np
+from PIL import Image
 from pytorch3d.io import load_obj
 import os
 import sys
@@ -398,7 +399,7 @@ class Render():
         return images
     
 
-    def get_rendered_video(self, image, save_path):
+    def get_rendered_video(self, images, save_path):
 
         self.cam_pos = []
         for angle in range(360):
@@ -406,14 +407,21 @@ class Render():
                 (100.0 * math.cos(np.pi / 180 * angle), self.mesh_y_center,
                  100.0 * math.sin(np.pi / 180 * angle)))
 
+        old_shape = np.array(images[0].shape[:2])
+        new_shape = ((self.size / old_shape[0]) * old_shape).astype(np.int)
+        
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        video = cv2.VideoWriter(save_path, fourcc, 30, (self.size*2, self.size))
+        video = cv2.VideoWriter(save_path, fourcc, 30, (self.size+new_shape[1]*len(images), self.size))
+        
         print(colored("exporting video, please wait for a while...", "blue"))
+            
         for cam_id in range(len(self.cam_pos)):
             self.init_renderer(self.get_camera(cam_id), 'clean_mesh', 'gray')
             rendered_img = (self.renderer(
                 self.mesh)[0, :, :, :3] * 255.0).detach().cpu().numpy().astype(np.uint8)
-            final_img = np.concatenate([image[:,:,[2,1,0]], rendered_img],axis=1)
+            img_lst = [np.array(Image.fromarray(img).resize(new_shape[::-1])).astype(np.uint8)[:,:,[2,1,0]] for img in images]
+            img_lst.append(rendered_img)
+            final_img = np.concatenate(img_lst,axis=1)
             video.write(final_img)
             
         video.release()

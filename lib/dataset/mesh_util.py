@@ -16,6 +16,7 @@
 # Contact: ps-license@tuebingen.mpg.de
 
 import numpy as np
+import cv2
 import torch
 import torchvision
 import trimesh
@@ -37,6 +38,7 @@ from PIL import Image, ImageFont, ImageDraw
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 from pytorch3d.renderer.mesh import rasterize_meshes
 from lib.common.render_utils import Pytorch3dRasterizer, face_vertices, batch_contains
+from lib.pymaf.utils.imutils import uncrop
 from pytorch3d.structures import Meshes
 
 
@@ -47,6 +49,28 @@ def get_mask(tensor, dim):
     mask = mask.type_as(tensor)
 
     return mask
+
+def blend_rgb_norm(rgb, norm, mask):
+    
+    # [0,0,0] or [127,127,127] should be marked as mask
+    final = rgb * (1-mask) + norm * (mask)
+    
+    return final.astype(np.uint8)
+
+def unwrap(image, data):
+    
+    img_uncrop = uncrop(np.array(Image.fromarray(image).resize(data['uncrop_param']['box_shape'][:2])), 
+                                 data['uncrop_param']['center'], 
+                                 data['uncrop_param']['scale'], 
+                                 data['uncrop_param']['crop_shape'])
+            
+    
+    img_orig = cv2.warpAffine(img_uncrop,
+                        np.linalg.inv(data['uncrop_param']['M'])[:2, :],
+                        data['uncrop_param']['ori_shape'][::-1][1:],
+                        flags=cv2.INTER_CUBIC)
+    
+    return img_orig
 
 
 # Losses to smooth / regularize the mesh shape

@@ -153,14 +153,17 @@ class TestDataset():
 
         img_path = self.subject_list[index]
         img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
-        img_icon, img_norm, img_np = process_image(img_path, self.det, 512)
+        img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, 512)
+        
         data_dict = {
             'name': img_name,
             'image': img_icon.to(self.device).unsqueeze(0),
-            'ori_image': img_np
+            'ori_image': img_ori,
+            'mask': img_mask,
+            'uncrop_param': uncrop_param
         }
         with torch.no_grad():
-            preds_dict = self.hps(img_norm.to(self.device))
+            preds_dict = self.hps(img_hps.to(self.device))
 
         data_dict['smpl_faces'] = torch.Tensor(
             self.smpl_model.faces.astype(np.int16)).long().unsqueeze(0).to(

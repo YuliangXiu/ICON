@@ -18,6 +18,8 @@
 import sys, os
 from termcolor import colored
 import argparse
+import numpy as np
+from PIL import Image
 import torch, trimesh
 torch.backends.cudnn.benchmark = True
 
@@ -25,7 +27,7 @@ torch.backends.cudnn.benchmark = True
 sys.path.insert(0, '../')
 from ICON import ICON
 from lib.dataset.TestDataset import TestDataset
-from lib.dataset.mesh_util import load_checkpoint, update_mesh_shape_prior_losses, get_optim_grid_image
+from lib.dataset.mesh_util import load_checkpoint, update_mesh_shape_prior_losses, get_optim_grid_image, blend_rgb_norm, unwrap
 from lib.common.config import cfg
 from lib.common.render import query_color
 
@@ -41,8 +43,8 @@ if __name__ == '__main__':
     parser.add_argument('-colab', action='store_true')
     parser.add_argument('-loop_smpl', '--loop_smpl', type=int, default=100)
     parser.add_argument('-patience', '--patience', type=int, default=5)
-    parser.add_argument('-vis_freq', '--vis_freq', type=int, default=10)
-    parser.add_argument('-loop_cloth', '--loop_cloth', type=int, default=10)
+    parser.add_argument('-vis_freq', '--vis_freq', type=int, default=100)
+    parser.add_argument('-loop_cloth', '--loop_cloth', type=int, default=100)
     parser.add_argument('-in_dir', '--in_dir', type=str, default="../examples")
     parser.add_argument('-out_dir',
                         '--out_dir',
@@ -95,7 +97,8 @@ if __name__ == '__main__':
 
         pbar.set_description(f"{data['name']}")
 
-        in_tensor = {'smpl_faces': data['smpl_faces'], 'image': data['image'], 'ori_image': data['ori_image']}
+        in_tensor = {'smpl_faces': data['smpl_faces'], 
+                     'image': data['image']}
 
         # The optimizer and variables
         optimed_pose = torch.tensor(data['body_pose'],
@@ -185,8 +188,8 @@ if __name__ == '__main__':
             with torch.no_grad():
                 in_tensor['normal_F'], in_tensor[
                     'normal_B'] = model.netG.normal_filter(in_tensor)
-
-            # mask = torch.abs(in_tensor['T_normal_F']).sum(dim=0, keepdims=True) > 0.0
+                
+            
             diff_F_smpl = torch.abs(in_tensor['T_normal_F'] -
                                     in_tensor['normal_F'])
             diff_B_smpl = torch.abs(in_tensor['T_normal_B'] -
@@ -246,8 +249,9 @@ if __name__ == '__main__':
                     exist_ok=True)
         
         # final results rendered as image
-        # 1. Render the final fitted SMPL
-        # 2. Render the final reconstructed clothed human
+        # 1. Render the final fitted SMPL (xxx_smpl.png)
+        # 2. Render the final reconstructed clothed human (xxx_cloth.png)
+        # 3. Blend the original image with predicted cloth normal (xxx_overlap.png)
         
         os.makedirs(os.path.join(args.out_dir, cfg.name, "png"),
                     exist_ok=True)
@@ -268,16 +272,18 @@ if __name__ == '__main__':
                                  duration=500,
                                  loop=0)
 
-            # per_data_lst[-1].save(
-            #     os.path.join(args.out_dir, cfg.name,
-            #                  f"png/{data['name']}_smpl_final.png"))
-            # per_data_lst[0].save(
-            #     os.path.join(args.out_dir, cfg.name,
-            #                  f"png/{data['name']}_smpl_init.png"))
-            
             per_data_lst[-1].save(
                 os.path.join(args.out_dir, cfg.name,
                              f"png/{data['name']}_smpl.png"))
+            
+        norm_pred = ((in_tensor['normal_F'][0].permute(1,2,0)+1.0)*255.0/2.0).detach().cpu().numpy().astype(np.uint8)
+            
+        norm_orig = unwrap(norm_pred, data)
+        mask_orig = unwrap(np.repeat(data['mask'].permute(1,2,0).detach().cpu().numpy(), 3, axis=2).astype(np.uint8), data)
+        rgb_norm = blend_rgb_norm(data['ori_image'], norm_orig, mask_orig)
+        
+        Image.fromarray(rgb_norm).save(os.path.join(args.out_dir, cfg.name,
+                             f"png/{data['name']}_overlap.png"))
 
         # ------------------------------------------------------------------------------------------------------------------
 
@@ -308,24 +314,24 @@ if __name__ == '__main__':
             os.path.join(args.out_dir, cfg.name,
                          f"obj/{data['name']}_recon.obj"))
 
-        # remeshing for better surface topology (minor improvement, yet time-consuming)
-        if cfg.net.prior_type == 'icon':
-            import pymeshlab
-            ms = pymeshlab.MeshSet()
-            ms.load_new_mesh(
-                os.path.join(args.out_dir, cfg.name,
-                             f"obj/{data['name']}_recon.obj"))
-            ms.laplacian_smooth()
-            ms.remeshing_isotropic_explicit_remeshing(
-                targetlen=pymeshlab.Percentage(0.5))
-            ms.save_current_mesh(
-                os.path.join(args.out_dir, cfg.name,
-                             f"obj/{data['name']}_recon.obj"))
-            polished_mesh = trimesh.load_mesh(
-                os.path.join(args.out_dir, cfg.name,
-                             f"obj/{data['name']}_recon.obj"))
-            verts_pr = torch.tensor(polished_mesh.vertices).float()
-            faces_pr = torch.tensor(polished_mesh.faces).long()
+        # # remeshing for better surface topology (minor improvement, yet time-consuming)
+        # if cfg.net.prior_type == 'icon':
+        #     import pymeshlab
+        #     ms = pymeshlab.MeshSet()
+        #     ms.load_new_mesh(
+        #         os.path.join(args.out_dir, cfg.name,
+        #                      f"obj/{data['name']}_recon.obj"))
+        #     ms.laplacian_smooth()
+        #     ms.remeshing_isotropic_explicit_remeshing(
+        #         targetlen=pymeshlab.Percentage(0.5))
+        #     ms.save_current_mesh(
+        #         os.path.join(args.out_dir, cfg.name,
+        #                      f"obj/{data['name']}_recon.obj"))
+        #     polished_mesh = trimesh.load_mesh(
+        #         os.path.join(args.out_dir, cfg.name,
+        #                      f"obj/{data['name']}_recon.obj"))
+        #     verts_pr = torch.tensor(polished_mesh.vertices).float()
+        #     faces_pr = torch.tensor(polished_mesh.faces).long()
 
         deform_verts = torch.full(verts_pr.shape,
                                   0.0,
@@ -405,7 +411,7 @@ if __name__ == '__main__':
         
         
         # self-rotated video
-        dataset.render.get_rendered_video(in_tensor['ori_image'], 
+        dataset.render.get_rendered_video([data['ori_image'], rgb_norm], 
                                           os.path.join(args.out_dir, cfg.name, f"vid/{data['name']}_cloth.mp4"))
 
 
@@ -431,4 +437,6 @@ if __name__ == '__main__':
             in_tensor['smpl_faces'].detach().cpu()[0])
         smpl_obj.export(
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
+        
+        break # uncomment if you want to test more than one images
         

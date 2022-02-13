@@ -81,13 +81,15 @@
 
 ## Who needs ICON?
 - Given an RGB image, you could get:
-  - image (png): masked out human, normal images (rendered from body, predicted from image)
+  - image (png): segmentation, normal images (body + cloth), overlap result (rgb + normal)
   - mesh (obj): SMPL-(X) body, reconstructed clothed human
   - video (mp4): self-rotated clothed human
 
-|![All Intermedia Results](assets/intermedias.gif)|
+|![Intermediate Results](assets/intermediate_results.png)|
 |:--:|
-|*ICON's outputs from single RGB image*|
+|*ICON's intermediate results*|
+|![Final Results](assets/overlap.gif)|
+|*ICON's final results*|
 
 - If you want to create a **realistic and animatable 3D clothed avatar** direclty from video / sequential images
   - fully-textured with per-vertex color

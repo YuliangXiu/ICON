@@ -6,9 +6,6 @@ import imageio
 def aug_matrix(w1, h1, w2, h2, pad=True):
     dx = (w2 - w1) / 2.0
     dy = (h2 - h1) / 2.0
-    # matrix_trans = np.array([[1.0, 0, dx],
-    #                          [0, 1.0, dy],
-    #                          [0, 0,   1.0]])
 
     if pad:
         scale = np.min([float(w2)/w1, float(h2)/h1])
@@ -19,9 +16,10 @@ def aug_matrix(w1, h1, w2, h2, pad=True):
         center = (w2 / 2.0, h2 / 2.0), 
         translate = (dx, dy), 
         scale = scale)
+    
     M = np.array(M + [0., 0., 1.]).reshape(3, 3)
-    # M = M.dot(matrix_trans)
-    return M 
+    
+    return M
 
 
 def get_affine_matrix(center, translate, scale):
