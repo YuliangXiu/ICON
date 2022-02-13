@@ -29,7 +29,7 @@ from lib.dataset.mesh_util import SMPLX
 from lib.net.MLP import MLP
 from lib.net.NormalNet import NormalNet
 from lib.dataset.mesh_util import cal_sdf_batch, feat_select, read_smpl_constants
-from lib.neural_voxelization_layer.voxelize import Voxelization
+from lib.net.voxelize import Voxelization
 
 maskout = False
 
