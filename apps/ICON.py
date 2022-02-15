@@ -608,9 +608,7 @@ class ICON(pl.LightningModule):
         Image.fromarray((image_inter * 255.0).astype(np.uint8)).save(
             osp.join(self.export_dir, f"{mesh_rot}_inter.png"))
 
-        verts_pr, faces_pr = self.reconEngine.export_mesh(sdf,
-                                                          with_color=False,
-                                                          decimation=False)
+        verts_pr, faces_pr = self.reconEngine.export_mesh(sdf)
 
         if self.clean_mesh_flag:
             verts_pr, faces_pr = clean_mesh(verts_pr, faces_pr)
@@ -740,9 +738,7 @@ class ICON(pl.LightningModule):
                                features=features,
                                proj_matrix=None)
 
-        verts_pr, faces_pr = self.reconEngine.export_mesh(sdf,
-                                                          with_color=False,
-                                                          decimation=False)
+        verts_pr, faces_pr = self.reconEngine.export_mesh(sdf)
         verts_pr, faces_pr = clean_mesh(verts_pr, faces_pr)
 
         # convert from GT to SDF

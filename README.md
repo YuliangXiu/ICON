@@ -1,8 +1,11 @@
 <!-- PROJECT LOGO -->
-<br />
+
 <p align="center">
 
   <h1 align="center">ICON: Implicit Clothed humans Obtained from Normals</h1>
+  <div align="center">
+  <a href="https://paperswithcode.com/sota/3d-human-reconstruction-on-cape?p=icon-implicit-clothed-humans-obtained-from"><img src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/icon-implicit-clothed-humans-obtained-from/3d-human-reconstruction-on-cape"></a><br><br>
+  </div>
 
   <a href="">
     <img src="./assets/teaser.jpeg" alt="Logo" width="100%">
@@ -42,6 +45,11 @@
 
 <br />
 <br />
+
+## News :triangular_flag_on_post:
+- [2022/02/07] <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'><img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'></a> is ready to use.
+
+<br>
 
 <!-- TABLE OF CONTENTS -->
 <details open="open" style='padding: 10px; border-radius:5px 30px 30px 5px; border-style: solid; border-width: 1px;'>
@@ -105,9 +113,9 @@
 ## TODO
 
 - [x] testing code and pretrained models (*self-implemented version)
-  - [x] ICON (w/ & w/o global encoder)
+  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/PARE as HPS)
   - [x] PIFu* (RGB image + predicted normal map as input)
-  - [x] PaMIR* (RGB image + predicted normal map as input)
+  - [x] PaMIR* (RGB image + predicted normal map as input, w/ PyMAF/PARE as HPS)
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
       <img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'>
     </a>

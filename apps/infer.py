@@ -45,6 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('-patience', '--patience', type=int, default=5)
     parser.add_argument('-vis_freq', '--vis_freq', type=int, default=100)
     parser.add_argument('-loop_cloth', '--loop_cloth', type=int, default=100)
+    parser.add_argument('-export_video', action='store_true')
     parser.add_argument('-in_dir', '--in_dir', type=str, default="../examples")
     parser.add_argument('-out_dir',
                         '--out_dir',
@@ -86,8 +87,8 @@ if __name__ == '__main__':
     dataset = TestDataset(
         {
             'image_dir': args.in_dir,
-            'has_det': True,
-            'hps_type': 'pymaf' #pymaf/pare
+            'has_det': True,    # w/ or w/o detection
+            'hps_type': 'pymaf'  # pymaf/pare
         }, device)
 
     print(colored(f"Dataset Size: {len(dataset)}", 'red'))
@@ -282,7 +283,7 @@ if __name__ == '__main__':
         mask_orig = unwrap(np.repeat(data['mask'].permute(1,2,0).detach().cpu().numpy(), 3, axis=2).astype(np.uint8), data)
         rgb_norm = blend_rgb_norm(data['ori_image'], norm_orig, mask_orig)
         
-        Image.fromarray(rgb_norm).save(os.path.join(args.out_dir, cfg.name,
+        Image.fromarray(np.concatenate([data['ori_image'].astype(np.uint8), rgb_norm],axis=1)).save(os.path.join(args.out_dir, cfg.name,
                              f"png/{data['name']}_overlap.png"))
 
         # ------------------------------------------------------------------------------------------------------------------
@@ -347,6 +348,16 @@ if __name__ == '__main__':
             verbose=0,
             min_lr=1e-4,
             patience=args.patience)
+        
+        if args.loop_cloth == 0:
+            in_tensor['P_normal_F'], in_tensor[
+                    'P_normal_B'] = dataset.render_normal(
+                        verts_pr.unsqueeze(0).to(device),
+                        faces_pr.unsqueeze(0).to(device).long(), deform_verts)
+            recon_render_lst = dataset.render.get_clean_image(
+                cam_ids=[0, 1, 2, 3])
+            
+            per_loop_lst = [recon_render_lst]
 
         for i in loop_cloth:
 
@@ -397,22 +408,24 @@ if __name__ == '__main__':
             optimizer_cloth.step()
             scheduler_cloth.step(cloth_loss)
             
-        # gif for optimization
-        per_data_lst[0].save(os.path.join(args.out_dir, cfg.name,
-                                          f"gif/{data['name']}_cloth.gif"),
-                             save_all=True,
-                             append_images=per_data_lst[1:],
-                             duration=500,
-                             loop=0)
+        if args.loop_cloth > 0:
+            # gif for optimization
+            per_data_lst[0].save(os.path.join(args.out_dir, cfg.name,
+                                            f"gif/{data['name']}_cloth.gif"),
+                                save_all=True,
+                                append_images=per_data_lst[1:],
+                                duration=500,
+                                loop=0)
+            
+            per_data_lst[-1].save(
+                os.path.join(args.out_dir, cfg.name,
+                            f"png/{data['name']}_cloth.png"))
         
-        per_data_lst[-1].save(
-            os.path.join(args.out_dir, cfg.name,
-                         f"png/{data['name']}_cloth.png"))
         
-        
-        # self-rotated video
-        dataset.render.get_rendered_video([data['ori_image'], rgb_norm], 
-                                          os.path.join(args.out_dir, cfg.name, f"vid/{data['name']}_cloth.mp4"))
+        if args.export_video:
+            # self-rotated video
+            dataset.render.get_rendered_video([data['ori_image'], rgb_norm], 
+                                            os.path.join(args.out_dir, cfg.name, f"vid/{data['name']}_cloth.mp4"))
 
 
         deform_verts = deform_verts.flatten().detach()
@@ -437,6 +450,4 @@ if __name__ == '__main__':
             in_tensor['smpl_faces'].detach().cpu()[0])
         smpl_obj.export(
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
-        
-        break # uncomment if you want to test more than one images
         

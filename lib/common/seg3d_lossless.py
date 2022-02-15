@@ -20,14 +20,14 @@ from .seg3d_utils import (
     create_grid3D,
     plot_mask3D,
     SmoothConv3D,
-    grid_interp,
 )
 
 import torch
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
-from skimage import measure
+import mcubes
+from torchmcubes import marching_cubes
 import logging
 
 logging.getLogger("lightning").setLevel(logging.ERROR)
@@ -580,41 +580,21 @@ class Seg3dLossless(nn.Module):
 
         return np.uint8(image)
 
-    def export_mesh(self, occupancys, with_color=False, decimation=False):
+    def export_mesh(self, occupancys):
 
         final = occupancys[:-1, :-1, :-1].contiguous()
 
-        # # cuda marching cubes (0.06s)
-        # verts, faces = marching_cubes(final, self.balance_value)
-        # verts = torch.as_tensor(verts)
-        # faces = torch.as_tensor(faces, dtype=torch.long)[:,[0,2,1]]
-
-        # # taichi marching cubes (2.73s)
-        # verts, faces = self.mciso_taichi.sdf2mesh(final)
-        # verts = torch.as_tensor(verts.copy())
-        # faces = torch.as_tensor(faces.copy(), dtype=torch.long)[:,[0,2,1]]
-
-        # skimage marching cubes (2.37s)
-        verts, faces, _, _ = measure.marching_cubes(
-            final.detach().cpu().numpy(), self.balance_value)
-        verts = verts[:, [2, 1, 0]]
-        verts = torch.as_tensor(verts.copy())
-        faces = torch.as_tensor(faces.copy(), dtype=torch.long)
-
-        if with_color:
-            N = occupancys.shape[0]
-
-            x, y, z = np.mgrid[:N, :N, :N]
-            x = (x / N).astype('float32')
-            y = (y / N).astype('float32')
-            z = (z / N).astype('float32')
-
-            rgb = np.stack((x, y, z), axis=-1)
-            rgb = np.transpose(rgb, axes=(3, 2, 1, 0)).copy()
-            rgb = torch.from_numpy(rgb).to(final.device)
-
-            colrs = grid_interp(rgb, verts)
-            return verts, faces, colrs
+        if final.shape[0] > 256:
+            # skimage marching cubes (0.2s for 256^3)
+            # occu_arr = final.detach().cpu().numpy()                 # non-smooth surface
+            occu_arr = mcubes.smooth(final.detach().cpu().numpy())  # smooth surface
+            vertices, triangles = mcubes.marching_cubes(occu_arr, self.balance_value)
+            verts = torch.as_tensor(vertices[:,[2,1,0]])
+            faces = torch.as_tensor(triangles.astype(np.long), dtype=torch.long)[:,[0,2,1]]
         else:
+            # torchmcubes (0.01s for 256^3, but CUDA memory explosion for 512^3)
+            vertices, triangles = marching_cubes(final, self.balance_value)
+            verts = torch.as_tensor(vertices)
+            faces = torch.as_tensor(triangles, dtype=torch.long)[:,[0,2,1]]
 
-            return verts, faces
+        return verts, faces

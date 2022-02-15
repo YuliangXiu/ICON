@@ -15,7 +15,6 @@ dependencies:
   - iopath
   - nvidiacub
   - pyembree
-  - gdown
   - pip
   - pip:
      - -r requirements.txt

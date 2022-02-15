@@ -413,7 +413,7 @@ class Render():
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         video = cv2.VideoWriter(save_path, fourcc, 30, (self.size+new_shape[1]*len(images), self.size))
         
-        print(colored("exporting video, please wait for a while...", "blue"))
+        print(colored(f"exporting video {os.path.basename(save_path)}, please wait for a while...", "blue"))
             
         for cam_id in range(len(self.cam_pos)):
             self.init_renderer(self.get_camera(cam_id), 'clean_mesh', 'gray')

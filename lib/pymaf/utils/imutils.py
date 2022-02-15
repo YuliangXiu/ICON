@@ -1,6 +1,7 @@
 """
 This file contains functions that are used to perform data augmentation.
 """
+from turtle import reset
 import cv2
 import io
 import torch
@@ -78,16 +79,16 @@ def process_image(img_file, det, input_res=512):
     [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor] = get_transformer(input_res)
 
     img_ori = load_img(img_file)
-
+    
+    in_height, in_width, _ = img_ori.shape
+    M = aug_matrix(in_width, in_height, input_res*2, input_res*2)
+    
+    # from rectangle to square
+    img_for_crop = cv2.warpAffine(img_ori, M[0:2, :], 
+                                    (input_res*2, input_res*2), flags=cv2.INTER_CUBIC)
+    
     if det is not None:
 
-        in_height, in_width, _ = img_ori.shape
-        M = aug_matrix(in_width, in_height, input_res*2, input_res*2, True)
-        
-        # from rectangle to square
-        img_for_crop = cv2.warpAffine(img_ori, M[0:2, :], 
-                                      (input_res*2, input_res*2), flags=cv2.INTER_CUBIC)
-        
         # detection for bbox
         bbox = get_bbox(img_for_crop, det)
 
@@ -99,7 +100,6 @@ def process_image(img_file, det, input_res=512):
     else:
         
         # Assume that the person is centerered in the image
-        img_for_crop = img_ori.copy()
         height = img_for_crop.shape[0]
         width = img_for_crop.shape[1]
         center = np.array([width // 2, height // 2])
@@ -155,17 +155,17 @@ def transform(pt, center, scale, res, invert=0):
         t = np.linalg.inv(t)
     new_pt = np.array([pt[0] - 1, pt[1] - 1, 1.]).T
     new_pt = np.dot(t, new_pt)
-    return new_pt[:2].astype(int) + 1
+    return np.around(new_pt[:2]).astype(np.int16)
 
 
 def crop(img, center, scale, res):
     """Crop image according to the supplied bounding box."""
     
     # Upper left point
-    ul = np.array(transform([1, 1], center, scale, res, invert=1)) - 1
+    ul = np.array(transform([0, 0], center, scale, res, invert=1))
     
     # Bottom right point
-    br = np.array(transform([res[0] + 1, res[1] + 1], center, scale, res, invert=1)) - 1
+    br = np.array(transform(res, center, scale, res, invert=1))
     
     new_shape = [br[1] - ul[1], br[0] - ul[0]]
     if len(img.shape) > 2:
@@ -185,17 +185,28 @@ def crop(img, center, scale, res):
 
     return new_img
 
+def corner_align(ul, br):
+    
+    if ul[1]-ul[0] != br[1]-br[0]:
+        ul[1] = ul[0]+br[1]-br[0]
+    
+    return ul, br
 
 def uncrop(img, center, scale, orig_shape):
     
     """'Undo' the image cropping/resizing.
     This function is used when evaluating mask/part segmentation.
     """
+    
     res = img.shape[:2]
+    
     # Upper left point
-    ul = np.array(transform([1, 1], center, scale, res, invert=1)) - 1
+    ul = np.array(transform([0, 0], center, scale, res, invert=1))
     # Bottom right point
-    br = np.array(transform([res[0] + 1, res[1] + 1], center, scale, res, invert=1)) - 1
+    br = np.array(transform(res, center, scale, res, invert=1))
+    
+    # quick fix
+    ul, br = corner_align(ul, br)
     
     # size of cropped image
     crop_shape = [br[1] - ul[1], br[0] - ul[0]]
