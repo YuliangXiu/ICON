@@ -408,7 +408,7 @@ class Render():
                  100.0 * math.sin(np.pi / 180 * angle)))
 
         old_shape = np.array(images[0].shape[:2])
-        new_shape = ((self.size / old_shape[0]) * old_shape).astype(np.int)
+        new_shape = np.around((self.size / old_shape[0]) * old_shape).astype(np.int)
         
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         video = cv2.VideoWriter(save_path, fourcc, 30, (self.size+new_shape[1]*len(images), self.size))

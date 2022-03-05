@@ -62,21 +62,25 @@ def get_transformer(input_res):
     ])
 
     image_to_pymaf_tensor = transforms.Compose([
-        transforms.Resize(224),
+        transforms.Resize(size=224),
         transforms.Normalize(mean=constants.IMG_NORM_MEAN,
                              std=constants.IMG_NORM_STD)
     ])
     
-    return [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor]
+    image_to_pixie_tensor = transforms.Compose([
+        transforms.Resize(224)
+    ])
+    
+    return [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor]
 
 
-def process_image(img_file, det, input_res=512):
+def process_image(img_file, det, hps_type, input_res=512):
     """Read image, do preprocessing and possibly crop it according to the bounding box.
     If there are bounding box annotations, use them to crop the image.
     If no bounding box is specified but openpose detections are available, use them to get the bounding box.
     """
     
-    [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor] = get_transformer(input_res)
+    [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor] = get_transformer(input_res)
 
     img_ori = load_img(img_file)
     
@@ -122,7 +126,11 @@ def process_image(img_file, det, input_res=512):
     # for hps
     img_hps = img_np.astype(np.float32) / 255.
     img_hps = torch.from_numpy(img_hps).permute(2, 0, 1)
-    img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0)
+    
+    if hps_type != 'pixie':
+        img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0)
+    else:
+        img_hps = image_to_pixie_tensor(img_hps).unsqueeze(0)
     
     # uncrop params
     uncrop_param = {'center': center,

@@ -1,3 +1,5 @@
+urle () { [[ "${1}" ]] || return 1; local LANG=C i x; for (( i = 0; i < ${#1}; i++ )); do x="${1:i:1}"; [[ "${x}" == [a-zA-Z0-9.~-] ]] && echo -n "${x}" || printf '%%%02X' "'${x}"; done; echo; }
+
 # fetch DensePose UV data from facebookresearch/DensePose
 mkdir -p data/pymaf_data/UV_data && cd data/pymaf_data/UV_data
 wget https://dl.fbaipublicfiles.com/densepose/densepose_uv_data.tar.gz
@@ -25,13 +27,47 @@ function download_pare(){
     wget https://www.dropbox.com/s/aeulffqzb3zmh8x/pare-github-data.zip
     unzip pare-github-data.zip && mv data pare_data
     rm -f pare-github-data.zip
+    cd ..
 
     echo "PARE done!"
 }
 
-read -p "(optional) Download PARE (y/n)?" choice
+function download_pixie(){
+
+  mkdir -p data/pixie_data
+
+  # SMPL-X 2020 (neutral SMPL-X model with the FLAME 2020 expression blendshapes)
+  echo -e "\nYou need to register at https://smpl-x.is.tue.mpg.de"
+  read -p "Username (SMPL-X):" username
+  read -p "Password (SMPL-X):" password
+  username=$(urle $username)
+  password=$(urle $password)
+  wget --post-data "username=$username&password=$password" 'https://download.is.tue.mpg.de/download.php?domain=smplx&sfile=SMPLX_NEUTRAL_2020.npz&resume=1' -O './data/pixie_data/SMPLX_NEUTRAL_2020.npz' --no-check-certificate --continue
+
+  # PIXIE pretrained model and utilities
+  echo -e "\nYou need to register at https://pixie.is.tue.mpg.de/"
+  read -p "Username (PIXIE):" username
+  read -p "Password (PIXIE):" password
+  username=$(urle $username)
+  password=$(urle $password)
+  wget --post-data "username=$username&password=$password" 'https://download.is.tue.mpg.de/download.php?domain=pixie&sfile=pixie_model.tar&resume=1' -O './data/pixie_data/pixie_model.tar' --no-check-certificate --continue
+  wget --post-data "username=$username&password=$password" 'https://download.is.tue.mpg.de/download.php?domain=pixie&sfile=utilities.zip&resume=1' -O './data/pixie_data/utilities.zip' --no-check-certificate --continue
+  cd data/pixie_data
+  unzip utilities.zip
+  rm utilities.zip
+  cd ../../
+}
+
+read -p "(optional) Download PARE[SMPL] (y/n)?" choice
 case "$choice" in 
   y|Y ) download_pare;;
-  n|N ) echo "Done!";;
+  n|N ) echo "PARE Done!";;
+  * ) echo "Invalid input! Please use y|Y or n|N";;
+esac
+
+read -p "(optional) Download PIXIE[SMPL-X] (y/n)?" choice
+case "$choice" in 
+  y|Y ) download_pixie;;
+  n|N ) echo "PIXIE Done!";;
   * ) echo "Invalid input! Please use y|Y or n|N";;
 esac

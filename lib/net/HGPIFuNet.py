@@ -144,21 +144,21 @@ class HGPIFuNet(BasePIFuNet):
                             'green'))
 
         summary_log = f"{self.prior_type.upper()}:\n" + \
-            f"[w/ Global Image Encoder]: {self.use_filter}\n" + \
-            f"[Image Features used by MLP]: {self.in_geo}\n"
+            f"w/ Global Image Encoder: {self.use_filter}\n" + \
+            f"Image Features used by MLP: {self.in_geo}\n"
 
         if self.prior_type == "icon":
-            summary_log += f"[Geometry Features used by MLP]: {self.smpl_feats}\n"
-            summary_log += f"[Dim of Image Features (local)]: 6\n"
-            summary_log += f"[Dim of Geometry Features (ICON)]: {self.smpl_dim}\n"
+            summary_log += f"Geometry Features used by MLP: {self.smpl_feats}\n"
+            summary_log += f"Dim of Image Features (local): 6\n"
+            summary_log += f"Dim of Geometry Features (ICON): {self.smpl_dim}\n"
         elif self.prior_type == "pamir":
-            summary_log += f"[Dim of Image Features (global)]: {self.hourglass_dim}\n"
-            summary_log += f"[Dim of Geometry Features (PaMIR)]: {self.voxel_dim}\n"
+            summary_log += f"Dim of Image Features (global): {self.hourglass_dim}\n"
+            summary_log += f"Dim of Geometry Features (PaMIR): {self.voxel_dim}\n"
         else:
-            summary_log += f"[Dim of Image Features (global)]: {self.hourglass_dim}\n"
-            summary_log += f"[Dim of Geometry Features (PIFu)]: 1 (z-value)\n"
+            summary_log += f"Dim of Image Features (global): {self.hourglass_dim}\n"
+            summary_log += f"Dim of Geometry Features (PIFu): 1 (z-value)\n"
 
-        summary_log += f"[Dim of MLP's first layer]: {channels_IF[0]}\n"
+        summary_log += f"Dim of MLP's first layer: {channels_IF[0]}\n"
 
         print(colored(summary_log, "yellow"))
 

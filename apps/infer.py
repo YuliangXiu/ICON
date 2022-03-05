@@ -21,6 +21,7 @@ import argparse
 import numpy as np
 from PIL import Image
 import torch, trimesh
+import numpy as np
 torch.backends.cudnn.benchmark = True
 
 # project related libs
@@ -34,6 +35,9 @@ from lib.common.render import query_color
 import logging
 logging.getLogger("trimesh").setLevel(logging.ERROR)
 
+def tensor2variable(tensor, device):
+    return torch.tensor(tensor, device=device, requires_grad=True)  #[1,23,3,3]
+
 if __name__ == '__main__':
 
     # loading cfg file
@@ -43,18 +47,13 @@ if __name__ == '__main__':
     parser.add_argument('-colab', action='store_true')
     parser.add_argument('-loop_smpl', '--loop_smpl', type=int, default=100)
     parser.add_argument('-patience', '--patience', type=int, default=5)
-    parser.add_argument('-vis_freq', '--vis_freq', type=int, default=100)
+    parser.add_argument('-vis_freq', '--vis_freq', type=int, default=10)
     parser.add_argument('-loop_cloth', '--loop_cloth', type=int, default=100)
+    parser.add_argument('-hps_type', '--hps_type', type=str, default='pymaf')
     parser.add_argument('-export_video', action='store_true')
     parser.add_argument('-in_dir', '--in_dir', type=str, default="../examples")
-    parser.add_argument('-out_dir',
-                        '--out_dir',
-                        type=str,
-                        default="../results")
-    parser.add_argument('-cfg',
-                        '--config',
-                        type=str,
-                        default="../configs/icon-filter.yaml")
+    parser.add_argument('-out_dir', '--out_dir', type=str, default="../results")
+    parser.add_argument('-cfg', '--config', type=str, default="../configs/icon-filter.yaml")
 
     args = parser.parse_args()
 
@@ -83,15 +82,21 @@ if __name__ == '__main__':
     # load model and dataloader
     model = ICON(cfg)
     model = load_checkpoint(model, cfg)
-
-    dataset = TestDataset(
-        {
+    
+    dataset_param = {
             'image_dir': args.in_dir,
-            'has_det': True,    # w/ or w/o detection
-            'hps_type': 'pymaf'  # pymaf/pare
-        }, device)
+            'has_det': True,            # w/ or w/o detection
+            'hps_type': args.hps_type   # pymaf/pare/pixie
+    }
+    
+    if args.hps_type == 'pixie' and 'pamir' in args.config:
+        print(colored("PIXIE isn't compatible with PaMIR, thus switch to PyMAF", "red"))
+        dataset_param['hps_type'] = 'pymaf'
+        
+    dataset = TestDataset(dataset_param, device)
 
-    print(colored(f"Dataset Size: {len(dataset)}", 'red'))
+    print(colored(f"Dataset Size: {len(dataset)}", 'green'))
+    
     pbar = tqdm(dataset)
 
     for data in pbar:
@@ -171,15 +176,26 @@ if __name__ == '__main__':
 
             optimizer_smpl.zero_grad()
 
-            # prior_loss, optimed_pose = dataset.vposer_prior(optimed_pose)
-            smpl_out = dataset.smpl_model(betas=optimed_betas,
-                                          body_pose=optimed_pose,
-                                          global_orient=optimed_orient,
-                                          pose2rot=False)
+            if dataset_param['hps_type'] != 'pixie':
+                smpl_out = dataset.smpl_model(betas=optimed_betas,
+                                            body_pose=optimed_pose,
+                                            global_orient=optimed_orient,
+                                            pose2rot=False)
 
-            smpl_verts = (smpl_out.vertices * data['scale']) + optimed_trans
+                smpl_verts = ((smpl_out.vertices) + optimed_trans) * data['scale']
+            else:
+                smpl_verts, _, _ = dataset.smpl_model(shape_params=optimed_betas,
+                                        expression_params=tensor2variable(data['exp'], device),
+                                        body_pose=optimed_pose,
+                                        global_pose=optimed_orient,
+                                        jaw_pose=tensor2variable(data['jaw_pose'], device),
+                                        left_hand_pose=tensor2variable(data['left_hand_pose'], device),
+                                        right_hand_pose=tensor2variable(data['right_hand_pose'], device))
+                
+                smpl_verts = (smpl_verts + optimed_trans) * data['scale']
+            
             smpl_verts *= torch.tensor([1.0, -1.0, -1.0]).to(device)
-
+                
             # render optimized mesh (normal, T_normal, image [-1,1])
             in_tensor['T_normal_F'], in_tensor[
                 'T_normal_B'] = dataset.render_normal(smpl_verts,
@@ -350,6 +366,7 @@ if __name__ == '__main__':
             patience=args.patience)
         
         if args.loop_cloth == 0:
+            per_loop_lst = []
             in_tensor['P_normal_F'], in_tensor[
                     'P_normal_B'] = dataset.render_normal(
                         verts_pr.unsqueeze(0).to(device),
@@ -357,7 +374,8 @@ if __name__ == '__main__':
             recon_render_lst = dataset.render.get_clean_image(
                 cam_ids=[0, 1, 2, 3])
             
-            per_loop_lst = [recon_render_lst]
+            per_loop_lst.extend(recon_render_lst)
+            per_data_lst.append(get_optim_grid_image(per_loop_lst, None, type='cloth'))
 
         for i in loop_cloth:
 
@@ -417,11 +435,10 @@ if __name__ == '__main__':
                                 duration=500,
                                 loop=0)
             
-            per_data_lst[-1].save(
-                os.path.join(args.out_dir, cfg.name,
-                            f"png/{data['name']}_cloth.png"))
-        
-        
+        per_data_lst[-1].save(
+            os.path.join(args.out_dir, cfg.name,
+                        f"png/{data['name']}_cloth.png"))
+            
         if args.export_video:
             # self-rotated video
             dataset.render.get_rendered_video([data['ori_image'], rgb_norm], 
@@ -450,4 +467,7 @@ if __name__ == '__main__':
             in_tensor['smpl_faces'].detach().cpu()[0])
         smpl_obj.export(
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
+        
+        print(colored("Please comment 'break' to continue", "red"))
+        break
         

@@ -26,6 +26,7 @@ rembg
 pytorch_lightning
 PyMCubes
 gdown
+kornia==0.4.0
 git+https://github.com/Project-Splinter/human_det
 git+https://github.com/YuliangXiu/smplx.git
 git+https://github.com/YuliangXiu/bvh-distance-queries.git

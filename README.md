@@ -47,6 +47,7 @@
 <br />
 
 ## News :triangular_flag_on_post:
+- [2022/03/05] <a href="https://github.com/YadiraF/PIXIE">PIXIE (SMPL-X)</a>, <a href="https://github.com/mkocabas/PARE">PARE (SMPL)</a>, <a href="https://github.com/HongwenZhang/PyMAF">PyMAF (SMPL)</a> are all supported as optional HPS.
 - [2022/02/07] <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'><img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'></a> is ready to use.
 
 <br>
@@ -96,8 +97,8 @@
 |![Intermediate Results](assets/intermediate_results.png)|
 |:--:|
 |*ICON's intermediate results*|
-|![Final Results](assets/overlap.gif)|
-|*ICON's final results*|
+|![Final Results](assets/overlap1.gif)![Final Results](assets/overlap2.gif)|
+|*ICON's normal prediction + reconstructed mesh (w/o & w/ smooth)*|
 
 - If you want to create a **realistic and animatable 3D clothed avatar** direclty from video / sequential images
   - fully-textured with per-vertex color
@@ -113,7 +114,7 @@
 ## TODO
 
 - [x] testing code and pretrained models (*self-implemented version)
-  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/PARE as HPS)
+  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/PIXIE/PARE as HPS)
   - [x] PIFu* (RGB image + predicted normal map as input)
   - [x] PaMIR* (RGB image + predicted normal map as input, w/ PyMAF/PARE as HPS)
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
@@ -140,10 +141,10 @@ python infer.py -cfg ../configs/pifu.yaml -gpu 0 -in_dir ../examples -out_dir ..
 python infer.py -cfg ../configs/pamir.yaml -gpu 0 -in_dir ../examples -out_dir ../results
 
 # ICON w/ global filter (better visual details --> lower Normal Error))
-python infer.py -cfg ../configs/icon-filter.yaml -gpu 0 -in_dir ../examples -out_dir ../results
+python infer.py -cfg ../configs/icon-filter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare}
 
 # ICON w/o global filter (higher evaluation scores --> lower P2S/Chamfer Error))
-python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -out_dir ../results
+python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare}
 ```
 
 ## More Qualitative Results
@@ -163,11 +164,12 @@ python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -o
 ## Citation
 
 ```bibtex
-@article{xiu2021icon,
-  title={ICON: Implicit Clothed humans Obtained from Normals},
+@inproceedings{xiu2022icon,
+  title={{ICON}: {I}mplicit {C}lothed humans {O}btained from {N}ormals},
   author={Xiu, Yuliang and Yang, Jinlong and Tzionas, Dimitrios and Black, Michael J},
-  journal={arXiv preprint arXiv:2112.09127},
-  year={2021}
+  booktitle={IEEE/CVF Conf.~on Computer Vision and Pattern Recognition (CVPR)},
+  month = jun,
+  year={2022}
 }
 ```
 

@@ -55,7 +55,8 @@ Required:
 Optional:
   * [SMPL-X](http://smpl-x.is.tue.mpg.de/): SMPL-X Model, used for training
   * [AGORA](https://agora.is.tue.mpg.de/): SMIL Kid Model, used for training
-  * [PARE](https://pare.is.tue.mpg.de/): optional HPS estimator
+  * [PARE](https://pare.is.tue.mpg.de/): optional SMPL HPS estimator
+  * [PIXIE](https://pixie.is.tue.mpg.de/): optional SMPL-X HPS estimator
 
 
 :warning: Click **Register now** on all dependencies, then you can download them all with **ONE** account.
@@ -65,7 +66,7 @@ Optional:
   cd ICON
   bash fetch_data.sh # requires username and password
   ```
-  * Download [PyMAF](https://github.com/HongwenZhang/PyMAF#necessary-files) and [PARE (optional)](https://github.com/mkocabas/PARE#demo)
+  * Download [PyMAF](https://github.com/HongwenZhang/PyMAF#necessary-files), [PARE (optional, SMPL)](https://github.com/mkocabas/PARE#demo), [PIXIE (optional, SMPL-X)](https://pixie.is.tue.mpg.de/)
   
   ```bash
   bash fetch_hps.sh
@@ -92,6 +93,20 @@ data/
 │   │       └── pare_w_3dpw_config.yaml
 │   ├── smpl_mean_params.npz
 │   └── smpl_partSegmentation_mapping.pkl
+├── pixie_data/
+│   ├── flame2smplx_tex_1024.npy
+│   ├── MANO_SMPLX_vertex_ids.pkl
+│   ├── pixie_model.tar
+│   ├── SMPL-X__FLAME_vertex_ids.npy
+│   ├── SMPL_X_template_FLAME_uv.obj
+│   ├── smplx_extra_joints.yaml
+│   ├── smplx_hand.obj
+│   ├── SMPLX_NEUTRAL_2020.npz
+│   ├── smplx_tex.obj
+│   ├── smplx_tex.png
+│   ├── SMPLX_to_J14.pkl
+│   ├── uv_face_eye_mask.png
+│   └── uv_face_mask.png
 ├── pymaf_data/
 │   ├── cube_parts.npy
 │   ├── gmm_08.pkl

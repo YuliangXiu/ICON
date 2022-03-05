@@ -39,11 +39,12 @@ You acknowledge that the Data & Software is a valuable scientific resource and a
 
 Citation:
 
-@article{xiu2021icon,
-  title={ICON: Implicit Clothed humans Obtained from Normals},
+@inproceedings{xiu2022icon,
+  title={{ICON}: {I}mplicit {C}lothed humans {O}btained from {N}ormals},
   author={Xiu, Yuliang and Yang, Jinlong and Tzionas, Dimitrios and Black, Michael J},
-  journal={arXiv preprint arXiv:2112.09127},
-  year={2021}
+  booktitle={IEEE/CVF Conf.~on Computer Vision and Pattern Recognition (CVPR)},
+  month = jun,
+  year={2022}
 }
 
 Commercial licensing opportunities
