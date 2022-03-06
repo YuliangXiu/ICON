@@ -27,7 +27,7 @@ import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 import mcubes
-from torchmcubes import marching_cubes
+from kaolin.ops.conversions import voxelgrids_to_trianglemeshes
 import logging
 
 logging.getLogger("lightning").setLevel(logging.ERROR)
@@ -585,16 +585,17 @@ class Seg3dLossless(nn.Module):
         final = occupancys[:-1, :-1, :-1].contiguous()
 
         if final.shape[0] > 256:
-            # skimage marching cubes (0.2s for 256^3)
-            # occu_arr = final.detach().cpu().numpy()                 # non-smooth surface
-            occu_arr = mcubes.smooth(final.detach().cpu().numpy())  # smooth surface
+            # for voxelgrid larger than 256^3, the required GPU memory will be > 9GB
+            # thus we use CPU marching_cube to avoid "CUDA out of memory"
+            occu_arr = final.detach().cpu().numpy()                 # non-smooth surface
+            # occu_arr = mcubes.smooth(final.detach().cpu().numpy())  # smooth surface
             vertices, triangles = mcubes.marching_cubes(occu_arr, self.balance_value)
             verts = torch.as_tensor(vertices[:,[2,1,0]])
             faces = torch.as_tensor(triangles.astype(np.long), dtype=torch.long)[:,[0,2,1]]
         else:
-            # torchmcubes (0.01s for 256^3, but CUDA memory explosion for 512^3)
-            vertices, triangles = marching_cubes(final, self.balance_value)
-            verts = torch.as_tensor(vertices)
-            faces = torch.as_tensor(triangles, dtype=torch.long)[:,[0,2,1]]
+            torch.cuda.empty_cache()
+            vertices, triangles = voxelgrids_to_trianglemeshes(final.unsqueeze(0))
+            verts = vertices[0][:,[2,1,0]].cpu()
+            faces = triangles[0][:,[0,2,1]].cpu()
 
         return verts, faces

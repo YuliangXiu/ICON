@@ -1,8 +1,3 @@
-# bvh-distance-queries only support cuda 11.0
-# yet cuda 11.1 is the default version for colab
-cd /etc/alternatives/
-unlink cuda
-ln -s /usr/local/cuda-11.0 cuda
 cd /content
 
 # conda installation
@@ -19,7 +14,5 @@ conda env create -f environment.yaml
 conda init bash
 source ~/.bashrc
 source activate icon
-
-# install packages for colab
-pip install ipykernel ipywidgets --user --no-warn-script-location
+pip install -r requirements.txt --use-deprecated=legacy-resolver
 

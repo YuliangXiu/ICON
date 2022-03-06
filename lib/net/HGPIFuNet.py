@@ -279,21 +279,21 @@ class HGPIFuNet(BasePIFuNet):
 
         if self.prior_type == 'icon':
 
-            # smpl_verts [B, 10475, 3]
-            # smpl_faces [B, 20908, 3]
+            # smpl_verts [B, N_vert, 3]
+            # smpl_faces [B, N_face, 3]
             # points [B, 3, N]
-            smpl_sdf, smpl_norm, smpl_cmap, smpl_ind = cal_sdf_batch(
+            
+            smpl_sdf, smpl_norm, smpl_cmap, smpl_vis = cal_sdf_batch(
                 self.smpl_feat_dict['smpl_verts'],
                 self.smpl_feat_dict['smpl_faces'],
                 self.smpl_feat_dict['smpl_cmap'],
-                xyz.permute(0, 2, 1).contiguous(),
-                edge=1.0)
-
+                self.smpl_feat_dict['smpl_vis'],
+                xyz.permute(0, 2, 1).contiguous())
+            
             # smpl_sdf [B, N, 1]
             # smpl_norm [B, N, 3]
-            # smpl_ind [B, N]
-            smpl_vis = torch.gather(self.smpl_feat_dict['smpl_vis'], 1,
-                                    smpl_ind.unsqueeze(2))
+            # smpl_cmap [B, N, 3]
+            # smpl_vis [B, N, 1]
 
             # set ourlier point features as uniform values
             smpl_outlier = torch.abs(smpl_sdf).ge(self.sdf_clip)
@@ -301,7 +301,7 @@ class HGPIFuNet(BasePIFuNet):
 
             feat_lst = [smpl_sdf]
             if 'cmap' in self.smpl_feats:
-                # smpl_cmap[smpl_outlier.repeat(1,1,3)] = smpl_sdf[smpl_outlier].repeat(1,1,3)
+                smpl_cmap[smpl_outlier.repeat(1,1,3)] = smpl_sdf[smpl_outlier].repeat(1,1,3)
                 feat_lst.append(smpl_cmap)
             if 'norm' in self.smpl_feats:
                 feat_lst.append(smpl_norm)

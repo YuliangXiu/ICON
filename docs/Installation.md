@@ -25,18 +25,15 @@ conda config --env --set always_yes true
 conda update -n base -c defaults conda -y
 
 # Note: 
-# bvh-distance-queries only support cuda <= 11.0
-# Thus, you need to setup suitable "cuda toolkit" firstly 
-# https://developer.nvidia.com/cuda-11.0-download-archive
 # For google colab, please refer to ICON/colab.sh
-ln -s {directory of cuda-11.0} /usr/local/cuda
-
 # create conda env and install required libs (~20min)
+
 cd ICON
 conda env create -f environment.yaml
 conda init bash
 source ~/.bashrc
 source activate icon
+pip install -r requirements.txt --use-deprecated=legacy-resolver
 ```
 
 For data generation and training

@@ -62,7 +62,7 @@ if __name__ == '__main__':
     cfg.merge_from_file('../lib/pymaf/configs/pymaf_config.yaml')
 
     cfg_show_list = [
-        'test_gpus', [args.gpu_device], 'mcube_res', 512, 'clean_mesh', False
+        'test_gpus', [args.gpu_device], 'mcube_res', 256, 'clean_mesh', True
     ]
 
     cfg.merge_from_list(cfg_show_list)

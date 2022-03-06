@@ -25,7 +25,8 @@ import os, sys
 from termcolor import colored
 import os.path as osp
 from scipy.spatial import cKDTree
-import bvh_distance_queries
+from kaolin.ops.mesh import check_sign
+from kaolin.metrics.trianglemesh import point_to_mesh_distance
 
 from pytorch3d.loss import (
     mesh_edge_loss,
@@ -37,7 +38,7 @@ from PIL import Image, ImageFont, ImageDraw
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 from pytorch3d.renderer.mesh import rasterize_meshes
-from lib.common.render_utils import Pytorch3dRasterizer, face_vertices, batch_contains
+from lib.common.render_utils import Pytorch3dRasterizer, face_vertices
 from lib.pymaf.utils.imutils import uncrop
 from pytorch3d.structures import Meshes
 
@@ -225,52 +226,76 @@ def get_visibility(xy, z, faces):
     return vis_mask
 
 
-def cal_sdf(verts, faces, points, edge=1.0):
+def barycentric_coordinates_of_projection(points, vertices):
+    ''' https://github.com/MPI-IS/mesh/blob/master/mesh/geometry/barycentric_coordinates_of_projection.py
+    '''
+    """Given a point, gives projected coords of that point to a triangle
+    in barycentric coordinates.
+    See
+        **Heidrich**, Computing the Barycentric Coordinates of a Projected Point, JGT 05
+        at http://www.cs.ubc.ca/~heidrich/Papers/JGT.05.pdf
+    
+    :param p: point to project. [B, 3]
+    :param v0: first vertex of triangles. [B, 3]
+    :returns: barycentric coordinates of ``p``'s projection in triangle defined by ``q``, ``u``, ``v``
+            vectorized so ``p``, ``q``, ``u``, ``v`` can all be ``3xN``
+    """ 
+    #(p, q, u, v)
+    v0, v1, v2 = vertices[:,0], vertices[:,0], vertices[:,0]
+    p = points
+    
+    q = v0
+    u = v1 - v0
+    v = v2 - v0
+    n = torch.cross(u, v)
+    s = torch.sum(n * n, dim=1)
+    # If the triangle edges are collinear, cross-product is zero,
+    # which makes "s" 0, which gives us divide by zero. So we
+    # make the arbitrary choice to set s to epsv (=numpy.spacing(1)),
+    # the closest thing to zero
+    s[s == 0] = 1e-6
+    oneOver4ASquared = 1.0 / s
+    w = p - q
+    b2 = torch.sum(torch.cross(u, w) * n, dim=1) * oneOver4ASquared
+    b1 = torch.sum(torch.cross(w, v) * n, dim=1) * oneOver4ASquared
+    weights = torch.stack((1 - b1 - b2, b1, b2), dim=-1)
+    # check barycenric weights
+    # p_n = v0*weights[:,0:1] + v1*weights[:,1:2] + v2*weights[:,2:3]
+    return weights
 
-    n2t = lambda var: torch.from_numpy(var).float() if isinstance(
-        var, (np.ndarray, np.generic)) else var
-    [verts, faces, points] = [n2t(item) for item in [verts, faces, points]]
 
-    mesh_tree = cKDTree(verts)
-    pts_dist, pts_ind = mesh_tree.query(points, p=2)
+def cal_sdf_batch(verts, faces, cmaps, vis, points):
+    
+    # verts [B, N_vert, 3]
+    # faces [B, N_face, 3]
+    # triangles [B, N_face, 3, 3]
+    # points [B, N_point, 3]
+    # cmaps [B, N_vert, 3]
 
-    pts_dist = pts_dist / torch.sqrt(torch.tensor(3 * (edge**2)))  # p=2
-    # pts_dist = pts_dist / torch.tensor(3*edge) # p=1
-    mesh = trimesh.Trimesh(verts, faces, process=False)
-
-    pts_occ = mesh.contains(points)
-    pts_norm = 0.5 * (torch.as_tensor(mesh.vertex_normals[pts_ind] * np.array(
-        [-1.0, 1.0, -1.0])).float() + 1.0)
-    pts_sdf = (pts_dist * ((pts_occ - 0.5) / 0.5))[..., None].float()
-
-    return pts_sdf, pts_norm, pts_ind
-
-
-def cal_sdf_batch(verts, faces, cmaps, points, edge=1.0):
-
-    func = bvh_distance_queries.PointToMeshResidual()
-    torch.cuda.synchronize()
-    norms = Meshes(verts, faces).verts_normals_padded()
+    normals = Meshes(verts, faces).verts_normals_padded()
+    
     triangles = face_vertices(verts, faces)
-    residues, normals, pts_cmap, pts_ind = func(
-        triangles.contiguous(), points.contiguous(),
-        face_vertices(norms, faces).contiguous(),
-        face_vertices(cmaps, faces).contiguous(), faces)
-    torch.cuda.synchronize()
+    normals = face_vertices(normals, faces)
+    cmaps = face_vertices(cmaps, faces)
+    vis = face_vertices(vis, faces)
+    
+    residues, pts_ind, _ = point_to_mesh_distance(points, triangles)
+    closest_triangles = torch.gather(triangles, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
+    closest_normals = torch.gather(normals, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
+    closest_cmaps = torch.gather(cmaps, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
+    closest_vis = torch.gather(vis, 1, pts_ind[:,:,None,None].expand(-1,-1,3,1)).view(-1,3,1)
+    
+    bary_weights = barycentric_coordinates_of_projection(points[0], closest_triangles)
+    
+    pts_cmap = (closest_cmaps*bary_weights[:,:,None]).sum(1).unsqueeze(0)
+    pts_vis = (closest_vis*bary_weights[:,:,None]).sum(1).unsqueeze(0).ge(1e-1)
+    pts_norm = (closest_normals*bary_weights[:,:,None]).sum(1).unsqueeze(0) * torch.tensor([-1.0, 1.0, -1.0]).type_as(normals)
+    pts_dist = torch.sqrt(residues) / torch.sqrt(torch.tensor(3))
 
-    pts_dist = torch.norm(residues, p=2, dim=2) / torch.sqrt(
-        torch.tensor(3 * (edge**2)))
-    pts_norm = normals * torch.tensor([-1.0, 1.0, -1.0]).type_as(normals)
-
-    # pts_sign = ((residues * normals).sum(dim=2) < 0) * 2.0 - 1.0
-    # if pts_signs.shape[1] != points.shape[1]:
-    pts_signs = (batch_contains(verts, faces, points)).type_as(verts)
-    # if pts_signs.shape[1] != points.shape[1]:
-    #     pts_signs = ((winding_numbers(points, triangles).le(0.99)*2.0)-1.0).type_as(verts)
-
+    pts_signs = 2.0 * (check_sign(verts, faces[0], points).float() - 0.5)
     pts_sdf = (pts_dist * pts_signs).unsqueeze(-1)
 
-    return pts_sdf, pts_norm, pts_cmap, pts_ind
+    return pts_sdf, pts_norm, pts_cmap, pts_vis
 
 
 def orthogonal(points, calibrations, transforms=None):
@@ -700,47 +725,6 @@ def mesh_move(mesh_lst, step, scale=1.0):
         results.append(mesh)
 
     return results
-
-
-def scan2smpl(verts, dcs, smpl_cmap):
-    tree = cKDTree(dcs, leafsize=1)
-    dist, ind = tree.query(smpl_cmap, k=1)
-    return verts[ind, :], dcs[ind, :]
-
-
-def fusion(ref_verts, part_verts, vis_lst, dc_lst):
-    """fusion several partial verts with one reference verts
-    visibility of verts are known
-
-        ref_verts: [N, 3]
-        parts_verts: list([A,3], [B,3], ...)
-        vis_lst: list([N,1], [A,1], [B,1], ...)
-        dc_lst: list([N,1], [A,1], [B,1], ...)
-        
-    Returns:
-        final_verts: [N, 3]
-        final_dcs: [N, 3]
-    """
-
-    vis_lst = [vis.flatten().astype(dtype=np.bool) for vis in vis_lst]
-
-    deform_verts = ref_verts[np.invert(vis_lst[0]), :]
-    vis_part_verts = np.concatenate(
-        ([verts[vis_lst[idx + 1], :] for idx, verts in enumerate(part_verts)]),
-        axis=0)
-    part_tree = cKDTree(vis_part_verts, leafsize=1)
-    _, ind = part_tree.query(deform_verts, k=10)
-    new_deform_verts = vis_part_verts[ind, :].mean(axis=1)
-
-    final_verts = ref_verts
-    final_verts[np.invert(vis_lst[0]), :] = new_deform_verts
-
-    final_dcs = dc_lst[0]
-    new_deform_dcs = np.concatenate(
-        [dc[vis_lst[idx + 1], :] for idx, dc in enumerate(dc_lst[1:])], axis=0)
-    final_dcs[np.invert(vis_lst[0]), :] = new_deform_dcs[ind, :].mean(axis=1)
-
-    return final_verts, final_dcs
 
 
 class SMPLX():

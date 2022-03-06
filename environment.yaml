@@ -16,5 +16,3 @@ dependencies:
   - nvidiacub
   - pyembree
   - pip
-  - pip:
-     - -r requirements.txt

@@ -739,7 +739,8 @@ class ICON(pl.LightningModule):
                                proj_matrix=None)
 
         verts_pr, faces_pr = self.reconEngine.export_mesh(sdf)
-        verts_pr, faces_pr = clean_mesh(verts_pr, faces_pr)
+        if self.clean_mesh_flag:
+            verts_pr, faces_pr = clean_mesh(verts_pr, faces_pr)
 
         # convert from GT to SDF
         verts_pr -= (self.resolutions[-1] - 1) / 2.0

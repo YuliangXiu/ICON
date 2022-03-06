@@ -3,17 +3,7 @@
 <p align="center">
 
   <h1 align="center">ICON: Implicit Clothed humans Obtained from Normals</h1>
-  <div align="center">
-  <a href="https://paperswithcode.com/sota/3d-human-reconstruction-on-cape?p=icon-implicit-clothed-humans-obtained-from"><img src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/icon-implicit-clothed-humans-obtained-from/3d-human-reconstruction-on-cape"></a><br><br>
-  </div>
-
-  <a href="">
-    <img src="./assets/teaser.jpeg" alt="Logo" width="100%">
-  </a>
-
   <p align="center">
-    arXiv, December 2021.
-    <br />
     <a href="https://ps.is.tuebingen.mpg.de/person/yxiu"><strong>Yuliang Xiu</strong></a>
     ·
     <a href="https://ps.is.tuebingen.mpg.de/person/jyang"><strong>Jinlong Yang</strong></a>
@@ -22,10 +12,19 @@
     ·
     <a href="https://ps.is.tuebingen.mpg.de/person/black"><strong>Michael J. Black</strong></a>
   </p>
+  <h2 align="center">CVPR 2022</h2>
+  <div align="center">
+  </div>
+
+  <a href="">
+    <img src="./assets/teaser.jpeg" alt="Logo" width="100%">
+  </a>
 
   <p align="center">
+  <br>
     <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
-    <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white"></a><br><br>
+    <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white"></a>
+    <a href="https://paperswithcode.com/sota/3d-human-reconstruction-on-cape?p=icon-implicit-clothed-humans-obtained-from"><img src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/icon-implicit-clothed-humans-obtained-from/3d-human-reconstruction-on-cape"></a><br></br>
     <a href='https://arxiv.org/abs/2112.09127'>
       <img src='https://img.shields.io/badge/Paper-PDF-green?style=flat&logo=arXiv&logoColor=green' alt='Paper PDF'>
     </a>
