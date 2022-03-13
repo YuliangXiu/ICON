@@ -38,7 +38,7 @@ function download_pixie(){
   mkdir -p data/pixie_data
 
   # SMPL-X 2020 (neutral SMPL-X model with the FLAME 2020 expression blendshapes)
-  echo -e "\nYou need to register at https://smpl-x.is.tue.mpg.de"
+  echo -e "\nYou need to login https://icon.is.tue.mpg.de/ and register SMPL-X and PIXIE"
   read -p "Username (SMPL-X):" username
   read -p "Password (SMPL-X):" password
   username=$(urle $username)
@@ -46,11 +46,6 @@ function download_pixie(){
   wget --post-data "username=$username&password=$password" 'https://download.is.tue.mpg.de/download.php?domain=smplx&sfile=SMPLX_NEUTRAL_2020.npz&resume=1' -O './data/pixie_data/SMPLX_NEUTRAL_2020.npz' --no-check-certificate --continue
 
   # PIXIE pretrained model and utilities
-  echo -e "\nYou need to register at https://pixie.is.tue.mpg.de/"
-  read -p "Username (PIXIE):" username
-  read -p "Password (PIXIE):" password
-  username=$(urle $username)
-  password=$(urle $password)
   wget --post-data "username=$username&password=$password" 'https://download.is.tue.mpg.de/download.php?domain=pixie&sfile=pixie_model.tar&resume=1' -O './data/pixie_data/pixie_model.tar' --no-check-certificate --continue
   wget --post-data "username=$username&password=$password" 'https://download.is.tue.mpg.de/download.php?domain=pixie&sfile=utilities.zip&resume=1' -O './data/pixie_data/utilities.zip' --no-check-certificate --continue
   cd data/pixie_data

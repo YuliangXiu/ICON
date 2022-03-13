@@ -77,6 +77,9 @@
       <a href="#license">License</a>
     </li>
     <li>
+      <a href="#disclosure">Disclosure</a>
+    </li>
+    <li>
       <a href="#contact">Contact</a>
     </li>
   </ol>
@@ -196,6 +199,9 @@ This project has received funding from the European Union’s Horizon 2020 resea
 
 ## License
 This code and model are available for non-commercial scientific research purposes as defined in the [LICENSE](LICENSE) file. By downloading and using the code and model you agree to the terms in the [LICENSE](LICENSE).
+
+## Disclosure
+MJB has received research gift funds from Adobe, Intel, Nvidia, Meta/Facebook, and Amazon.  MJB has financial interests in Amazon, Datagen Technologies, and Meshcapade GmbH.  While MJB was a part-time employee of Amazon during this project, his research was performed solely at, and funded solely by, the Max Planck Society.
 
 ## Contact
 

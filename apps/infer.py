@@ -467,7 +467,3 @@ if __name__ == '__main__':
             in_tensor['smpl_faces'].detach().cpu()[0])
         smpl_obj.export(
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
-        
-        print(colored("Please comment 'break' to continue", "red"))
-        break
-        
