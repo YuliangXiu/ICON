@@ -29,7 +29,7 @@ sys.path.insert(
 from lib.renderer.camera import Camera
 from lib.renderer.gl.prt_render import PRTRender
 from lib.dataset.mesh_util import projection
-from lib.renderer.mesh import load_obj_mesh, compute_tangent, compute_normal, load_obj_mesh_mtl
+from lib.renderer.mesh import load_scan, compute_tangent, compute_normal, load_obj_mesh_mtl
 from lib.renderer.camera import Camera
 
 
@@ -250,7 +250,7 @@ def render_prt_ortho(out_path,
     texture_image = cv2.imread(text_file)
     texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
 
-    vertices, faces, normals, faces_normals, textures, face_textures = load_obj_mesh(
+    vertices, faces, normals, faces_normals, textures, face_textures = load_scan(
         mesh_file, with_normal=True, with_texture=True)
     vmin = vertices.min(0)
     vmax = vertices.max(0)

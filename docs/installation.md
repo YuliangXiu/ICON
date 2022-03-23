@@ -36,11 +36,6 @@ source activate icon
 pip install -r requirements.txt --use-deprecated=legacy-resolver
 ```
 
-For data generation and training
-
-  * freeglut (`sudo apt-get install freeglut3-dev`)
-  * (optional) EGL used for headless rendering (`apt install libgl1-mesa-dri libegl1-mesa libgbm1`)
-
 ## Register at [ICON's website](https://icon.is.tue.mpg.de/)
 
 ![Register](../assets/register.png)

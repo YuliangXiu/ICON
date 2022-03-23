@@ -1,7 +1,11 @@
 data/*/*
 !data/tbfo.ttf
 __pycache__
+debug/
+log/
 results/*
 .vscode
 !.gitignore
 force_push.sh
+scripts/vis*
+scripts/process_all*

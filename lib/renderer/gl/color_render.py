@@ -29,14 +29,14 @@ from .cam_render import CamRender
 
 
 class ColorRender(CamRender):
-    def __init__(self, width=1600, height=1200, name='Color Renderer'):
+    def __init__(self, width=1600, height=1200, name='Color Renderer', egl=False):
         program_files = ['color.vs', 'color.fs']
         CamRender.__init__(self,
                            width,
                            height,
                            name,
                            program_files=program_files,
-                           color_size=3)
+                           color_size=3, egl=egl)
 
         # WARNING: this differs from vertex_buffer and vertex_data in Render
         self.vert_buffer = {}

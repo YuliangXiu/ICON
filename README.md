@@ -65,6 +65,9 @@
       <a href="#installation">Installation</a>
     </li>
     <li>
+    <a href="#dataset-preprocess"> Dataset Preprocess</a>
+    </li>
+    <li>
       <a href="#demo">Demo</a>
     </li>
     <li>
@@ -129,7 +132,11 @@
 
 ## Installation
 
-Please follow the [Installation Instruction](docs/Installation.md) to setup all the required packages, extra data, and models.
+Please follow the [Installation Instruction](docs/installation.md) to setup all the required packages, extra data, and models.
+
+## Dataset Preprocess
+
+Please follow the [Data Preprocess Instruction](docs/dataset.md) to generate the train/val/test dataset from raw scans (THuman2.0).
 
 ## Demo
 

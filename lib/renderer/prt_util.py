@@ -114,8 +114,7 @@ def getSHCoeffs(order, phi, theta):
 
 def computePRT(mesh_path, scale, n, order):
 
-    prt_dir = os.path.join(os.path.dirname(mesh_path), "../prt/",
-                           os.path.basename(mesh_path)[:-4])
+    prt_dir = os.path.join(os.path.dirname(mesh_path), "prt")
     bounce_path = os.path.join(prt_dir, "bounce.npy")
     face_path = os.path.join(prt_dir, "face.npy")
 

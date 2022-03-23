@@ -16,15 +16,23 @@
 # Contact: ps-license@tuebingen.mpg.de
 
 import numpy as np
+import smplx
 import trimesh
 import torch
 import torch.nn.functional as F
 import sys, os
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from lib.common.render_utils import face_vertices
+from lib.dataset.mesh_util import SMPLX
+
+get_smpl_model = lambda smpl_type, smpl_gender : smplx.create(
+            model_path=SMPLX().model_dir,
+            gender=smpl_gender,
+            model_type=smpl_type,
+            use_pca=True,
+            num_pca_comps=12,
+            ext='npz')
 
 
 def normalization(data):
@@ -49,6 +57,33 @@ def rescale_smpl(fitted_path, scale=100, translate=(0, 0, 0), return_vf=False):
         return np.array(fitted_body.vertices), np.array(fitted_body.faces)
     else:
         return fitted_body
+    
+def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral'):
+    
+    param = np.load(fitted_path, allow_pickle=True)
+    for key in param.keys():
+        param[key] = torch.as_tensor(param[key])
+        
+    smpl_model = get_smpl_model(smpl_type, smpl_gender)
+    smpl_out = smpl_model(shape_params=param['betas'],
+                            expression_params=param['expression'],
+                            body_pose=param['body_pose'],
+                            global_pose=param['global_orient'],
+                            jaw_pose=param['jaw_pose'],
+                            left_hand_pose=param['left_hand_pose'],
+                            right_hand_pose=param['right_hand_pose'],
+                            leye_pose=param['leye_pose'],
+                            reye_pose=param['reye_pose'])
+    
+    print(f"smpl-x scale: {param['scale']}")
+    smpl_verts = ((smpl_out.vertices[0] * param['scale'] + param['translation']) * scale).detach()
+    smpl_joints = ((smpl_out.joints[0] * param['scale'] + param['translation']) * scale).detach()
+    smpl_mesh = trimesh.Trimesh(smpl_verts, 
+                                smpl_model.faces, 
+                                process=False, maintain_order=True)
+    
+    return smpl_mesh, smpl_joints
+    
 
 
 def save_obj_mesh(mesh_path, verts, faces):
@@ -257,7 +292,7 @@ def load_obj_mesh_mtl(mesh_file):
     return out_tuple
 
 
-def load_obj_mesh(mesh_file, with_normal=False, with_texture=False):
+def load_scan(mesh_file, with_normal=False, with_texture=False):
     vertex_data = []
     norm_data = []
     uv_data = []

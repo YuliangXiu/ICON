@@ -49,7 +49,6 @@ from lib.pare.pare.core.tester import PARETester
 import smplx
 from lib.pixielib.pixie import PIXIE
 from lib.pixielib.utils.config import cfg as pixie_cfg
-from lib.pixielib.utils.rotation_converter import batch_matrix2axis
 
 
 class TestDataset():
