@@ -125,8 +125,8 @@
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
       <img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'>
     </a>
-- [ ] training code
-- [ ] dataset processing pipeline
+- [x] dataset processing pipeline
+- [ ] training and evaluation codes
 - [ ] Video-to-Avatar module
 
 
@@ -175,7 +175,7 @@ python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -o
 ```bibtex
 @inproceedings{xiu2022icon,
   title={{ICON}: {I}mplicit {C}lothed humans {O}btained from {N}ormals},
-  author={Xiu, Yuliang and Yang, Jinlong and Tzionas, Dimitrios and Black, Michael J},
+  author={Xiu, Yuliang and Yang, Jinlong and Tzionas, Dimitrios and Black, Michael J.},
   booktitle={IEEE/CVF Conf.~on Computer Vision and Pattern Recognition (CVPR)},
   month = jun,
   year={2022}
