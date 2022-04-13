@@ -18,7 +18,7 @@ vedo==2020.4.2
 rtree==0.9.7
 pytorch_lightning==1.2.5
 PyMCubes
-kornia
+kornia==0.4.0
 chumpy
 cython==0.29.20
 rembg>=2.0.3
