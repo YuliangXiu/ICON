@@ -26,13 +26,23 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../'
 from lib.common.render_utils import face_vertices
 from lib.dataset.mesh_util import SMPLX
 
-get_smpl_model = lambda smpl_type, smpl_gender : smplx.create(
-            model_path=SMPLX().model_dir,
-            gender=smpl_gender,
-            model_type=smpl_type,
-            use_pca=True,
-            num_pca_comps=12,
-            ext='npz')
+model_init_params = dict(
+    gender='neutral',
+    model_type='smplx',
+    model_path=SMPLX().model_dir,
+    create_global_orient=False,
+    create_body_pose=False,
+    create_betas=False,
+    create_left_hand_pose=False,
+    create_right_hand_pose=False,
+    create_expression=False,
+    create_jaw_pose=False,
+    create_leye_pose=False,
+    create_reye_pose=False,
+    create_transl=False,
+    num_pca_comps=12)
+
+get_smpl_model = lambda model_type, gender : smplx.create(**model_init_params)
 
 
 def normalization(data):
@@ -65,15 +75,17 @@ def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral'):
         param[key] = torch.as_tensor(param[key])
         
     smpl_model = get_smpl_model(smpl_type, smpl_gender)
-    smpl_out = smpl_model(shape_params=param['betas'],
-                            expression_params=param['expression'],
+    model_forward_params = dict(betas=param['betas'],
+                            global_orient=param['global_orient'],
                             body_pose=param['body_pose'],
-                            global_pose=param['global_orient'],
-                            jaw_pose=param['jaw_pose'],
                             left_hand_pose=param['left_hand_pose'],
                             right_hand_pose=param['right_hand_pose'],
+                            jaw_pose=param['jaw_pose'],
                             leye_pose=param['leye_pose'],
-                            reye_pose=param['reye_pose'])
+                            reye_pose=param['reye_pose'],
+                            expression=param['expression'],
+                            return_verts=True)
+    smpl_out = smpl_model(**model_forward_params)
     
     print(f"smpl-x scale: {param['scale']}")
     smpl_verts = ((smpl_out.vertices[0] * param['scale'] + param['translation']) * scale).detach()

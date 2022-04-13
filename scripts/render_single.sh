@@ -26,7 +26,7 @@ if [[ $MODE == "debug" ]]; then
     mkdir -p $SAVE_DIR
 
     if [[ $DATASET == "thuman2" ]]; then
-        SUBJECT="0001"
+        SUBJECT="0000"
         echo "Rendering $DATASET $SUBJECT"
     fi
 

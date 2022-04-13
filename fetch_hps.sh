@@ -20,11 +20,12 @@ rm -rf data && rm -f data.tar.gz
 source activate icon
 pip install gdown --upgrade
 gdown https://drive.google.com/drive/u/1/folders/1CkF79XRaZzdRlj6eJUt4W0nbTORv2t7O -O pretrained_model --folder
-cd ..
+cd ../..
 echo "PyMAF done!"
 
 function download_pare(){
     # (optional) download PARE
+    cd data
     wget https://www.dropbox.com/s/aeulffqzb3zmh8x/pare-github-data.zip
     unzip pare-github-data.zip && mv data pare_data
     rm -f pare-github-data.zip
@@ -54,6 +55,20 @@ function download_pixie(){
   cd ../../
 }
 
+function download_hybrik(){
+    mkdir -p data/hybrik_data
+
+    # (optional) download HybrIK
+    # gdown https://drive.google.com/uc?id=16Y_MGUynFeEzV8GVtKTE5AtkHSi3xsF9 -O data/hybrik_data/pretrained_w_cam.pth
+    gdown https://drive.google.com/uc?id=1lEWZgqxiDNNJgvpjlIXef2VuxcGbtXzi -O data/hybrik_data.zip
+    cd data
+    unzip hybrik_data.zip
+    rm -r *.zip __MACOSX
+    cd ..
+
+    echo "HybrIK done!"
+}
+
 read -p "(optional) Download PARE[SMPL] (y/n)?" choice
 case "$choice" in 
   y|Y ) download_pare;;
@@ -65,5 +80,13 @@ read -p "(optional) Download PIXIE[SMPL-X] (y/n)?" choice
 case "$choice" in 
   y|Y ) download_pixie;;
   n|N ) echo "PIXIE Done!";;
+  * ) echo "Invalid input! Please use y|Y or n|N";;
+esac
+
+pwd
+read -p "(optional) Download HybrIK[SMPL] (y/n)?" choice
+case "$choice" in 
+  y|Y ) download_hybrik;;
+  n|N ) echo "HybrIK Done!";;
   * ) echo "Invalid input! Please use y|Y or n|N";;
 esac

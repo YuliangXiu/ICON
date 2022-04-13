@@ -36,6 +36,9 @@ source activate icon
 pip install -r requirements.txt --use-deprecated=legacy-resolver
 ```
 
+
+:warning: If you have trouble assessing Google Drive, you need VPN to use `rembg` for the first time.
+
 ## Register at [ICON's website](https://icon.is.tue.mpg.de/)
 
 ![Register](../assets/register.png)
@@ -58,7 +61,7 @@ Optional:
   cd ICON
   bash fetch_data.sh # requires username and password
   ```
-  * Download [PyMAF](https://github.com/HongwenZhang/PyMAF#necessary-files), [PARE (optional, SMPL)](https://github.com/mkocabas/PARE#demo), [PIXIE (optional, SMPL-X)](https://pixie.is.tue.mpg.de/)
+  * Download [PyMAF](https://github.com/HongwenZhang/PyMAF#necessary-files), [PARE (optional, SMPL)](https://github.com/mkocabas/PARE#demo), [PIXIE (optional, SMPL-X)](https://pixie.is.tue.mpg.de/), [HybrIK (optional, SMPL)](https://github.com/Jeff-sjtu/HybrIK)
   
   ```bash
   bash fetch_hps.sh
@@ -75,6 +78,11 @@ data/
 │   ├── normal.ckpt
 │   ├── pamir.ckpt
 │   └── pifu.ckpt
+├── hybrik_data/
+│   ├── h36m_mean_beta.npy
+│   ├── J_regressor_h36m.npy
+│   ├── hybrik_config.yaml
+│   └── pretrained_w_cam.pth
 ├── pare_data/
 │   ├── J_regressor_{extra,h36m}.npy
 │   ├── pare/
