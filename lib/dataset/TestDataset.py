@@ -50,6 +50,9 @@ import smplx
 from lib.pixielib.pixie import PIXIE
 from lib.pixielib.utils.config import cfg as pixie_cfg
 
+# for hybrik
+from lib.hybrik.models.simple3dpose import HybrIKBaseSMPLCam
+
 
 class TestDataset():
     def __init__(self, cfg, device):
@@ -104,8 +107,12 @@ class TestDataset():
         elif self.hps_type == 'pixie':
             self.hps = PIXIE(config = pixie_cfg, device=self.device)
             self.smpl_model = self.hps.smplx
-        
-            
+        elif self.hps_type == 'hybrik':
+            smpl_path = osp.join(self.smpl_data.model_dir, "smpl/SMPL_NEUTRAL.pkl")
+            self.hps = HybrIKBaseSMPLCam(cfg_file=path_config.HYBRIK_CFG, smpl_path=smpl_path, data_path=path_config.hybrik_data_dir)
+            self.hps.load_state_dict(torch.load(path_config.HYBRIK_CKPT, map_location='cpu'), strict=False)
+            self.hps.to(self.device)
+
         print(colored(f"Using {self.hps_type} as HPS Estimator\n", "green"))
 
         self.render = Render(size=512, device=device)
@@ -217,6 +224,14 @@ class TestDataset():
             data_dict['smpl_verts'] = preds_dict['vertices']
             scale, tranX, tranY = preds_dict['cam'][0, :3]
 
+        elif self.hps_type == 'hybrik':
+            data_dict['body_pose'] = preds_dict['pred_theta_mats'][:, 1:]
+            data_dict['global_orient'] = preds_dict['pred_theta_mats'][:, [0]]
+            data_dict['betas'] = preds_dict['pred_shape']
+            data_dict['smpl_verts'] = preds_dict['pred_vertices']
+            scale, tranX, tranY = preds_dict['pred_camera'][0, :3]
+            scale = scale * 2
+
         data_dict['scale'] = scale
         data_dict['trans'] = torch.tensor([tranX, tranY, 0.0]).to(self.device)
         
@@ -246,7 +261,6 @@ class TestDataset():
                                         global_orient=data['global_orient'],
                                         pose2rot=False)
             smpl_verts = ((smpl_out.vertices + data['trans'])* data['scale']).detach().cpu().numpy()[0]
-            
         else:
             smpl_verts, _, _ = self.smpl_model(shape_params=data['betas'],
                                         expression_params=data['exp'],
@@ -303,7 +317,7 @@ if __name__ == '__main__':
         {
             'image_dir': "../examples",
             'has_det': True,    # w/ or w/o detection
-            'hps_type': 'pixie'  # pymaf/pare/pixie
+            'hps_type': 'hybrik'  # pymaf/pare/pixie/hybrik
         }, device)
 
     

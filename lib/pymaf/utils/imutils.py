@@ -70,8 +70,19 @@ def get_transformer(input_res):
     image_to_pixie_tensor = transforms.Compose([
         transforms.Resize(224)
     ])
-    
-    return [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor]
+    def image_to_hybrik_tensor(img):
+        # mean
+        img[0].add_(-0.406)
+        img[1].add_(-0.457)
+        img[2].add_(-0.480)
+
+        # std
+        img[0].div_(0.225)
+        img[1].div_(0.224)
+        img[2].div_(0.229)
+        return img
+
+    return [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor, image_to_hybrik_tensor]
 
 
 def process_image(img_file, det, hps_type, input_res=512):
@@ -80,7 +91,7 @@ def process_image(img_file, det, hps_type, input_res=512):
     If no bounding box is specified but openpose detections are available, use them to get the bounding box.
     """
     
-    [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor] = get_transformer(input_res)
+    [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor, image_to_hybrik_tensor] = get_transformer(input_res)
 
     img_ori = load_img(img_file)
     
@@ -109,8 +120,11 @@ def process_image(img_file, det, hps_type, input_res=512):
         center = np.array([width // 2, height // 2])
 
     scale = max(height, width) / 180
-    img_np = crop(img_for_crop, center, scale, (input_res, input_res))
-    
+    if hps_type == 'hybrik':
+        img_np = crop_for_hybrik(img_for_crop, center, np.array([scale * 180, scale * 180]))
+    else:
+        img_np = crop(img_for_crop, center, scale, (input_res, input_res))
+
     with torch.no_grad():
         buf = io.BytesIO()
         Image.fromarray(img_np).save(buf, format='png')
@@ -127,7 +141,9 @@ def process_image(img_file, det, hps_type, input_res=512):
     img_hps = img_np.astype(np.float32) / 255.
     img_hps = torch.from_numpy(img_hps).permute(2, 0, 1)
     
-    if hps_type != 'pixie':
+    if hps_type == 'hybrik':
+        img_hps = image_to_hybrik_tensor(img_hps).unsqueeze(0)
+    elif hps_type != 'pixie':
         img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0)
     else:
         img_hps = image_to_pixie_tensor(img_hps).unsqueeze(0)
@@ -192,6 +208,63 @@ def crop(img, center, scale, res):
     new_img = np.array(Image.fromarray(new_img.astype(np.uint8)).resize(res))
 
     return new_img
+
+def crop_for_hybrik(img, center, scale):
+    inp_h, inp_w = (256, 256)
+    trans = get_affine_transform(center, scale, 0, [inp_w, inp_h])
+    new_img = cv2.warpAffine(img, trans, (int(inp_w), int(inp_h)), flags=cv2.INTER_LINEAR)
+    return new_img
+
+def get_affine_transform(center,
+                         scale,
+                         rot,
+                         output_size,
+                         shift=np.array([0, 0], dtype=np.float32),
+                         inv=0):
+
+    def get_dir(src_point, rot_rad):
+        """Rotate the point by `rot_rad` degree."""
+        sn, cs = np.sin(rot_rad), np.cos(rot_rad)
+
+        src_result = [0, 0]
+        src_result[0] = src_point[0] * cs - src_point[1] * sn
+        src_result[1] = src_point[0] * sn + src_point[1] * cs
+
+        return src_result
+
+    def get_3rd_point(a, b):
+        """Return vector c that perpendicular to (a - b)."""
+        direct = a - b
+        return b + np.array([-direct[1], direct[0]], dtype=np.float32)
+
+    if not isinstance(scale, np.ndarray) and not isinstance(scale, list):
+        scale = np.array([scale, scale])
+
+    scale_tmp = scale
+    src_w = scale_tmp[0]
+    dst_w = output_size[0]
+    dst_h = output_size[1]
+
+    rot_rad = np.pi * rot / 180
+    src_dir = get_dir([0, src_w * -0.5], rot_rad)
+    dst_dir = np.array([0, dst_w * -0.5], np.float32)
+
+    src = np.zeros((3, 2), dtype=np.float32)
+    dst = np.zeros((3, 2), dtype=np.float32)
+    src[0, :] = center + scale_tmp * shift
+    src[1, :] = center + src_dir + scale_tmp * shift
+    dst[0, :] = [dst_w * 0.5, dst_h * 0.5]
+    dst[1, :] = np.array([dst_w * 0.5, dst_h * 0.5]) + dst_dir
+
+    src[2:, :] = get_3rd_point(src[0, :], src[1, :])
+    dst[2:, :] = get_3rd_point(dst[0, :], dst[1, :])
+
+    if inv:
+        trans = cv2.getAffineTransform(np.float32(dst), np.float32(src))
+    else:
+        trans = cv2.getAffineTransform(np.float32(src), np.float32(dst))
+
+    return trans
 
 def corner_align(ul, br):
     
