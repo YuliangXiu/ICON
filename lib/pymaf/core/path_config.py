@@ -31,3 +31,9 @@ pare_data_dir = os.path.join(os.path.dirname(__file__),
 CFG = os.path.join(pare_data_dir, 'pare/checkpoints/pare_w_3dpw_config.yaml')
 CKPT = os.path.join(pare_data_dir,
                     'pare/checkpoints/pare_w_3dpw_checkpoint.ckpt')
+
+# hybrik
+hybrik_data_dir = os.path.join(os.path.dirname(__file__),
+                             "../../../data/hybrik_data")
+HYBRIK_CFG = os.path.join(hybrik_data_dir, 'hybrik_config.yaml')
+HYBRIK_CKPT = os.path.join(hybrik_data_dir, 'pretrained_w_cam.pth')
