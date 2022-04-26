@@ -54,6 +54,13 @@ function download_pixie(){
   cd ../../
 }
 
+function download_hybrik(){
+    # (optional) download HybrIK
+    gdown https://drive.google.com/uc?id=16Y_MGUynFeEzV8GVtKTE5AtkHSi3xsF9 -O hybrik_data/pretrained_w_cam.pth
+
+    echo "HybrIK done!"
+}
+
 read -p "(optional) Download PARE[SMPL] (y/n)?" choice
 case "$choice" in 
   y|Y ) download_pare;;
@@ -65,5 +72,13 @@ read -p "(optional) Download PIXIE[SMPL-X] (y/n)?" choice
 case "$choice" in 
   y|Y ) download_pixie;;
   n|N ) echo "PIXIE Done!";;
+  * ) echo "Invalid input! Please use y|Y or n|N";;
+esac
+
+pwd
+read -p "(optional) Download HybrIK[SMPL] (y/n)?" choice
+case "$choice" in 
+  y|Y ) download_hybrik;;
+  n|N ) echo "HybrIK Done!";;
   * ) echo "Invalid input! Please use y|Y or n|N";;
 esac
