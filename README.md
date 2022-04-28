@@ -120,7 +120,7 @@
 ## TODO
 
 - [x] testing code and pretrained models (*self-implemented version)
-  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/PIXIE/PARE as HPS)
+  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/HybrIK/PIXIE/PARE as HPS)
   - [x] PIFu* (RGB image + predicted normal map as input)
   - [x] PaMIR* (RGB image + predicted normal map as input, w/ PyMAF/PARE as HPS)
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
