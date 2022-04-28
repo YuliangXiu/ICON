@@ -20,11 +20,12 @@ rm -rf data && rm -f data.tar.gz
 source activate icon
 pip install gdown --upgrade
 gdown https://drive.google.com/drive/u/1/folders/1CkF79XRaZzdRlj6eJUt4W0nbTORv2t7O -O pretrained_model --folder
-cd ..
+cd ../..
 echo "PyMAF done!"
 
 function download_pare(){
     # (optional) download PARE
+    cd data
     wget https://www.dropbox.com/s/aeulffqzb3zmh8x/pare-github-data.zip
     unzip pare-github-data.zip && mv data pare_data
     rm -f pare-github-data.zip
@@ -55,8 +56,10 @@ function download_pixie(){
 }
 
 function download_hybrik(){
+    mkdir -p data/hybrik_data
+
     # (optional) download HybrIK
-    gdown https://drive.google.com/uc?id=16Y_MGUynFeEzV8GVtKTE5AtkHSi3xsF9 -O hybrik_data/pretrained_w_cam.pth
+    gdown https://drive.google.com/uc?id=16Y_MGUynFeEzV8GVtKTE5AtkHSi3xsF9 -O data/hybrik_data/pretrained_w_cam.pth
 
     echo "HybrIK done!"
 }
