@@ -59,7 +59,12 @@ function download_hybrik(){
     mkdir -p data/hybrik_data
 
     # (optional) download HybrIK
-    gdown https://drive.google.com/uc?id=16Y_MGUynFeEzV8GVtKTE5AtkHSi3xsF9 -O data/hybrik_data/pretrained_w_cam.pth
+    # gdown https://drive.google.com/uc?id=16Y_MGUynFeEzV8GVtKTE5AtkHSi3xsF9 -O data/hybrik_data/pretrained_w_cam.pth
+    gdown https://drive.google.com/uc?id=1lEWZgqxiDNNJgvpjlIXef2VuxcGbtXzi -O data/hybrik_data.zip
+    cd data
+    unzip hybrik_data.zip
+    rm -r *.zip __MACOSX
+    cd ..
 
     echo "HybrIK done!"
 }
