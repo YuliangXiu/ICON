@@ -30,3 +30,10 @@ bash render_batch.sh gen all
 ```
 
 Then you will get the whole generated dataset under `data/thuman2_{num_views}views`
+
+## Examples
+
+|<img src="assets/../../assets/rendering/080.png" width="150">|<img src="assets/../../assets/rendering/norm_F_080.png" width="150">|<img src="assets/../../assets/rendering/norm_B_080.png" width="150">|<img src="assets/../../assets/rendering/SMPL_norm_F_080.png" width="150">|<img src="assets/../../assets/rendering/SMPL_norm_B_080.png" width="150">|
+|---|---|---|---|---|
+|Image|Normal(Front)|Normal(Back)|Normal(SMPL, Front)|Normal(SMPL, Back)|
+
