@@ -7,6 +7,4 @@ results/*
 .vscode
 !.gitignore
 force_push.sh
-scripts/vis*
-scripts/process_all*
 .idea

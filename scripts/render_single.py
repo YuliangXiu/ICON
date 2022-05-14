@@ -79,7 +79,7 @@ else:
 if smpl_type != "none":
     
     scan_scale = vertices.max(0)[up_axis] - vertices.min(0)[up_axis]
-    print(f"scan scale: {scan_scale}")
+    # print(f"scan scale: {scan_scale}")
     rescale_fitted_body, joints = load_fit_body(fit_file, 
                                                 scale/scan_scale, 
                                                 smpl_type='smplx', 

@@ -87,7 +87,7 @@ def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral'):
                             return_verts=True)
     smpl_out = smpl_model(**model_forward_params)
     
-    print(f"smpl-x scale: {param['scale']}")
+    # print(f"smpl-x scale: {param['scale']}")
     smpl_verts = ((smpl_out.vertices[0] * param['scale'] + param['translation']) * scale).detach()
     smpl_joints = ((smpl_out.joints[0] * param['scale'] + param['translation']) * scale).detach()
     smpl_mesh = trimesh.Trimesh(smpl_verts, 
