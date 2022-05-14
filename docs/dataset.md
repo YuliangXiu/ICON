@@ -16,24 +16,37 @@ conda activate icon
 
 cd ICON/scripts
 bash render_batch.sh debug all
+bash vis_batch.sh debug all
 ```
 
-Then you will get the rendered samples under `debug/`
+Then you will get the rendered samples & visibility results under `debug/`
 
 ## Generate Mode 
 
+**1. Rendering phrase**: RGB images, normal images, calibration array
 
 ```bash
 conda activate icon
 cd ICON/scripts
 bash render_batch.sh gen all
 ```
+You could check the rendering status from `log/render/thuman2-{num_views}-{size}-{part}.txt`
 
-Then you will get the whole generated dataset under `data/thuman2_{num_views}views`
+**2. Visibility phrase**: SMPL-X based visibility computation
+
+```bash
+bash vis_batch.sh gen all
+```
+You could check the visibility computing status from `log/vis/thuman2-{num_views}-{part}.txt`
+
+
+:white_check_mark: NOW, you have all the synthetic dataset under `data/thuman2_{num_views}views`, which will be used for training. 
+
+:arrow_right: NEXT, please jump to [training.md](training.md) for more details.
 
 ## Examples
 
-|<img src="assets/../../assets/rendering/080.png" width="150">|<img src="assets/../../assets/rendering/norm_F_080.png" width="150">|<img src="assets/../../assets/rendering/norm_B_080.png" width="150">|<img src="assets/../../assets/rendering/SMPL_norm_F_080.png" width="150">|<img src="assets/../../assets/rendering/SMPL_norm_B_080.png" width="150">|
-|---|---|---|---|---|
-|Image|Normal(Front)|Normal(Back)|Normal(SMPL, Front)|Normal(SMPL, Back)|
+|<img src="../assets/rendering/080.png" width="150">|<img src="../assets/rendering/norm_F_080.png" width="150">|<img src="../assets/rendering/norm_B_080.png" width="150">|<img src="../assets/rendering/SMPL_norm_F_080.png" width="150">|<img src="../assets/rendering/SMPL_norm_B_080.png" width="150">|<img src="../assets/rendering/vis.png" width="150">|
+|---|---|---|---|---|---|
+|RGB Image|Normal(Front)|Normal(Back)|Normal(SMPL, Front)|Normal(SMPL, Back)|Visibility|
 

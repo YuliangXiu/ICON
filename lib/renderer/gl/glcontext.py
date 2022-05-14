@@ -133,4 +133,4 @@ def create_opengl_context(surface_size=(640, 480)):
     buffer_type = egl.EGLint()
     out = egl.eglQueryContext(egl_display, egl_context,
                               egl.EGL_CONTEXT_CLIENT_VERSION, buffer_type)
-    print(buffer_type)
+    # print(buffer_type)
