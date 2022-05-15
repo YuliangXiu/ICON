@@ -39,7 +39,7 @@ from lib.common.config import cfg
 # for pymaf
 from lib.pymaf.models import pymaf_net
 from lib.pymaf.core import path_config
-from lib.pymaf.utils.imutils import process_image
+from lib.pymaf.utils.imutils import process_image, load_segmentation
 from lib.pymaf.utils.geometry import rotation_matrix_to_angle_axis
 
 # for pare
@@ -60,6 +60,7 @@ class TestDataset():
         random.seed(1993)
 
         self.image_dir = cfg['image_dir']
+        self.seg_dir = cfg['seg_dir']
         self.has_det = cfg['has_det']
         self.hps_type = cfg['hps_type']
         self.smpl_type = 'smpl' if cfg['hps_type'] != 'pixie' else 'smplx'
@@ -185,15 +186,28 @@ class TestDataset():
 
         img_path = self.subject_list[index]
         img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
+
         img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, self.hps_type, 512)
-        
-        data_dict = {
+        if self.seg_dir is None:
+            img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, self.hps_type, 512)
+            data_dict = {
             'name': img_name,
             'image': img_icon.to(self.device).unsqueeze(0),
             'ori_image': img_ori,
             'mask': img_mask,
             'uncrop_param': uncrop_param
-        }
+            }
+        else:
+            img_icon, img_hps, img_ori, img_mask, uncrop_param, segmentations = process_image(img_path, self.det, self.hps_type, 512, os.path.join(self.seg_dir, f'{img_name}.json'))
+            data_dict = {
+            'name': img_name,
+            'image': img_icon.to(self.device).unsqueeze(0),
+            'ori_image': img_ori,
+            'mask': img_mask,
+            'uncrop_param': uncrop_param,
+            'segmentations': segmentations
+            }
+
         with torch.no_grad():
             preds_dict = self.hps.forward(img_hps.to(self.device))
 
