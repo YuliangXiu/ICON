@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import glob
 import cv2
 import numpy as np
 import random
@@ -47,8 +48,7 @@ initialize_GL_context(width=size, height=size, egl=egl)
 dataset = save_folder.split("/")[-1].split("_")[0]
 
 format = 'obj'
-scale = 180.0
-y_scale = 1
+scale = 100.0
 up_axis = 1
 pcd = False
 smpl_type = "smplx"
@@ -76,35 +76,26 @@ else:
     normals = mesh.vertex_normals
     
 # center 
-if smpl_type != "none":
     
-    scan_scale = vertices.max(0)[up_axis] - vertices.min(0)[up_axis]
-    # print(f"scan scale: {scan_scale}")
-    rescale_fitted_body, joints = load_fit_body(fit_file, 
-                                                scale/scan_scale, 
-                                                smpl_type='smplx', 
-                                                smpl_gender='neutral')
+scan_scale = 0.6/vertices.max(0)[up_axis] - vertices.min(0)[up_axis]
+rescale_fitted_body, joints = load_fit_body(fit_file, 
+                                            scale, 
+                                            smpl_type='smplx', 
+                                            smpl_gender='neutral')
+
+vertices *= scale
+vmin = vertices.min(0)
+vmax = vertices.max(0)
+vmed = joints[0]
+vmed[up_axis] = 0.5*(vmax[up_axis] + vmin[up_axis])
+
+rndr_depth = ColorRender(width=size, height=size, egl=egl)
+rndr_depth.set_mesh(rescale_fitted_body.vertices, 
+                    rescale_fitted_body.faces, 
+                    rescale_fitted_body.vertices, 
+                    rescale_fitted_body.vertex_normals)
+rndr_depth.set_norm_mat(scan_scale, vmed)
     
-    vertices *= scale/scan_scale
-    vmin = vertices.min(0)
-    vmax = vertices.max(0)
-    vmed = joints[0]
-    vmed[up_axis] = 0.5*(vmax[up_axis] + vmin[up_axis])
-    
-    rndr_depth = ColorRender(width=size, height=size, egl=egl)
-    rndr_depth.set_mesh(rescale_fitted_body.vertices, 
-                        rescale_fitted_body.faces, 
-                        rescale_fitted_body.vertices, 
-                        rescale_fitted_body.vertex_normals)
-    rndr_depth.set_norm_mat(y_scale, vmed)
-    
-else:
-    scan_scale = vertices.max(0)[up_axis] - vertices.min(0)[up_axis]
-    vertices *= scale/scan_scale
-    vmin = vertices.min(0)
-    vmax = vertices.max(0)
-    vmed = np.median(vertices, 0)
-    vmed[up_axis] = 0.5*(vmax[up_axis] + vmin[up_axis])
 
 # camera
 cam = Camera(width=size, height=size)
@@ -115,7 +106,7 @@ if pcd:
     colors = mesh.visual.vertex_colors[:,:3] / 255.0
     rndr = ColorRender(width=size, height=size, egl=egl)
     rndr.set_mesh(vertices, faces, colors, normals)
-    rndr.set_norm_mat(y_scale, vmed)
+    rndr.set_norm_mat(scan_scale, vmed)
     
 else:
     
@@ -135,7 +126,7 @@ else:
 
     tan, bitan = compute_tangent(vertices, faces, normals, textures, face_textures)
     
-    rndr.set_norm_mat(y_scale, vmed)
+    rndr.set_norm_mat(scan_scale, vmed)
     rndr.set_mesh(vertices, faces, normals, faces_normals, 
                   textures, face_textures, 
                   prt, face_prt, tan, bitan, verts_label)    
@@ -162,7 +153,7 @@ for y in range(0, 360, 360//rotation):
         rndr_depth.set_camera(cam)
     
     dic = {'ortho_ratio': cam.ortho_ratio,
-        'scale': y_scale, 
+        'scale': scan_scale, 
         'center': vmed, 
         'R': R}
     
@@ -239,7 +230,7 @@ for y in range(0, 360, 360//rotation):
                 save_folder, subject, 'T_depth_B', f'{y:03d}.png'))
     
         
-done_jobs = len(os.listdir(save_folder))
+done_jobs = len(glob.glob(f"{save_folder}/*/render"))
 all_jobs = len(os.listdir(f"../data/{dataset}/scans"))
 print(
     f"Finish rendering {subject}| {done_jobs}/{all_jobs} | Time: {(time.time()-t0):.0f} secs")

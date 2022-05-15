@@ -39,6 +39,7 @@
 <br />
 
 ## News :triangular_flag_on_post:
+- [2022/05/15] Training code is released, please check [Training Instruction](docs/training.md).
 - [2022/04/26] <a href="https://github.com/Jeff-sjtu/HybrIK">HybrIK (SMPL)</a> is supported as optional HPS by <a href="https://jeffli.site/">Jiefeng Li</a>.
 - [2022/03/05] <a href="https://github.com/YadiraF/PIXIE">PIXIE (SMPL-X)</a>, <a href="https://github.com/mkocabas/PARE">PARE (SMPL)</a>, <a href="https://github.com/HongwenZhang/PyMAF">PyMAF (SMPL)</a> are all supported as optional HPS.
 - [2022/02/07] <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'><img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'></a> is ready to use.
@@ -119,9 +120,14 @@
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
       <img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'>
     </a>
-- [x] dataset processing pipeline
-- [ ] training and evaluation codes
-- [ ] Video-to-Avatar module
+- [x] dataset processing
+  - [x] RGB/Normal Rendering
+  - [x] Visibility computing
+- [ ] training codes
+  - [x] ICON (w/ & w/o global encoder, w/ SMPL-X)
+  - [x] PIFu* (RGB image + predicted normal map as input)
+  - [ ] PaMIR* (RGB image + predicted normal map as input, w/ voxelized SMPL)
+- [ ] evaluation on CAPE (Hard, Easy)
 
 
 ## Installation
@@ -131,6 +137,9 @@ Please follow the [Installation Instruction](docs/installation.md) to setup all 
 ## Dataset Preprocess
 
 Please follow the [Data Preprocess Instruction](docs/dataset.md) to generate the train/val/test dataset from raw scans (THuman2.0).
+
+## Training
+Please follow the [Training Instruction](docs/training.md) to train your own model using THuman2.0.
 
 ## Demo
 

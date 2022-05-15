@@ -54,21 +54,7 @@ def sigmoid(x):
     z = 1 / (1 + np.exp(-x))
     return z
 
-
-def rescale_smpl(fitted_path, scale=100, translate=(0, 0, 0), return_vf=False):
-
-    fitted_body = trimesh.load(fitted_path, process=False, maintain_order=True)
-    resize_matrix = trimesh.transformations.scale_and_translate(
-        scale=(scale), translate=translate)
-
-    fitted_body.apply_transform(resize_matrix)
-
-    if return_vf:
-        return np.array(fitted_body.vertices), np.array(fitted_body.faces)
-    else:
-        return fitted_body
-    
-def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral'):
+def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral', noise_dict=None):
     
     param = np.load(fitted_path, allow_pickle=True)
     for key in param.keys():
@@ -85,9 +71,12 @@ def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral'):
                             reye_pose=param['reye_pose'],
                             expression=param['expression'],
                             return_verts=True)
+    
+    if noise_dict is not None:
+        model_forward_params.update(noise_dict)
+        
     smpl_out = smpl_model(**model_forward_params)
     
-    # print(f"smpl-x scale: {param['scale']}")
     smpl_verts = ((smpl_out.vertices[0] * param['scale'] + param['translation']) * scale).detach()
     smpl_joints = ((smpl_out.joints[0] * param['scale'] + param['translation']) * scale).detach()
     smpl_mesh = trimesh.Trimesh(smpl_verts, 
@@ -95,7 +84,6 @@ def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral'):
                                 process=False, maintain_order=True)
     
     return smpl_mesh, smpl_joints
-    
 
 
 def save_obj_mesh(mesh_path, verts, faces):
