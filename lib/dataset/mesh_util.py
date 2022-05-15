@@ -15,6 +15,7 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from pdb import set_trace
 import numpy as np
 import cv2
 import torch
@@ -272,6 +273,8 @@ def cal_sdf_batch(verts, faces, cmaps, vis, points):
     # points [B, N_point, 3]
     # cmaps [B, N_vert, 3]
 
+    Bsize = points.shape[0]
+    
     normals = Meshes(verts, faces).verts_normals_padded()
     
     triangles = face_vertices(verts, faces)
@@ -284,8 +287,7 @@ def cal_sdf_batch(verts, faces, cmaps, vis, points):
     closest_normals = torch.gather(normals, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
     closest_cmaps = torch.gather(cmaps, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
     closest_vis = torch.gather(vis, 1, pts_ind[:,:,None,None].expand(-1,-1,3,1)).view(-1,3,1)
-    
-    bary_weights = barycentric_coordinates_of_projection(points[0], closest_triangles)
+    bary_weights = barycentric_coordinates_of_projection(points.view(-1,3), closest_triangles)
     
     pts_cmap = (closest_cmaps*bary_weights[:,:,None]).sum(1).unsqueeze(0)
     pts_vis = (closest_vis*bary_weights[:,:,None]).sum(1).unsqueeze(0).ge(1e-1)
@@ -295,7 +297,7 @@ def cal_sdf_batch(verts, faces, cmaps, vis, points):
     pts_signs = 2.0 * (check_sign(verts, faces[0], points).float() - 0.5)
     pts_sdf = (pts_dist * pts_signs).unsqueeze(-1)
 
-    return pts_sdf, pts_norm, pts_cmap, pts_vis
+    return pts_sdf.view(Bsize, -1, 1), pts_norm.view(Bsize, -1, 3), pts_cmap.view(Bsize, -1, 3), pts_vis.view(Bsize, -1, 1)
 
 
 def orthogonal(points, calibrations, transforms=None):

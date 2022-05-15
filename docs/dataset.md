@@ -7,17 +7,11 @@
 
 Please refer to [THuman2.0-Dataset](https://github.com/ytrock/THuman2.0-Dataset) to download the original scans into `data/thuman2/scans`, and its SMPL-X fits into `data/thuman2/fits`. Then generate `all.txt` by `ls > ../all.txt` under `data/thuman2/scans`, which contains all the subject names (0000~0525).
 
+:eyes: `./sample_data` contains one example of THuman2.0
+
 ## Debug Mode
 
 :warning: For headless rendering (without window, such as clusters), please `export PYOPENGL_PLATFORM=egl` before running these scripts, also change `egl=True` in `scripts/render_single.py`.
-
-```bash
-conda activate icon
-
-cd ICON/scripts
-bash render_batch.sh debug all
-bash vis_batch.sh debug all
-```
 
 Then you will get the rendered samples & visibility results under `debug/`
 
