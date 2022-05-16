@@ -478,8 +478,8 @@ if __name__ == '__main__':
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
 
         if not (args.seg_dir is None):
-            os.makedirs(os.path.join(args.out_dir, cfg.name, "clothes"),
-                    exist_ok=True)
+            os.makedirs(os.path.join(args.out_dir, cfg.name, "clothes"), exist_ok=True)
+            os.makedirs(os.path.join(args.out_dir, cfg.name, "clothes", "info"), exist_ok=True)
             for seg in data['segmentations']:
                 ## These matrices work for PyMaf, not sure about the other hps type
                 K = np.array([[ 1.0000,  0.0000,  0.0000,  0.0000],
@@ -494,19 +494,19 @@ if __name__ == '__main__':
                 t = np.array([[ -0.,  -0., 100.]])
                 clothing_obj = extract_cloth(recon_obj, seg, K, R, t, smpl_obj)
                 if clothing_obj is not None:
+                    cloth_type = seg['type'].replace(' ', '_')
                     cloth_info = {
-                        'shape_params': optimed_betas,
-                        'expression_params': tensor2variable(data['exp'], device),
+                        'betas': optimed_betas,
                         'body_pose': optimed_pose,
-                        'global_pose': optimed_orient,
-                        'jaw_pose': tensor2variable(data['jaw_pose'], device),
-                        'left_hand_pose': tensor2variable(data['left_hand_pose'], device),
-                        'right_hand_pose': tensor2variable(data['right_hand_pose'], device),
-                        'clothing_type': seg['type'],
+                        'global_orient': optimed_orient,
+                        'pose2rot': False,
+                        'clothing_type': cloth_type,
                     }
-                    file_id = f"{data['name']}_{seg['type'].replace(' ', '_')}"
-                    
-                    with open(f"{file_id}_info.pkl", 'wb') as fp:
+
+                    file_id = f"{data['name']}_{cloth_type}"
+                    with open(os.path.join(args.out_dir, cfg.name, "clothes", "info", f"{file_id}_info.pkl"), 'wb') as fp:
                         pickle.dump(cloth_info, fp)
 
                     clothing_obj.export(os.path.join(args.out_dir, cfg.name, "clothes", f"{file_id}.obj"))
+                else:
+                    print(f"Unable to extract clothing of type {seg['type']} from image {data['name']}")
