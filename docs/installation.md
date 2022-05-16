@@ -67,6 +67,61 @@ Optional:
   bash fetch_hps.sh
   ```
 
+## Citation
+:+1: Please consider citing these awesome HPS approaches
+
+<details><summary>PyMAF, PARE, PIXIE, HybrIK, BEV</summary>
+
+```
+@inproceedings{pymaf2021,
+  title={PyMAF: 3D Human Pose and Shape Regression with Pyramidal Mesh Alignment Feedback Loop},
+  author={Zhang, Hongwen and Tian, Yating and Zhou, Xinchi and Ouyang, Wanli and Liu, Yebin and Wang, Limin and Sun, Zhenan},
+  booktitle={Proceedings of the IEEE International Conference on Computer Vision},
+  year={2021}
+}
+
+@inproceedings{Kocabas_PARE_2021,
+  title = {{PARE}: Part Attention Regressor for {3D} Human Body Estimation},
+  author = {Kocabas, Muhammed and Huang, Chun-Hao P. and Hilliges, Otmar and Black, Michael J.},
+  booktitle = {Proc. International Conference on Computer Vision (ICCV)},
+  pages = {11127--11137},
+  month = oct,
+  year = {2021},
+  doi = {},
+  month_numeric = {10}
+}
+
+@inproceedings{PIXIE:2021,
+  title={Collaborative Regression of Expressive Bodies using Moderation}, 
+  author={Yao Feng and Vasileios Choutas and Timo Bolkart and Dimitrios Tzionas and Michael J. Black},
+  booktitle={International Conference on 3D Vision (3DV)},
+  year={2021}
+}
+
+@inproceedings{li2021hybrik,
+  title={Hybrik: A hybrid analytical-neural inverse kinematics solution for 3d human pose and shape estimation},
+  author={Li, Jiefeng and Xu, Chao and Chen, Zhicun and Bian, Siyuan and Yang, Lixin and Lu, Cewu},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={3383--3393},
+  year={2021}
+}
+
+@InProceedings{BEV,
+  author = {Sun, Yu and Liu, Wu and Bao, Qian and Fu, Yili and Mei, Tao and Black, Michael J},
+  title = {Putting People in their Place: Monocular Regression of 3D People in Depth},
+  booktitle = {CVPR},
+  year = {2022}
+}
+
+@InProceedings{ROMP,
+  author = {Sun, Yu and Bao, Qian and Liu, Wu and Fu, Yili and Michael J., Black and Mei, Tao},
+  title = {Monocular, One-stage, Regression of Multiple 3D People},
+  booktitle = {ICCV},
+  year = {2021}
+}
+
+```
+</details>
 
 ## Tree structure of **data** folder
 

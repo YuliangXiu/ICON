@@ -44,3 +44,35 @@ You could check the visibility computing status from `log/vis/thuman2-{num_views
 |---|---|---|---|---|---|
 |RGB Image|Normal(Front)|Normal(Back)|Normal(SMPL, Front)|Normal(SMPL, Back)|Visibility|
 
+## Citation
+If you use this dataset for your research, please consider citing:
+```
+@InProceedings{tao2021function4d,
+  title={Function4D: Real-time Human Volumetric Capture from Very Sparse Consumer RGBD Sensors},
+  author={Yu, Tao and Zheng, Zerong and Guo, Kaiwen and Liu, Pengpeng and Dai, Qionghai and Liu, Yebin},
+  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR2021)},
+  month={June},
+  year={2021},
+}
+```
+This `PyTorch Dataloader` benefits a lot from [MonoPortDataset](https://github.com/Project-Splinter/MonoPortDataset), so please consider citing:
+
+```
+@inproceedings{li2020monoport,
+  title={Monocular Real-Time Volumetric Performance Capture},
+  author={Li, Ruilong and Xiu, Yuliang and Saito, Shunsuke and Huang, Zeng and Olszewski, Kyle and Li, Hao},
+  booktitle={European Conference on Computer Vision},
+  pages={49--67},
+  year={2020},
+  organization={Springer}
+}
+  
+@incollection{li2020monoportRTL,
+  title={Volumetric human teleportation},
+  author={Li, Ruilong and Olszewski, Kyle and Xiu, Yuliang and Saito, Shunsuke and Huang, Zeng and Li, Hao},
+  booktitle={ACM SIGGRAPH 2020 Real-Time Live},
+  pages={1--1},
+  year={2020}
+}
+```
+

@@ -39,6 +39,7 @@
 <br />
 
 ## News :triangular_flag_on_post:
+- [2022/05/16] <a href="https://github.com/Arthur151/ROMP">BEV</a> is supported as optional HPS by <a href="https://scholar.google.com/citations?hl=en&user=fkGxgrsAAAAJ">Yu Sun</a>.
 - [2022/05/15] Training code is released, please check [Training Instruction](docs/training.md).
 - [2022/04/26] <a href="https://github.com/Jeff-sjtu/HybrIK">HybrIK (SMPL)</a> is supported as optional HPS by <a href="https://jeffli.site/">Jiefeng Li</a>.
 - [2022/03/05] <a href="https://github.com/YadiraF/PIXIE">PIXIE (SMPL-X)</a>, <a href="https://github.com/mkocabas/PARE">PARE (SMPL)</a>, <a href="https://github.com/HongwenZhang/PyMAF">PyMAF (SMPL)</a> are all supported as optional HPS.
@@ -114,9 +115,9 @@
 ## TODO
 
 - [x] testing code and pretrained models (*self-implemented version)
-  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/HybrIK/PIXIE/PARE as HPS)
+  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
   - [x] PIFu* (RGB image + predicted normal map as input)
-  - [x] PaMIR* (RGB image + predicted normal map as input, w/ PyMAF/PARE as HPS)
+  - [x] PaMIR* (RGB image + predicted normal map as input, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
       <img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'>
     </a>
@@ -153,10 +154,10 @@ python infer.py -cfg ../configs/pifu.yaml -gpu 0 -in_dir ../examples -out_dir ..
 python infer.py -cfg ../configs/pamir.yaml -gpu 0 -in_dir ../examples -out_dir ../results
 
 # ICON w/ global filter (better visual details --> lower Normal Error))
-python infer.py -cfg ../configs/icon-filter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare/hybrik}
+python infer.py -cfg ../configs/icon-filter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare/hybrik/bev}
 
 # ICON w/o global filter (higher evaluation scores --> lower P2S/Chamfer Error))
-python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare/hybrik}
+python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare/hybrik/bev}
 ```
 
 ## More Qualitative Results
@@ -197,7 +198,7 @@ Here are some great resources we benefit from:
 - [PaMIR](https://github.com/ZhengZerong/PaMIR), [PIFu](https://github.com/shunsukesaito/PIFu), [PIFuHD](https://github.com/facebookresearch/pifuhd), and [MonoPort](https://github.com/Project-Splinter/MonoPort) for Benchmark
 - [SCANimate](https://github.com/shunsukesaito/SCANimate) and [AIST++](https://github.com/google/aistplusplus_api) for Animation
 - [rembg](https://github.com/danielgatis/rembg) for Human Segmentation
-- [smplx](https://github.com/vchoutas/smplx), [PARE](https://github.com/mkocabas/PARE), [PyMAF](https://github.com/HongwenZhang/PyMAF), [PIXIE](https://github.com/YadiraF/PIXIE), and [HybrIK](https://github.com/Jeff-sjtu/HybrIK) for Human Pose & Shape Estimation
+- [smplx](https://github.com/vchoutas/smplx), [PARE](https://github.com/mkocabas/PARE), [PyMAF](https://github.com/HongwenZhang/PyMAF), [PIXIE](https://github.com/YadiraF/PIXIE), [BEV](https://github.com/Arthur151/ROMP), and [HybrIK](https://github.com/Jeff-sjtu/HybrIK) for Human Pose & Shape Estimation
 - [CAPE](https://github.com/qianlim/CAPE) and [THuman](https://github.com/ZhengZerong/DeepHuman/tree/master/THUmanDataset) for Dataset
 - [PyTorch3D](https://github.com/facebookresearch/pytorch3d) for Differential Rendering
 
