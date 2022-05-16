@@ -1,0 +1,78 @@
+name: pifu
+ckpt_dir: "../data/ckpt/"
+resume_path: "../data/ckpt/pifu.ckpt"
+normal_path: "../data/ckpt/normal.ckpt"
+results_path: "../results"
+
+dataset:
+  root: "../data/"
+  rotation_num: 36
+  num_sample_geo: 8000
+  num_sample_color: 0
+  num_sample_seg: 0
+  num_sample_knn: 0
+  sigma_geo: 5.0
+  sigma_seg: 0.00
+  sigma_color: 0.00
+  train_bsize: 1.0
+  val_bsize: 1.0
+  test_bsize: 1.0
+  ray_sample_num: 1
+  zray_type: False
+  semantic_p: False
+  remove_outlier: False
+
+  noise_type: ['pose', 'beta']
+  noise_scale: [0.05, 0.5]
+
+  types: ["thuman2"]
+  scales: [100.0]
+
+net:
+  mlp_dim: [256, 512, 256, 128, 1]
+  res_layers: [2,3,4]
+  num_stack: 2
+  prior_type: "pifu"
+  use_filter: True
+  in_geo: (('image',3), ('normal_F',3), ('normal_B',3))
+  in_nml: (('image',3), ('T_normal_F',3), ('T_normal_B',3))
+  gtype: 'HGPIFuNet'
+  ctype: 'resnet34'
+  norm_mlp: 'batch'
+  N_freqs: 10
+  geo_w: 0.1
+  norm_w: 0.001
+  dc_w: 1.0
+  hourglass_dim: 12
+  voxel_dim: 32
+  smpl_dim: 7
+
+lr_G: 1e-4
+weight_decay: 0.0 
+momentum: 0.0
+batch_size: 8
+num_threads: 16
+gpus: [0]
+test_gpus: [0]
+
+sdf: False
+sdf_clip: 15.0
+
+fast_dev: 0
+resume: False
+test_mode: False
+mcube_res: 512
+clean_mesh: True
+num_sanity_val_steps: 1
+
+momentum: 0.0 
+optim: RMSprop
+
+# training (batch=4, set=agora, rot-6)
+overfit: False
+num_epoch: 10
+freq_show_train: 0.1
+freq_show_val: 0.3
+freq_plot: 0.01
+freq_eval: 0.2
+schedule: [3, 8]
