@@ -24,7 +24,7 @@ cython==0.29.20
 rembg>=2.0.3
 opencv-python
 opencv_contrib_python
-simple-romp==1.0.2
+simple-romp==1.0.3
 git+https://github.com/Project-Splinter/human_det
 git+https://github.com/YuliangXiu/smplx.git
 git+https://github.com/facebookresearch/pytorch3d.git

@@ -117,7 +117,7 @@ class TestDataset():
                 import bev
             except:
                 print('Could not find bev, installing via pip install --upgrade simple-romp')
-                os.system('pip install simple-romp==1.0.2')
+                os.system('pip install simple-romp==1.0.3')
                 import bev
             settings = bev.main.default_settings
             # change the argparse settings of bev here if you prefer other settings.
