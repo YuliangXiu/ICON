@@ -40,7 +40,7 @@ from lib.common.config import cfg
 from lib.pymaf.models import pymaf_net
 from lib.pymaf.core import path_config
 from lib.pymaf.utils.imutils import process_image
-from lib.pymaf.utils.geometry import rotation_matrix_to_angle_axis
+from lib.pymaf.utils.geometry import rotation_matrix_to_angle_axis, batch_rodrigues
 
 # for pare
 from lib.pare.pare.core.tester import PARETester
@@ -112,6 +112,20 @@ class TestDataset():
             self.hps = HybrIKBaseSMPLCam(cfg_file=path_config.HYBRIK_CFG, smpl_path=smpl_path, data_path=path_config.hybrik_data_dir)
             self.hps.load_state_dict(torch.load(path_config.HYBRIK_CKPT, map_location='cpu'), strict=False)
             self.hps.to(self.device)
+        elif self.hps_type == 'bev':
+            try:
+                import bev
+            except:
+                print('Could not find bev, installing via pip install --upgrade simple-romp')
+                os.system('pip install simple-romp==1.0.2')
+                import bev
+            settings = bev.main.default_settings
+            # change the argparse settings of bev here if you prefer other settings.
+            settings.mode = 'image'
+            settings.GPU = int(str(self.device).split(':')[1])
+            settings.show_largest = True
+            # settings.show = True # uncommit this to show the original BEV predictions
+            self.hps = bev.BEV(settings)
 
         print(colored(f"Using {self.hps_type} as HPS Estimator\n", "green"))
 
@@ -185,7 +199,7 @@ class TestDataset():
 
         img_path = self.subject_list[index]
         img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
-        img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, self.hps_type, 512)
+        img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, self.hps_type, 512, device=self.device)
         
         data_dict = {
             'name': img_name,
@@ -195,7 +209,7 @@ class TestDataset():
             'uncrop_param': uncrop_param
         }
         with torch.no_grad():
-            preds_dict = self.hps.forward(img_hps.to(self.device))
+            preds_dict = self.hps.forward(img_hps)
 
         data_dict['smpl_faces'] = torch.Tensor(
             self.faces.astype(np.int16)).long().unsqueeze(0).to(
@@ -231,9 +245,19 @@ class TestDataset():
             data_dict['smpl_verts'] = preds_dict['pred_vertices']
             scale, tranX, tranY = preds_dict['pred_camera'][0, :3]
             scale = scale * 2
-
+        
+        elif self.hps_type == 'bev':
+            data_dict['betas'] = torch.from_numpy(preds_dict['smpl_betas'])[[0], :10].to(self.device).float()
+            pred_thetas = batch_rodrigues(torch.from_numpy(preds_dict['smpl_thetas'][0]).reshape(-1,3)).float()
+            data_dict['body_pose'] = pred_thetas[1:][None].to(self.device)
+            data_dict['global_orient'] = pred_thetas[[0]][None].to(self.device)
+            data_dict['smpl_verts'] = torch.from_numpy(preds_dict['verts'][[0]]).to(self.device).float()
+            tranX = preds_dict['cam_trans'][0, 0]
+            tranY = preds_dict['cam'][0, 1] + 0.28
+            scale = preds_dict['cam'][0, 0] * 1.1
+        
         data_dict['scale'] = scale
-        data_dict['trans'] = torch.tensor([tranX, tranY, 0.0]).to(self.device)
+        data_dict['trans'] = torch.tensor([tranX, tranY, 0.0]).to(self.device).float()
         
         # data_dict info (key-shape):
         # scale, tranX, tranY - tensor.float
@@ -317,8 +341,8 @@ if __name__ == '__main__':
         {
             'image_dir': "../examples",
             'has_det': True,    # w/ or w/o detection
-            'hps_type': 'hybrik'  # pymaf/pare/pixie/hybrik
+            'hps_type': 'bev'  # pymaf/pare/pixie/hybrik/bev
         }, device)
 
-    
-    dataset.visualize_alignment(dataset[1])
+    for i in range(len(dataset)):
+        dataset.visualize_alignment(dataset[i])

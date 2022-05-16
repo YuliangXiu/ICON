@@ -10,3 +10,8 @@ force_push.sh
 scripts/vis*
 scripts/process_all*
 .idea
+smplx/
+human_det/
+kaolin/
+neural_voxelization_layer/
+pytorch3d/

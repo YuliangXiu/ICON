@@ -85,7 +85,7 @@ def get_transformer(input_res):
     return [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor, image_to_hybrik_tensor]
 
 
-def process_image(img_file, det, hps_type, input_res=512):
+def process_image(img_file, det, hps_type, input_res=512, device=None):
     """Read image, do preprocessing and possibly crop it according to the bounding box.
     If there are bounding box annotations, use them to crop the image.
     If no bounding box is specified but openpose detections are available, use them to get the bounding box.
@@ -141,12 +141,14 @@ def process_image(img_file, det, hps_type, input_res=512):
     img_hps = img_np.astype(np.float32) / 255.
     img_hps = torch.from_numpy(img_hps).permute(2, 0, 1)
     
-    if hps_type == 'hybrik':
-        img_hps = image_to_hybrik_tensor(img_hps).unsqueeze(0)
+    if hps_type == 'bev':
+        img_hps = img_np[:,:,[2,1,0]]
+    elif hps_type == 'hybrik':
+        img_hps = image_to_hybrik_tensor(img_hps).unsqueeze(0).to(device)
     elif hps_type != 'pixie':
-        img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0)
+        img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0).to(device)
     else:
-        img_hps = image_to_pixie_tensor(img_hps).unsqueeze(0)
+        img_hps = image_to_pixie_tensor(img_hps).unsqueeze(0).to(device)
     
     # uncrop params
     uncrop_param = {'center': center,
