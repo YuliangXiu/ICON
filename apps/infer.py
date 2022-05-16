@@ -22,6 +22,7 @@ import numpy as np
 from PIL import Image
 import torch, trimesh
 import numpy as np
+import pickle
 torch.backends.cudnn.benchmark = True
 
 # project related libs
@@ -492,4 +493,20 @@ if __name__ == '__main__':
 
                 t = np.array([[ -0.,  -0., 100.]])
                 clothing_obj = extract_cloth(recon_obj, seg, K, R, t, smpl_obj)
-                clothing_obj.export(os.path.join(args.out_dir, cfg.name, "clothes", f"{data['name']}_{seg['type'].replace(' ', '_')}.obj"))
+                if clothing_obj is not None:
+                    cloth_info = {
+                        'shape_params': optimed_betas,
+                        'expression_params': tensor2variable(data['exp'], device),
+                        'body_pose': optimed_pose,
+                        'global_pose': optimed_orient,
+                        'jaw_pose': tensor2variable(data['jaw_pose'], device),
+                        'left_hand_pose': tensor2variable(data['left_hand_pose'], device),
+                        'right_hand_pose': tensor2variable(data['right_hand_pose'], device),
+                        'clothing_type': seg['type'],
+                    }
+                    file_id = f"{data['name']}_{seg['type'].replace(' ', '_')}"
+                    
+                    with open(f"{file_id}_info.pkl", 'wb') as fp:
+                        pickle.dump(cloth_info, fp)
+
+                    clothing_obj.export(os.path.join(args.out_dir, cfg.name, "clothes", f"{file_id}.obj"))

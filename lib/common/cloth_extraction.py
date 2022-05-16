@@ -147,11 +147,14 @@ def extract_cloth(recon, segmentation, K, R, t, smpl = None):
 
     faces_to_keep = np.array(list(set(i_x).union(i_y).union(i_z)))
     mask = np.zeros(len(recon.faces), dtype=bool)
-    mask[faces_to_keep] = True
+    if len(faces_to_keep) > 0:
+        mask[faces_to_keep] = True
 
-    mesh.update_faces(mask)
-    mesh.remove_unreferenced_vertices()
+        mesh.update_faces(mask)
+        mesh.remove_unreferenced_vertices()
 
-    mesh.rezero()
+        mesh.rezero()
 
-    return mesh
+        return mesh
+    
+    return None
