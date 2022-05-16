@@ -27,7 +27,7 @@ from lib.common.render_utils import face_vertices
 from lib.dataset.mesh_util import SMPLX
 
 model_init_params = dict(
-    gender='neutral',
+    gender='male',
     model_type='smplx',
     model_path=SMPLX().model_dir,
     create_global_orient=False,

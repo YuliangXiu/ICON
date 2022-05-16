@@ -81,7 +81,7 @@ scan_scale = 0.6/vertices.max(0)[up_axis] - vertices.min(0)[up_axis]
 rescale_fitted_body, joints = load_fit_body(fit_file, 
                                             scale, 
                                             smpl_type='smplx', 
-                                            smpl_gender='neutral')
+                                            smpl_gender='male')
 
 vertices *= scale
 vmin = vertices.min(0)

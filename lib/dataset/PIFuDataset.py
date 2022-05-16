@@ -301,11 +301,11 @@ class PIFuDataset():
         smplx_out, _ = load_fit_body(fitted_path=data_dict['smplx_path'],
                                      scale=self.datasets_dict[dataset]['scale'],
                                      smpl_type='smplx',
-                                     smpl_gender='neutral',
+                                     smpl_gender='male',
                                      noise_dict=dict(betas=smplx_betas,body_pose=smplx_pose))
 
         smplx_dict.update({"type": "smplx",
-                          "gender": 'neutral',
+                          "gender": 'male',
                           "body_pose": torch.as_tensor(smplx_pose),
                           "betas": torch.as_tensor(smplx_betas)})
 

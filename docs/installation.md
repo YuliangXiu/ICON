@@ -123,7 +123,11 @@ Optional:
 ```
 </details>
 
-## Tree structure of **data** folder
+<br>
+
+## Tree structure of **./data**
+
+<details>
 
 ```
 data/
@@ -198,4 +202,4 @@ data/
     ├── tetrahedrons_{male,female,neutral}_{adult,kid}.txt
     └── vertices.txt
 ```
-
+</details>

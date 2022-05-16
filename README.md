@@ -61,7 +61,10 @@
       <a href="#installation">Installation</a>
     </li>
     <li>
-    <a href="#dataset-preprocess"> Dataset Preprocess</a>
+    <a href="#dataset-preprocess">Dataset Preprocess</a>
+    </li>
+    <li>
+    <a href="#training">Training</a>
     </li>
     <li>
       <a href="#demo">Demo</a>

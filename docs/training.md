@@ -22,13 +22,17 @@ conda activate icon
 cd ICON/apps
 
 # ICON w/ filter (name: icon-filter)
-CUDA_VISIBLE_DEVICES=0 python train.py -cfg ../config/train/icon-filter.yaml
+CUDA_VISIBLE_DEVICES=0 python train.py -cfg ../configs/train/icon-filter.yaml
 
 # ICON w/o filter (name: icon-nofilter)
-CUDA_VISIBLE_DEVICES=0 python train.py -cfg ../config/train/icon-nofilter.yaml
+CUDA_VISIBLE_DEVICES=0 python train.py -cfg ../configs/train/icon-nofilter.yaml
+
+# ICON-MVP (name: icon-mvp), mvp = minimal viable product, simple (used features) yet efficient (GPU)
+# https://en.wikipedia.org/wiki/Minimum_viable_product
+CUDA_VISIBLE_DEVICES=0 python train.py -cfg ../configs/train/icon-mvp.yaml
 
 # PIFu (name: pifu)
-CUDA_VISIBLE_DEVICES=0 python train.py -cfg ../config/train/pifu.yaml
+CUDA_VISIBLE_DEVICES=0 python train.py -cfg ../configs/train/pifu.yaml
 ```
 
 ## Tensorboard

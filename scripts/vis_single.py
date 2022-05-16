@@ -37,7 +37,7 @@ fit_file = f'../data/{dataset}/fits/{subject}/smplx_param.pkl'
 rescale_fitted_body, _ = load_fit_body(fit_file, 
                                         180.0, 
                                         smpl_type='smplx', 
-                                        smpl_gender='neutral')
+                                        smpl_gender='male')
 
 smpl_verts = torch.from_numpy(rescale_fitted_body.vertices).cuda().float()
 smpl_faces = torch.from_numpy(rescale_fitted_body.faces).cuda().long()

@@ -1,17 +1,26 @@
 ## Environment 
 
   * freeglut (`sudo apt-get install freeglut3-dev`)
-  * (optional) EGL used for headless rendering (`apt install libgl1-mesa-dri libegl1-mesa libgbm1`)
+  * (optional) **EGL** used for headless rendering (`apt install libgl1-mesa-dri libegl1-mesa libgbm1`)
+
+:warning: For **EGL** headless rendering (without screen, such as clusters), please `export PYOPENGL_PLATFORM=egl` before running these scripts, also set `egl=True` in `scripts/render_single.py`, otherwise, set `egl=False` and `unset PYOPENGL_PLATFORM`.
+
+:warning: If the program runs so slowly and is stuck in `mesh.ray.intersects_any`, uninstall and reinstall `pyembree` and `trimesh`, more details in [issue #62](https://github.com/YuliangXiu/ICON/issues/62).
 
 ## THuman2.0
 
-Please refer to [THuman2.0-Dataset](https://github.com/ytrock/THuman2.0-Dataset) to download the original scans into `data/thuman2/scans`, and its SMPL-X fits into `data/thuman2/fits`. Then generate `all.txt` by `ls > ../all.txt` under `data/thuman2/scans`, which contains all the subject names (0000~0525).
+Please refer to [THuman2.0-Dataset](https://github.com/ytrock/THuman2.0-Dataset) to download the original scans into `data/thuman2/scans`, and its SMPL-X(male) fits into `data/thuman2/fits`. Then generate `all.txt` by `ls > ../all.txt` under `data/thuman2/scans`, which contains all the subject names (0000~0525).
 
 :eyes: `./sample_data` contains one example of THuman2.0
 
 ## Debug Mode
 
-:warning: For headless rendering (without window, such as clusters), please `export PYOPENGL_PLATFORM=egl` before running these scripts, also change `egl=True` in `scripts/render_single.py`.
+```bash
+conda activate icon
+cd ICON/scripts
+bash render_batch.sh debug all
+bash vis_batch.sh debug all
+```
 
 Then you will get the rendered samples & visibility results under `debug/`
 
@@ -36,7 +45,7 @@ You could check the visibility computing status from `log/vis/thuman2-{num_views
 
 :white_check_mark: NOW, you have all the synthetic dataset under `data/thuman2_{num_views}views`, which will be used for training. 
 
-:arrow_right: NEXT, please jump to [training.md](training.md) for more details.
+:arrow_right: NEXT, please jump to [Training Instruction](training.md) for more details.
 
 ## Examples
 
