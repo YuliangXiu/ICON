@@ -589,13 +589,16 @@ class Seg3dLossless(nn.Module):
             # thus we use CPU marching_cube to avoid "CUDA out of memory"
             occu_arr = final.detach().cpu().numpy()                 # non-smooth surface
             # occu_arr = mcubes.smooth(final.detach().cpu().numpy())  # smooth surface
-            vertices, triangles = mcubes.marching_cubes(occu_arr, self.balance_value)
-            verts = torch.as_tensor(vertices[:,[2,1,0]])
-            faces = torch.as_tensor(triangles.astype(np.long), dtype=torch.long)[:,[0,2,1]]
+            vertices, triangles = mcubes.marching_cubes(
+                occu_arr, self.balance_value)
+            verts = torch.as_tensor(vertices[:, [2, 1, 0]])
+            faces = torch.as_tensor(triangles.astype(
+                np.long), dtype=torch.long)[:, [0, 2, 1]]
         else:
             torch.cuda.empty_cache()
-            vertices, triangles = voxelgrids_to_trianglemeshes(final.unsqueeze(0))
-            verts = vertices[0][:,[2,1,0]].cpu()
-            faces = triangles[0][:,[0,2,1]].cpu()
+            vertices, triangles = voxelgrids_to_trianglemeshes(
+                final.unsqueeze(0))
+            verts = vertices[0][:, [2, 1, 0]].cpu()
+            faces = triangles[0][:, [0, 2, 1]].cpu()
 
         return verts, faces

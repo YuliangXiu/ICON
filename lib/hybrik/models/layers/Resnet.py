@@ -17,9 +17,11 @@ class BasicBlock(nn.Module):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         if groups != 1 or base_width != 64:
-            raise ValueError('BasicBlock only supports groups=1 and base_width=64')
+            raise ValueError(
+                'BasicBlock only supports groups=1 and base_width=64')
         if dilation > 1:
-            raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
+            raise NotImplementedError(
+                "Dilation > 1 not supported in BasicBlock")
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = norm_layer(planes)
@@ -102,7 +104,8 @@ class ResNet(nn.Module):
     def __init__(self, architecture, norm_layer=nn.BatchNorm2d, dcn=None, stage_with_dcn=(False, False, False, False)):
         super(ResNet, self).__init__()
         self._norm_layer = norm_layer
-        assert architecture in ["resnet18", "resnet34", "resnet50", "resnet101", 'resnet152']
+        assert architecture in ["resnet18", "resnet34",
+                                "resnet50", "resnet101", 'resnet152']
         layers = {
             'resnet18': [2, 2, 2, 2],
             'resnet34': [3, 4, 6, 3],

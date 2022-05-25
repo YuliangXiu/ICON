@@ -25,15 +25,7 @@ import torch
 from torch import nn
 import trimesh
 import os.path as osp
-from scipy.spatial import cKDTree
 from PIL import Image
-from PIL import ImageFont
-from PIL import ImageDraw
-
-import sys
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 
 class Evaluator:

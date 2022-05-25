@@ -25,6 +25,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+
 def rot_mat_to_euler(rot_mats):
     # Calculates rotation matrix to euler angles
     # Careful for extreme cases of eular angles like [0.0, pi, 0.0]
@@ -381,6 +382,7 @@ def batch_rigid_transform(rot_mats, joints, parents, dtype=torch.float32):
 
     return posed_joints, rel_transforms
 
+
 class JointsFromVerticesSelector(nn.Module):
     def __init__(self, fname):
         ''' Selects extra joints from vertices
@@ -437,14 +439,17 @@ class JointsFromVerticesSelector(nn.Module):
 #     else:
 #         return torch.tensor(array, dtype=dtype)
 
+
 def to_tensor(array, dtype=torch.float32):
     if 'torch.tensor' not in str(type(array)):
         return torch.tensor(array, dtype=dtype)
+
 
 def to_np(array, dtype=np.float32):
     if 'scipy.sparse' in str(type(array)):
         array = array.todense()
     return np.array(array, dtype=dtype)
+
 
 class Struct(object):
     def __init__(self, **kwargs):

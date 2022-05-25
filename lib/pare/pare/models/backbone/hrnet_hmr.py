@@ -592,7 +592,8 @@ def get_cfg_defaults(pretrained, width=32):
     cfg = CN()
     cfg.MODEL = CN()
     cfg.MODEL.INIT_WEIGHTS = True
-    cfg.MODEL.PRETRAINED = pretrained  # 'data/pretrained_models/hrnet_w32-36af842e.pth'
+    # 'data/pretrained_models/hrnet_w32-36af842e.pth'
+    cfg.MODEL.PRETRAINED = pretrained
     cfg.MODEL.EXTRA = HRNET
     cfg.MODEL.NUM_JOINTS = 24
     return cfg

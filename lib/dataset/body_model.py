@@ -25,12 +25,12 @@ class SMPLModel():
     def __init__(self, model_path, age):
         """
         SMPL model.
-    
+
         Parameter:
         ---------
         model_path: Path to the SMPL model parameters, pre-processed by
         `preprocess.py`.
-    
+
         """
         with open(model_path, 'rb') as f:
             params = pickle.load(f, encoding='latin1')
@@ -83,22 +83,22 @@ class SMPLModel():
         """
         Set pose, shape, and/or translation parameters of SMPL model. Verices of the
         model will be updated and returned.
-    
+
         Prameters:
         ---------
         pose: Also known as 'theta', a [24,3] matrix indicating child joint rotation
         relative to parent joint. For root joint it's global orientation.
         Represented in a axis-angle format.
-    
+
         beta: Parameter for model shape. A vector of shape [10]. Coefficients for
         PCA component. Only 10 components were released by MPI.
-    
+
         trans: Global translation of shape [3].
-    
+
         Return:
         ------
         Updated vertices.
-    
+
         """
         if pose is not None:
             self.pose = pose
@@ -112,7 +112,7 @@ class SMPLModel():
     def update(self):
         """
         Called automatically when parameters are updated.
-    
+
         """
         # how beta affect body shape
         v_shaped = self.shapedirs.dot(self.beta) + self.v_template
@@ -155,15 +155,15 @@ class SMPLModel():
         """
         Rodrigues' rotation formula that turns axis-angle vector into rotation
         matrix in a batch-ed manner.
-    
+
         Parameter:
         ----------
         r: Axis-angle rotation vector of shape [batch_size, 1, 3].
-    
+
         Return:
         -------
         Rotation matrix of shape [batch_size, 3, 3].
-    
+
         """
         theta = np.linalg.norm(r, axis=(1, 2), keepdims=True)
         # avoid zero divide
@@ -186,15 +186,15 @@ class SMPLModel():
     def with_zeros(self, x):
         """
         Append a [0, 0, 0, 1] vector to a [3, 4] matrix.
-    
+
         Parameter:
         ---------
         x: Matrix to be appended.
-    
+
         Return:
         ------
         Matrix after appending of shape [4,4]
-    
+
         """
         return np.vstack((x, np.array([[0.0, 0.0, 0.0, 1.0]])))
 
@@ -202,36 +202,32 @@ class SMPLModel():
         """
         Append zero matrices of shape [4, 3] to vectors of [4, 1] shape in a batched
         manner.
-    
+
         Parameter:
         ----------
         x: Matrices to be appended of shape [batch_size, 4, 1]
-    
+
         Return:
         ------
         Matrix of shape [batch_size, 4, 4] after appending.
-    
+
         """
         return np.dstack((np.zeros((x.shape[0], 4, 3)), x))
 
     def save_to_obj(self, path):
         """
         Save the SMPL model into .obj file.
-    
+
         Parameter:
         ---------
         path: Path to save.
-    
+
         """
         with open(path, 'w') as fp:
             for v in self.verts:
                 fp.write('v %f %f %f\n' % (v[0], v[1], v[2]))
             for f in self.faces + 1:
                 fp.write('f %d %d %d\n' % (f[0], f[1], f[2]))
-
-
-import numpy as np
-import pickle
 
 
 class TetraSMPLModel():
@@ -242,12 +238,12 @@ class TetraSMPLModel():
                  v_template=None):
         """
         SMPL model.
-    
+
         Parameter:
         ---------
         model_path: Path to the SMPL model parameters, pre-processed by
         `preprocess.py`.
-    
+
         """
         with open(model_path, 'rb') as f:
             params = pickle.load(f, encoding='latin1')
@@ -313,22 +309,22 @@ class TetraSMPLModel():
         """
         Set pose, shape, and/or translation parameters of SMPL model. Verices of the
         model will be updated and returned.
-    
+
         Prameters:
         ---------
         pose: Also known as 'theta', a [24,3] matrix indicating child joint rotation
         relative to parent joint. For root joint it's global orientation.
         Represented in a axis-angle format.
-    
+
         beta: Parameter for model shape. A vector of shape [10]. Coefficients for
         PCA component. Only 10 components were released by MPI.
-    
+
         trans: Global translation of shape [3].
-    
+
         Return:
         ------
         Updated vertices.
-    
+
         """
 
         if torch.is_tensor(pose):
@@ -348,7 +344,7 @@ class TetraSMPLModel():
     def update(self):
         """
         Called automatically when parameters are updated.
-    
+
         """
         # how beta affect body shape
         v_shaped = self.shapedirs.dot(self.beta) + self.v_template
@@ -402,15 +398,15 @@ class TetraSMPLModel():
         """
         Rodrigues' rotation formula that turns axis-angle vector into rotation
         matrix in a batch-ed manner.
-    
+
         Parameter:
         ----------
         r: Axis-angle rotation vector of shape [batch_size, 1, 3].
-    
+
         Return:
         -------
         Rotation matrix of shape [batch_size, 3, 3].
-    
+
         """
         theta = np.linalg.norm(r, axis=(1, 2), keepdims=True)
         # avoid zero divide
@@ -433,15 +429,15 @@ class TetraSMPLModel():
     def with_zeros(self, x):
         """
         Append a [0, 0, 0, 1] vector to a [3, 4] matrix.
-    
+
         Parameter:
         ---------
         x: Matrix to be appended.
-    
+
         Return:
         ------
         Matrix after appending of shape [4,4]
-    
+
         """
         return np.vstack((x, np.array([[0.0, 0.0, 0.0, 1.0]])))
 
@@ -449,26 +445,26 @@ class TetraSMPLModel():
         """
         Append zero matrices of shape [4, 3] to vectors of [4, 1] shape in a batched
         manner.
-    
+
         Parameter:
         ----------
         x: Matrices to be appended of shape [batch_size, 4, 1]
-    
+
         Return:
         ------
         Matrix of shape [batch_size, 4, 4] after appending.
-    
+
         """
         return np.dstack((np.zeros((x.shape[0], 4, 3)), x))
 
     def save_mesh_to_obj(self, path):
         """
         Save the SMPL model into .obj file.
-    
+
         Parameter:
         ---------
         path: Path to save.
-    
+
         """
         with open(path, 'w') as fp:
             for v in self.verts:
@@ -479,11 +475,11 @@ class TetraSMPLModel():
     def save_tetrahedron_to_obj(self, path):
         """
         Save the tetrahedron SMPL model into .obj file.
-    
+
         Parameter:
         ---------
         path: Path to save.
-    
+
         """
 
         with open(path, 'w') as fp:

@@ -15,16 +15,13 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from lib.dataset.mesh_util import SMPLX
+from lib.common.render_utils import face_vertices
 import numpy as np
 import smplx
 import trimesh
 import torch
 import torch.nn.functional as F
-import sys, os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-from lib.common.render_utils import face_vertices
-from lib.dataset.mesh_util import SMPLX
 
 model_init_params = dict(
     gender='male',
@@ -42,7 +39,9 @@ model_init_params = dict(
     create_transl=False,
     num_pca_comps=12)
 
-get_smpl_model = lambda model_type, gender : smplx.create(**model_init_params)
+
+def get_smpl_model(model_type, gender): return smplx.create(
+    **model_init_params)
 
 
 def normalization(data):
@@ -54,35 +53,38 @@ def sigmoid(x):
     z = 1 / (1 + np.exp(-x))
     return z
 
+
 def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral', noise_dict=None):
-    
+
     param = np.load(fitted_path, allow_pickle=True)
     for key in param.keys():
         param[key] = torch.as_tensor(param[key])
-        
+
     smpl_model = get_smpl_model(smpl_type, smpl_gender)
     model_forward_params = dict(betas=param['betas'],
-                            global_orient=param['global_orient'],
-                            body_pose=param['body_pose'],
-                            left_hand_pose=param['left_hand_pose'],
-                            right_hand_pose=param['right_hand_pose'],
-                            jaw_pose=param['jaw_pose'],
-                            leye_pose=param['leye_pose'],
-                            reye_pose=param['reye_pose'],
-                            expression=param['expression'],
-                            return_verts=True)
-    
+                                global_orient=param['global_orient'],
+                                body_pose=param['body_pose'],
+                                left_hand_pose=param['left_hand_pose'],
+                                right_hand_pose=param['right_hand_pose'],
+                                jaw_pose=param['jaw_pose'],
+                                leye_pose=param['leye_pose'],
+                                reye_pose=param['reye_pose'],
+                                expression=param['expression'],
+                                return_verts=True)
+
     if noise_dict is not None:
         model_forward_params.update(noise_dict)
-        
+
     smpl_out = smpl_model(**model_forward_params)
-    
-    smpl_verts = ((smpl_out.vertices[0] * param['scale'] + param['translation']) * scale).detach()
-    smpl_joints = ((smpl_out.joints[0] * param['scale'] + param['translation']) * scale).detach()
-    smpl_mesh = trimesh.Trimesh(smpl_verts, 
-                                smpl_model.faces, 
+
+    smpl_verts = (
+        (smpl_out.vertices[0] * param['scale'] + param['translation']) * scale).detach()
+    smpl_joints = (
+        (smpl_out.joints[0] * param['scale'] + param['translation']) * scale).detach()
+    smpl_mesh = trimesh.Trimesh(smpl_verts,
+                                smpl_model.faces,
                                 process=False, maintain_order=True)
-    
+
     return smpl_mesh, smpl_joints
 
 

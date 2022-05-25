@@ -39,7 +39,8 @@ class PARE(nn.Module):
         iter_residual=False,
         num_iterations=3,
         shape_input_type='feats',  # 'feats.all_pose.shape.cam',
-        pose_input_type='feats',  # 'feats.neighbor_pose_feats.all_pose.self_pose.neighbor_pose.shape.cam'
+        # 'feats.neighbor_pose_feats.all_pose.self_pose.neighbor_pose.shape.cam'
+        pose_input_type='feats',
         pose_mlp_num_layers=1,
         shape_mlp_num_layers=1,
         pose_mlp_hidden_size=256,
@@ -100,17 +101,16 @@ class PARE(nn.Module):
             shape_mlp_num_layers=shape_mlp_num_layers,
             pose_mlp_hidden_size=pose_mlp_hidden_size,
             shape_mlp_hidden_size=shape_mlp_hidden_size,
-            use_keypoint_features_for_smpl_regression=
-            use_keypoint_features_for_smpl_regression,
+            use_keypoint_features_for_smpl_regression=use_keypoint_features_for_smpl_regression,
             use_heatmaps=use_heatmaps,
             use_keypoint_attention=use_keypoint_attention,
             use_postconv_keypoint_attention=use_postconv_keypoint_attention,
             keypoint_attention_act=keypoint_attention_act,
             use_scale_keypoint_attention=use_scale_keypoint_attention,
-            use_branch_nonlocal=
-            use_branch_nonlocal,  # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
-            use_final_nonlocal=
-            use_final_nonlocal,  # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
+            # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
+            use_branch_nonlocal=use_branch_nonlocal,
+            # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
+            use_final_nonlocal=use_final_nonlocal,
             backbone=backbone,
             use_hmr_regression=use_hmr_regression,
             use_coattention=use_coattention,

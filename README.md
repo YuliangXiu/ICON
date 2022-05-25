@@ -39,9 +39,9 @@
 <br />
 
 ## News :triangular_flag_on_post:
-- [2022/05/16] <a href="https://github.com/Arthur151/ROMP">BEV</a> is supported as optional HPS by <a href="https://scholar.google.com/citations?hl=en&user=fkGxgrsAAAAJ">Yu Sun</a>.
+- [2022/05/16] <a href="https://github.com/Arthur151/ROMP">BEV</a> is supported as optional HPS by <a href="https://scholar.google.com/citations?hl=en&user=fkGxgrsAAAAJ">Yu Sun</a>, see [commit #060e265](https://github.com/YuliangXiu/ICON/commit/060e265bd253c6a34e65c9d0a5288c6d7ffaf68e).
 - [2022/05/15] Training code is released, please check [Training Instruction](docs/training.md).
-- [2022/04/26] <a href="https://github.com/Jeff-sjtu/HybrIK">HybrIK (SMPL)</a> is supported as optional HPS by <a href="https://jeffli.site/">Jiefeng Li</a>.
+- [2022/04/26] <a href="https://github.com/Jeff-sjtu/HybrIK">HybrIK (SMPL)</a> is supported as optional HPS by <a href="https://jeffli.site/">Jiefeng Li</a>, see [commit #3663704](https://github.com/YuliangXiu/ICON/commit/36637046dcbb5667cdfbee3b9c91b934d4c5dd05).
 - [2022/03/05] <a href="https://github.com/YadiraF/PIXIE">PIXIE (SMPL-X)</a>, <a href="https://github.com/mkocabas/PARE">PARE (SMPL)</a>, <a href="https://github.com/HongwenZhang/PyMAF">PyMAF (SMPL)</a> are all supported as optional HPS.
 - [2022/02/07] <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'><img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'></a> is ready to use.
 
@@ -61,7 +61,7 @@
       <a href="#installation">Installation</a>
     </li>
     <li>
-    <a href="#dataset-preprocess">Dataset Preprocess</a>
+    <a href="#dataset">Dataset</a>
     </li>
     <li>
     <a href="#training">Training</a>
@@ -101,6 +101,8 @@
 |![Intermediate Results](assets/intermediate_results.png)|
 |:--:|
 |*ICON's intermediate results*|
+|![Iterative Refinement](assets/refinement.gif)|
+|*ICON's SMPL Pose Refinement*|
 |![Final Results](assets/overlap1.gif)![Final Results](assets/overlap2.gif)|
 |*ICON's normal prediction + reconstructed mesh (w/o & w/ smooth)*|
 
@@ -138,9 +140,9 @@
 
 Please follow the [Installation Instruction](docs/installation.md) to setup all the required packages, extra data, and models.
 
-## Dataset Preprocess
+## Dataset
 
-Please follow the [Data Preprocess Instruction](docs/dataset.md) to generate the train/val/test dataset from raw scans (THuman2.0).
+Please follow the [Dataset Instruction](docs/dataset.md) to generate the train/val/test dataset from raw scans (THuman2.0).
 
 ## Training
 Please follow the [Training Instruction](docs/training.md) to train your own model using THuman2.0.
@@ -148,19 +150,19 @@ Please follow the [Training Instruction](docs/training.md) to train your own mod
 ## Demo
 
 ```bash
-cd ICON/apps
+cd ICON
 
 # PIFu* (*: re-implementation)
-python infer.py -cfg ../configs/pifu.yaml -gpu 0 -in_dir ../examples -out_dir ../results
+python -m apps.infer -cfg ./configs/pifu.yaml -gpu 0 -in_dir ./examples -out_dir ./results
 
 # PaMIR* (*: re-implementation)
-python infer.py -cfg ../configs/pamir.yaml -gpu 0 -in_dir ../examples -out_dir ../results
+python -m apps.infer -cfg ./configs/pamir.yaml -gpu 0 -in_dir ./examples -out_dir ./results
 
 # ICON w/ global filter (better visual details --> lower Normal Error))
-python infer.py -cfg ../configs/icon-filter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare/hybrik/bev}
+python -m apps.infer -cfg ./configs/icon-filter.yaml -gpu 0 -in_dir ./examples -out_dir ./results -hps_type {pixie/pymaf/pare/hybrik/bev}
 
 # ICON w/o global filter (higher evaluation scores --> lower P2S/Chamfer Error))
-python infer.py -cfg ../configs/icon-nofilter.yaml -gpu 0 -in_dir ../examples -out_dir ../results -hps_type {pixie/pymaf/pare/hybrik/bev}
+python -m apps.infer -cfg ./configs/icon-nofilter.yaml -gpu 0 -in_dir ./examples -out_dir ./results -hps_type {pixie/pymaf/pare/hybrik/bev}
 ```
 
 ## More Qualitative Results

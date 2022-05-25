@@ -8,36 +8,53 @@ import os
 
 cfg = CN()
 
-abs_pixie_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..','..'))
+abs_pixie_dir = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', '..', '..'))
 cfg.pixie_dir = abs_pixie_dir
 cfg.device = 'cuda'
 cfg.device_id = '0'
-cfg.pretrained_modelpath = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'pixie_model.tar')
-## smplx parameter settings
+cfg.pretrained_modelpath = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'pixie_model.tar')
+# smplx parameter settings
 cfg.params = CN()
-cfg.params.body_list = ['body_cam', 'global_pose', 'partbody_pose', 'neck_pose']
-cfg.params.head_list =  ['head_cam', 'tex', 'light']
+cfg.params.body_list = ['body_cam',
+                        'global_pose', 'partbody_pose', 'neck_pose']
+cfg.params.head_list = ['head_cam', 'tex', 'light']
 cfg.params.head_share_list = ['shape', 'exp', 'head_pose', 'jaw_pose']
 cfg.params.hand_list = ['hand_cam']
-cfg.params.hand_share_list = ['right_wrist_pose', 'right_hand_pose'] #only for right hand
+cfg.params.hand_share_list = ['right_wrist_pose',
+                              'right_hand_pose']  # only for right hand
 
 # ---------------------------------------------------------------------------- #
 # Options for Body model
 # ---------------------------------------------------------------------------- #
 cfg.model = CN()
-cfg.model.topology_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'SMPL_X_template_FLAME_uv.obj') 
-cfg.model.topology_smplxtex_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'smplx_tex.obj')
-cfg.model.topology_smplx_hand_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'smplx_hand.obj')
-cfg.model.smplx_model_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'SMPLX_NEUTRAL_2020.npz')
-cfg.model.face_mask_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'uv_face_mask.png')
-cfg.model.face_eye_mask_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'uv_face_eye_mask.png')
-cfg.model.tex_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'FLAME_albedo_from_BFM.npz')
-cfg.model.extra_joint_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'smplx_extra_joints.yaml')
-cfg.model.j14_regressor_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'SMPLX_to_J14.pkl')
-cfg.model.flame2smplx_cached_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'flame2smplx_tex_1024.npy')
-cfg.model.smplx_tex_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'smplx_tex.png')
-cfg.model.mano_ids_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'MANO_SMPLX_vertex_ids.pkl')
-cfg.model.flame_ids_path = os.path.join(cfg.pixie_dir, 'data/pixie_data', 'SMPL-X__FLAME_vertex_ids.npy')
+cfg.model.topology_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'SMPL_X_template_FLAME_uv.obj')
+cfg.model.topology_smplxtex_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'smplx_tex.obj')
+cfg.model.topology_smplx_hand_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'smplx_hand.obj')
+cfg.model.smplx_model_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'SMPLX_NEUTRAL_2020.npz')
+cfg.model.face_mask_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'uv_face_mask.png')
+cfg.model.face_eye_mask_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'uv_face_eye_mask.png')
+cfg.model.tex_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'FLAME_albedo_from_BFM.npz')
+cfg.model.extra_joint_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'smplx_extra_joints.yaml')
+cfg.model.j14_regressor_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'SMPLX_to_J14.pkl')
+cfg.model.flame2smplx_cached_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'flame2smplx_tex_1024.npy')
+cfg.model.smplx_tex_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'smplx_tex.png')
+cfg.model.mano_ids_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'MANO_SMPLX_vertex_ids.pkl')
+cfg.model.flame_ids_path = os.path.join(
+    cfg.pixie_dir, 'data/pixie_data', 'SMPL-X__FLAME_vertex_ids.npy')
 cfg.model.uv_size = 256
 cfg.model.n_shape = 200
 cfg.model.n_tex = 50
@@ -45,16 +62,16 @@ cfg.model.n_exp = 50
 cfg.model.n_body_cam = 3
 cfg.model.n_head_cam = 3
 cfg.model.n_hand_cam = 3
-cfg.model.tex_type = 'BFM' # BFM, FLAME, albedoMM
-cfg.model.uvtex_type = 'SMPLX' # FLAME or SMPLX
-cfg.model.use_tex = False # whether to use flame texture model
+cfg.model.tex_type = 'BFM'  # BFM, FLAME, albedoMM
+cfg.model.uvtex_type = 'SMPLX'  # FLAME or SMPLX
+cfg.model.use_tex = False  # whether to use flame texture model
 cfg.model.flame_tex_path = ''
 
 # pose
 cfg.model.n_global_pose = 3*2
 cfg.model.n_head_pose = 3*2
 cfg.model.n_neck_pose = 3*2
-cfg.model.n_jaw_pose = 3 #euler angle
+cfg.model.n_jaw_pose = 3  # euler angle
 cfg.model.n_body_pose = 21*3*2
 cfg.model.n_partbody_pose = (21-4)*3*2
 cfg.model.n_left_hand_pose = 15*3*2
@@ -162,10 +179,12 @@ def get_cfg_defaults():
     # This is for the "local variable" use pattern
     return cfg.clone()
 
+
 def update_cfg(cfg, cfg_file):
     # cfg.merge_from_file(cfg_file, allow_unsafe=True)
     cfg.merge_from_file(cfg_file)
     return cfg.clone()
+
 
 def parse_args():
     parser = argparse.ArgumentParser()

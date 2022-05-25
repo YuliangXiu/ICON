@@ -187,7 +187,8 @@ def bones2joints(bone_dirs, bone_lens, parents):
             joints[:, c_id] = bone_dirs[:, c_id]
         else:
             # Child node
-            joints[:, c_id] = joints[:, p_id] + bone_dirs[:, c_id] * bone_lens[:, c_id]
+            joints[:, c_id] = joints[:, p_id] + \
+                bone_dirs[:, c_id] * bone_lens[:, c_id]
 
     return joints
 
@@ -248,7 +249,8 @@ def lbs(betas, pose, v_template, shapedirs, posedirs, J_regressor, J_regressor_h
     ident = torch.eye(3, dtype=dtype, device=device)
     if pose2rot:
         if pose.numel() == batch_size * 24 * 4:
-            rot_mats = quat_to_rotmat(pose.reshape(batch_size * 24, 4)).reshape(batch_size, 24, 3, 3)
+            rot_mats = quat_to_rotmat(pose.reshape(
+                batch_size * 24, 4)).reshape(batch_size, 24, 3, 3)
         else:
             rot_mats = batch_rodrigues(
                 pose.view(-1, 3), dtype=dtype).view([batch_size, -1, 3, 3])
@@ -266,7 +268,8 @@ def lbs(betas, pose, v_template, shapedirs, posedirs, J_regressor, J_regressor_h
 
     v_posed = pose_offsets + v_shaped
     # 4. Get the global joint location
-    J_transformed, A = batch_rigid_transform(rot_mats, J, parents[:24], dtype=dtype)
+    J_transformed, A = batch_rigid_transform(
+        rot_mats, J, parents[:24], dtype=dtype)
 
     # 5. Do skinning:
     # W is N x V x (J + 1)
@@ -345,7 +348,8 @@ def hybrik(betas, global_orient, pose_skeleton, phis,
     if leaf_thetas is not None:
         rest_J = vertices2joints(J_regressor, v_shaped)
     else:
-        rest_J = torch.zeros((v_shaped.shape[0], 29, 3), dtype=dtype, device=device)
+        rest_J = torch.zeros(
+            (v_shaped.shape[0], 29, 3), dtype=dtype, device=device)
         rest_J[:, :24] = vertices2joints(J_regressor, v_shaped)
 
         leaf_number = [411, 2445, 5905, 3216, 6617]
@@ -366,7 +370,8 @@ def hybrik(betas, global_orient, pose_skeleton, phis,
 
     test_joints = True
     if test_joints:
-        J_transformed, A = batch_rigid_transform(rot_mats, rest_J[:, :24].clone(), parents[:24], dtype=dtype)
+        J_transformed, A = batch_rigid_transform(
+            rot_mats, rest_J[:, :24].clone(), parents[:24], dtype=dtype)
     else:
         J_transformed = None
 
@@ -598,12 +603,14 @@ def batch_inverse_kinematics_transform(
     rotate_rest_pose[:, 0] = rel_rest_pose[:, 0]
 
     rel_pose_skeleton = torch.unsqueeze(pose_skeleton.clone(), dim=-1).detach()
-    rel_pose_skeleton[:, 1:] = rel_pose_skeleton[:, 1:] - rel_pose_skeleton[:, parents[1:]].clone()
+    rel_pose_skeleton[:, 1:] = rel_pose_skeleton[:, 1:] - \
+        rel_pose_skeleton[:, parents[1:]].clone()
     rel_pose_skeleton[:, 0] = rel_rest_pose[:, 0]
 
     # the predicted final pose
     final_pose_skeleton = torch.unsqueeze(pose_skeleton.clone(), dim=-1)
-    final_pose_skeleton = final_pose_skeleton - final_pose_skeleton[:, 0:1] + rel_rest_pose[:, 0:1]
+    final_pose_skeleton = final_pose_skeleton - \
+        final_pose_skeleton[:, 0:1] + rel_rest_pose[:, 0:1]
 
     rel_rest_pose = rel_rest_pose
     rel_pose_skeleton = rel_pose_skeleton
@@ -687,15 +694,18 @@ def batch_inverse_kinematics_transform(
                 rel_rest_pose[:, i]
             )
             # (B, 3, 1)
-            child_final_loc = final_pose_skeleton[:, children[i]] - rotate_rest_pose[:, i]
+            child_final_loc = final_pose_skeleton[:,
+                                                  children[i]] - rotate_rest_pose[:, i]
 
             if not train:
                 orig_vec = rel_pose_skeleton[:, children[i]]
                 template_vec = rel_rest_pose[:, children[i]]
                 norm_t = torch.norm(template_vec, dim=1, keepdim=True)
-                orig_vec = orig_vec * norm_t / torch.norm(orig_vec, dim=1, keepdim=True)
+                orig_vec = orig_vec * norm_t / \
+                    torch.norm(orig_vec, dim=1, keepdim=True)
 
-                diff = torch.norm(child_final_loc - orig_vec, dim=1, keepdim=True)
+                diff = torch.norm(child_final_loc - orig_vec,
+                                  dim=1, keepdim=True)
                 big_diff_idx = torch.where(diff > 15 / 1000)[0]
 
                 child_final_loc[big_diff_idx] = orig_vec[big_diff_idx]
@@ -716,7 +726,8 @@ def batch_inverse_kinematics_transform(
             axis_norm = torch.norm(axis, dim=1, keepdim=True)
 
             # (B, 1, 1)
-            cos = torch.sum(child_rest_loc * child_final_loc, dim=1, keepdim=True) / (child_rest_norm * child_final_norm + 1e-8)
+            cos = torch.sum(child_rest_loc * child_final_loc, dim=1,
+                            keepdim=True) / (child_rest_norm * child_final_norm + 1e-8)
             sin = axis_norm / (child_rest_norm * child_final_norm + 1e-8)
 
             # (B, 3, 1)
@@ -806,12 +817,14 @@ def batch_inverse_kinematics_transform_optimized(
     rotate_rest_pose[:, 0] = rel_rest_pose[:, 0]
 
     rel_pose_skeleton = torch.unsqueeze(pose_skeleton.clone(), dim=-1).detach()
-    rel_pose_skeleton[:, 1:] = rel_pose_skeleton[:, 1:] - rel_pose_skeleton[:, parents[1:]].clone()
+    rel_pose_skeleton[:, 1:] = rel_pose_skeleton[:, 1:] - \
+        rel_pose_skeleton[:, parents[1:]].clone()
     rel_pose_skeleton[:, 0] = rel_rest_pose[:, 0]
 
     # the predicted final pose
     final_pose_skeleton = torch.unsqueeze(pose_skeleton.clone(), dim=-1)
-    final_pose_skeleton = final_pose_skeleton - final_pose_skeleton[:, [0]] + rel_rest_pose[:, [0]]
+    final_pose_skeleton = final_pose_skeleton - \
+        final_pose_skeleton[:, [0]] + rel_rest_pose[:, [0]]
 
     # assert phis.dim() == 3
     phis = phis / (torch.norm(phis, dim=2, keepdim=True) + 1e-8)
@@ -827,7 +840,8 @@ def batch_inverse_kinematics_transform_optimized(
     # rot_mat_chain = [global_orient_mat]
     # rot_mat_local = [global_orient_mat]
 
-    rot_mat_chain = torch.zeros((batch_size, 24, 3, 3), dtype=torch.float32, device=pose_skeleton.device)
+    rot_mat_chain = torch.zeros(
+        (batch_size, 24, 3, 3), dtype=torch.float32, device=pose_skeleton.device)
     rot_mat_local = torch.zeros_like(rot_mat_chain)
     rot_mat_chain[:, 0] = global_orient_mat
     rot_mat_local[:, 0] = global_orient_mat
@@ -921,31 +935,38 @@ def batch_inverse_kinematics_transform_optimized(
                 rel_rest_pose[:, indices]
             )
             # (B, 3, 1)
-            child_final_loc = final_pose_skeleton[:, children[indices]] - rotate_rest_pose[:, indices]
+            child_final_loc = final_pose_skeleton[:,
+                                                  children[indices]] - rotate_rest_pose[:, indices]
 
             if not train:
                 orig_vec = rel_pose_skeleton[:, children[indices]]
                 template_vec = rel_rest_pose[:, children[indices]]
 
-                norm_t = torch.norm(template_vec, dim=2, keepdim=True)  # B x K x 1
+                norm_t = torch.norm(template_vec, dim=2,
+                                    keepdim=True)  # B x K x 1
 
-                orig_vec = orig_vec * norm_t / torch.norm(orig_vec, dim=2, keepdim=True)  # B x K x 3
+                orig_vec = orig_vec * norm_t / \
+                    torch.norm(orig_vec, dim=2, keepdim=True)  # B x K x 3
 
-                diff = torch.norm(child_final_loc - orig_vec, dim=2, keepdim=True).reshape(-1)
+                diff = torch.norm(child_final_loc - orig_vec,
+                                  dim=2, keepdim=True).reshape(-1)
                 big_diff_idx = torch.where(diff > 15 / 1000)[0]
 
                 # child_final_loc[big_diff_idx] = orig_vec[big_diff_idx]
-                child_final_loc = child_final_loc.reshape(batch_size * len_indices, 3, 1)
+                child_final_loc = child_final_loc.reshape(
+                    batch_size * len_indices, 3, 1)
                 orig_vec = orig_vec.reshape(batch_size * len_indices, 3, 1)
                 child_final_loc[big_diff_idx] = orig_vec[big_diff_idx]
-                child_final_loc = child_final_loc.reshape(batch_size, len_indices, 3, 1)
+                child_final_loc = child_final_loc.reshape(
+                    batch_size, len_indices, 3, 1)
 
             child_final_loc = torch.matmul(
                 rot_mat_chain[:, parents[indices]].transpose(2, 3),
                 child_final_loc
             )
 
-            child_rest_loc = rel_rest_pose[:, children[indices]]  # need rotation back ?
+            # need rotation back ?
+            child_rest_loc = rel_rest_pose[:, children[indices]]
             # (B, K, 1, 1)
             child_final_norm = torch.norm(child_final_loc, dim=2, keepdim=True)
             child_rest_norm = torch.norm(child_rest_loc, dim=2, keepdim=True)
@@ -955,7 +976,8 @@ def batch_inverse_kinematics_transform_optimized(
             axis_norm = torch.norm(axis, dim=2, keepdim=True)
 
             # (B, K, 1, 1)
-            cos = torch.sum(child_rest_loc * child_final_loc, dim=2, keepdim=True) / (child_rest_norm * child_final_norm + 1e-8)
+            cos = torch.sum(child_rest_loc * child_final_loc, dim=2,
+                            keepdim=True) / (child_rest_norm * child_final_norm + 1e-8)
             sin = axis_norm / (child_rest_norm * child_final_norm + 1e-8)
 
             # (B, K, 3, 1)
@@ -964,11 +986,13 @@ def batch_inverse_kinematics_transform_optimized(
             # Convert location revolve to rot_mat by rodrigues
             # (B, K, 1, 1)
             rx, ry, rz = torch.split(axis, 1, dim=2)
-            zeros = torch.zeros((batch_size, len_indices, 1, 1), dtype=dtype, device=device)
+            zeros = torch.zeros(
+                (batch_size, len_indices, 1, 1), dtype=dtype, device=device)
 
             K = torch.cat([zeros, -rz, ry, rz, zeros, -rx, -ry, rx, zeros], dim=2) \
                 .view((batch_size, len_indices, 3, 3))
-            ident = torch.eye(3, dtype=dtype, device=device).reshape(1, 1, 3, 3)
+            ident = torch.eye(
+                3, dtype=dtype, device=device).reshape(1, 1, 3, 3)
             rot_mat_loc = ident + sin * K + (1 - cos) * torch.matmul(K, K)
 
             # Convert spin to rot_mat
@@ -976,10 +1000,12 @@ def batch_inverse_kinematics_transform_optimized(
             spin_axis = child_rest_loc / child_rest_norm
             # (B, K, 1, 1)
             rx, ry, rz = torch.split(spin_axis, 1, dim=2)
-            zeros = torch.zeros((batch_size, len_indices, 1, 1), dtype=dtype, device=device)
+            zeros = torch.zeros(
+                (batch_size, len_indices, 1, 1), dtype=dtype, device=device)
             K = torch.cat([zeros, -rz, ry, rz, zeros, -rx, -ry, rx, zeros], dim=2) \
                 .view((batch_size, len_indices, 3, 3))
-            ident = torch.eye(3, dtype=dtype, device=device).reshape(1, 1, 3, 3)
+            ident = torch.eye(
+                3, dtype=dtype, device=device).reshape(1, 1, 3, 3)
             # (B, K, 1, 1)
             phi_indices = [item - 1 for item in indices]
             cos, sin = torch.split(phis[:, phi_indices], 1, dim=2)
@@ -1005,7 +1031,6 @@ def batch_inverse_kinematics_transform_optimized(
     rot_mats = rot_mat_local
 
     return rot_mats, rotate_rest_pose.squeeze(-1)
-
 
 
 def batch_get_pelvis_orient_svd(rel_pose_skeleton, rel_rest_pose, parents, children, dtype):
@@ -1035,9 +1060,11 @@ def batch_get_pelvis_orient_svd(rel_pose_skeleton, rel_rest_pose, parents, child
 
     # rot_mat_non_zero = torch.bmm(V, U.transpose(1, 2))
     det_u_v = torch.det(torch.bmm(V, U.transpose(1, 2)))
-    det_modify_mat = torch.eye(3, device=U.device).unsqueeze(0).expand(U.shape[0], -1, -1).clone()
+    det_modify_mat = torch.eye(3, device=U.device).unsqueeze(
+        0).expand(U.shape[0], -1, -1).clone()
     det_modify_mat[:, 2, 2] = det_u_v
-    rot_mat_non_zero = torch.bmm(torch.bmm(V, det_modify_mat), U.transpose(1, 2))
+    rot_mat_non_zero = torch.bmm(
+        torch.bmm(V, det_modify_mat), U.transpose(1, 2))
 
     rot_mat[mask_zero != 0] = rot_mat_non_zero
 
@@ -1070,15 +1097,20 @@ def batch_get_pelvis_orient(rel_pose_skeleton, rel_rest_pose, parents, children,
     for child in pelvis_child:
         if child == int(children[0]):
             continue
-        center_final_loc = center_final_loc + rel_pose_skeleton[:, child].clone()
+        center_final_loc = center_final_loc + \
+            rel_pose_skeleton[:, child].clone()
         center_rest_loc = center_rest_loc + rel_rest_pose[:, child].clone()
     center_final_loc = center_final_loc / (len(pelvis_child) - 1)
     center_rest_loc = center_rest_loc / (len(pelvis_child) - 1)
 
     center_rest_loc = torch.matmul(rot_mat_spine, center_rest_loc)
 
-    center_final_loc = center_final_loc - torch.sum(center_final_loc * spine_norm, dim=1, keepdim=True) * spine_norm
-    center_rest_loc = center_rest_loc - torch.sum(center_rest_loc * spine_norm, dim=1, keepdim=True) * spine_norm
+    center_final_loc = center_final_loc - \
+        torch.sum(center_final_loc * spine_norm,
+                  dim=1, keepdim=True) * spine_norm
+    center_rest_loc = center_rest_loc - \
+        torch.sum(center_rest_loc * spine_norm,
+                  dim=1, keepdim=True) * spine_norm
 
     center_final_loc_norm = torch.norm(center_final_loc, dim=1, keepdim=True)
     center_rest_loc_norm = torch.norm(center_rest_loc, dim=1, keepdim=True)
@@ -1088,7 +1120,8 @@ def batch_get_pelvis_orient(rel_pose_skeleton, rel_rest_pose, parents, children,
     axis_norm = torch.norm(axis, dim=1, keepdim=True)
 
     # (B, 1, 1)
-    cos = torch.sum(center_rest_loc * center_final_loc, dim=1, keepdim=True) / (center_rest_loc_norm * center_final_loc_norm + 1e-8)
+    cos = torch.sum(center_rest_loc * center_final_loc, dim=1, keepdim=True) / \
+        (center_rest_loc_norm * center_final_loc_norm + 1e-8)
     sin = axis_norm / (center_rest_loc_norm * center_final_loc_norm + 1e-8)
 
     assert torch.sum(torch.isnan(cos)
@@ -1139,7 +1172,8 @@ def batch_get_3children_orient_svd(rel_pose_skeleton, rel_rest_pose, rot_mat_cha
 
     # rot_mat = torch.bmm(V, U.transpose(1, 2))
     det_u_v = torch.det(torch.bmm(V, U.transpose(1, 2)))
-    det_modify_mat = torch.eye(3, device=U.device).unsqueeze(0).expand(U.shape[0], -1, -1).clone()
+    det_modify_mat = torch.eye(3, device=U.device).unsqueeze(
+        0).expand(U.shape[0], -1, -1).clone()
     det_modify_mat[:, 2, 2] = det_u_v
     rot_mat = torch.bmm(torch.bmm(V, det_modify_mat), U.transpose(1, 2))
 
@@ -1160,7 +1194,8 @@ def vectors2rotmat(vec_rest, vec_final, dtype):
     axis_norm = torch.norm(axis, dim=1, keepdim=True)
 
     # (B, 1, 1)
-    cos = torch.sum(vec_rest * vec_final, dim=1, keepdim=True) / (vec_rest_norm * vec_final_norm + 1e-8)
+    cos = torch.sum(vec_rest * vec_final, dim=1, keepdim=True) / \
+        (vec_rest_norm * vec_final_norm + 1e-8)
     sin = axis_norm / (vec_rest_norm * vec_final_norm + 1e-8)
 
     # (B, 3, 1)
@@ -1283,7 +1318,8 @@ def quat_to_rotmat(quat):
     """
     norm_quat = quat
     norm_quat = norm_quat / (norm_quat.norm(p=2, dim=1, keepdim=True) + 1e-8)
-    w, x, y, z = norm_quat[:, 0], norm_quat[:, 1], norm_quat[:, 2], norm_quat[:, 3]
+    w, x, y, z = norm_quat[:, 0], norm_quat[:,
+                                            1], norm_quat[:, 2], norm_quat[:, 3]
 
     B = quat.size(0)
 

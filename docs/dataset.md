@@ -11,34 +11,32 @@
 
 Please refer to [THuman2.0-Dataset](https://github.com/ytrock/THuman2.0-Dataset) to download the original scans into `data/thuman2/scans`, and its SMPL-X(male) fits into `data/thuman2/fits`. Then generate `all.txt` by `ls > ../all.txt` under `data/thuman2/scans`, which contains all the subject names (0000~0525).
 
-:eyes: `./sample_data` contains one example of THuman2.0
+:eyes: `./sample_data` contains one example of THuman2.0 and shows the data folder structure.
 
 ## Debug Mode
 
 ```bash
 conda activate icon
-cd ICON/scripts
-bash render_batch.sh debug all
-bash vis_batch.sh debug all
+bash scripts/render_batch.sh debug all
+bash scripts/vis_batch.sh debug all
 ```
 
 Then you will get the rendered samples & visibility results under `debug/`
 
 ## Generate Mode 
 
-**1. Rendering phrase**: RGB images, normal images, calibration array
+**1. Rendering phrase**: RGB images, normal images, calibration array. *If you need the depth maps, just set `depth=True` at `render_single.py:L56`*
 
 ```bash
 conda activate icon
-cd ICON/scripts
-bash render_batch.sh gen all
+bash scripts/render_batch.sh gen all
 ```
 You could check the rendering status from `log/render/thuman2-{num_views}-{size}-{part}.txt`
 
 **2. Visibility phrase**: SMPL-X based visibility computation
 
 ```bash
-bash vis_batch.sh gen all
+bash scripts/vis_batch.sh gen all
 ```
 You could check the visibility computing status from `log/vis/thuman2-{num_views}-{part}.txt`
 
@@ -49,9 +47,11 @@ You could check the visibility computing status from `log/vis/thuman2-{num_views
 
 ## Examples
 
-|<img src="../assets/rendering/080.png" width="150">|<img src="../assets/rendering/norm_F_080.png" width="150">|<img src="../assets/rendering/norm_B_080.png" width="150">|<img src="../assets/rendering/SMPL_norm_F_080.png" width="150">|<img src="../assets/rendering/SMPL_norm_B_080.png" width="150">|<img src="../assets/rendering/vis.png" width="150">|
-|---|---|---|---|---|---|
-|RGB Image|Normal(Front)|Normal(Back)|Normal(SMPL, Front)|Normal(SMPL, Back)|Visibility|
+|<img src="../assets/rendering/080.png" width="150">|<img src="../assets/rendering/norm_F_080.png" width="150">|<img src="../assets/rendering/norm_B_080.png" width="150">|<img src="../assets/rendering/SMPL_norm_F_080.png" width="150">|<img src="../assets/rendering/SMPL_norm_B_080.png" width="150">|
+|---|---|---|---|---|
+|RGB Image|Normal(Front)|Normal(Back)|Normal(SMPL-X, Front)|Normal(SMPL-X, Back)|
+|<img src="../assets/rendering/vis.png" width="150">|<img src="../assets/rendering/depth_F_080.png" width="150">|<img src="../assets/rendering/depth_B_080.png" width="150">|<img src="../assets/rendering/SMPL_depth_F_080.png" width="150">|<img src="../assets/rendering/SMPL_depth_B_080.png" width="150">|
+|Visibility|Depth(Front)|Depth(Back)|Depth(SMPL-X, Front)|Depth(SMPL-X, Back)|
 
 ## Citation
 If you use this dataset for your research, please consider citing:

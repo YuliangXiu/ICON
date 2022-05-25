@@ -1,11 +1,11 @@
 name: pifu
-ckpt_dir: "../data/ckpt/"
-resume_path: "../data/ckpt/pifu.ckpt"
-normal_path: "../data/ckpt/normal.ckpt"
-results_path: "../results"
+ckpt_dir: "./data/ckpt/"
+resume_path: "./data/ckpt/pifu.ckpt"
+normal_path: "./data/ckpt/normal.ckpt"
+results_path: "./results"
 
 dataset:
-  root: "../data/"
+  root: "./data/"
   rotation_num: 36
   num_sample_geo: 8000
   num_sample_color: 0

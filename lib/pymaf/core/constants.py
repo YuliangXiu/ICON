@@ -148,6 +148,6 @@ J24_FLIP_PERM = [
 ]
 # Permutation indices for the full set of 49 joints
 J49_FLIP_PERM = [0, 1, 5, 6, 7, 2, 3, 4, 8, 12, 13, 14, 9, 10, 11, 16, 15, 18, 17, 22, 23, 24, 19, 20, 21]\
-              + [25+i for i in J24_FLIP_PERM]
+    + [25+i for i in J24_FLIP_PERM]
 SMPL_J49_FLIP_PERM = [0, 1, 5, 6, 7, 2, 3, 4, 8, 12, 13, 14, 9, 10, 11, 16, 15, 18, 17, 22, 23, 24, 19, 20, 21]\
-              + [25+i for i in SMPL_JOINTS_FLIP_PERM]
+    + [25+i for i in SMPL_JOINTS_FLIP_PERM]

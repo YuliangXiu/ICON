@@ -48,7 +48,8 @@ class PareHead(nn.Module):
         iter_residual=False,
         num_iterations=3,
         shape_input_type='feats',  # 'feats.pose.shape.cam'
-        pose_input_type='feats',  # 'feats.neighbor_pose_feats.all_pose.self_pose.neighbor_pose.shape.cam'
+        # 'feats.neighbor_pose_feats.all_pose.self_pose.neighbor_pose.shape.cam'
+        pose_input_type='feats',
         pose_mlp_num_layers=1,
         shape_mlp_num_layers=1,
         pose_mlp_hidden_size=256,
@@ -59,8 +60,10 @@ class PareHead(nn.Module):
         use_postconv_keypoint_attention=False,
         keypoint_attention_act='softmax',
         use_scale_keypoint_attention=False,
-        use_branch_nonlocal=None,  # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
-        use_final_nonlocal=None,  # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
+        # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
+        use_branch_nonlocal=None,
+        # 'concatenation', 'dot_product', 'embedded_gaussian', 'gaussian'
+        use_final_nonlocal=None,
         backbone='resnet',
         use_hmr_regression=False,
         use_coattention=False,
@@ -210,7 +213,8 @@ class PareHead(nn.Module):
                     in ('part_segm', 'part_segm_pool') else num_joints),
             )
 
-            soft_att_feature_size = smpl_final_dim  # if use_hmr_regression else pose_mlp_inp_dim
+            # if use_hmr_regression else pose_mlp_inp_dim
+            soft_att_feature_size = smpl_final_dim
             self.smpl_final_layer = nn.Sequential(
                 conv3x3(num_deconv_filters[-1], 256),
                 nn.BatchNorm2d(256),
@@ -329,14 +333,14 @@ class PareHead(nn.Module):
                     in_channels=num_deconv_filters[-1],
                     sub_sample=False,
                     bn_layer=True,
-                )
+            )
 
             self.branch_3d_nonlocal = eval(
                 self.use_branch_nonlocal).NONLocalBlock2D(
                     in_channels=num_deconv_filters[-1],
                     sub_sample=False,
                     bn_layer=True,
-                )
+            )
 
         if self.use_final_nonlocal:
             logger.info(
@@ -346,14 +350,14 @@ class PareHead(nn.Module):
                     in_channels=self.pose_mlp_inp_dim,
                     sub_sample=False,
                     bn_layer=True,
-                )
+            )
 
             self.final_shape_nonlocal = eval(
                 self.use_final_nonlocal).NONLocalBlock1D(
                     in_channels=num_features_smpl,
                     sub_sample=False,
                     bn_layer=True,
-                )
+            )
 
         if self.use_keypoint_attention:
             logger.info('Keypoint attention is active')

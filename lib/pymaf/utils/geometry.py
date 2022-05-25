@@ -48,7 +48,7 @@ def quat_to_rotmat(quat):
         w2 - x2 + y2 - z2, 2 * yz - 2 * wx, 2 * xz - 2 * wy, 2 * wx + 2 * yz,
         w2 - x2 - y2 + z2
     ],
-                         dim=1).view(B, 3, 3)
+        dim=1).view(B, 3, 3)
     return rotMat
 
 
@@ -248,7 +248,7 @@ def projection(pred_joints, pred_camera, retain_z=False):
         pred_camera[:, 1], pred_camera[:, 2], 2 * 5000. /
         (224. * pred_camera[:, 0] + 1e-9)
     ],
-                             dim=-1)
+        dim=-1)
     batch_size = pred_joints.shape[0]
     camera_center = torch.zeros(batch_size, 2)
     pred_keypoints_2d = perspective_projection(
@@ -382,11 +382,11 @@ def estimate_translation(S, joints_2d, focal_length=5000., img_size=224.):
 
 def Rot_y(angle, category='torch', prepend_dim=True, device=None):
     '''Rotate around y-axis by angle
-	Args:
-		category: 'torch' or 'numpy'
-		prepend_dim: prepend an extra dimension
-	Return: Rotation matrix with shape [1, 3, 3] (prepend_dim=True)
-	'''
+        Args:
+                category: 'torch' or 'numpy'
+                prepend_dim: prepend an extra dimension
+        Return: Rotation matrix with shape [1, 3, 3] (prepend_dim=True)
+        '''
     m = np.array([[np.cos(angle), 0., np.sin(angle)], [0., 1., 0.],
                   [-np.sin(angle), 0., np.cos(angle)]])
     if category == 'torch':
@@ -406,11 +406,11 @@ def Rot_y(angle, category='torch', prepend_dim=True, device=None):
 
 def Rot_x(angle, category='torch', prepend_dim=True, device=None):
     '''Rotate around x-axis by angle
-	Args:
-		category: 'torch' or 'numpy'
-		prepend_dim: prepend an extra dimension
-	Return: Rotation matrix with shape [1, 3, 3] (prepend_dim=True)
-	'''
+        Args:
+                category: 'torch' or 'numpy'
+                prepend_dim: prepend an extra dimension
+        Return: Rotation matrix with shape [1, 3, 3] (prepend_dim=True)
+        '''
     m = np.array([[1., 0., 0.], [0., np.cos(angle), -np.sin(angle)],
                   [0., np.sin(angle), np.cos(angle)]])
     if category == 'torch':
@@ -430,11 +430,11 @@ def Rot_x(angle, category='torch', prepend_dim=True, device=None):
 
 def Rot_z(angle, category='torch', prepend_dim=True, device=None):
     '''Rotate around z-axis by angle
-	Args:
-		category: 'torch' or 'numpy'
-		prepend_dim: prepend an extra dimension
-	Return: Rotation matrix with shape [1, 3, 3] (prepend_dim=True)
-	'''
+        Args:
+                category: 'torch' or 'numpy'
+                prepend_dim: prepend an extra dimension
+        Return: Rotation matrix with shape [1, 3, 3] (prepend_dim=True)
+        '''
     m = np.array([[np.cos(angle), -np.sin(angle), 0.],
                   [np.sin(angle), np.cos(angle), 0.], [0., 0., 1.]])
     if category == 'torch':

@@ -13,6 +13,6 @@ do
     # num_views = 36
     # MODE = gen (process all subjects) | debug (only one subject)
     # PART = filename of render_list
-    bash vis_single.sh 6 $DATASET 36 $MODE $PART
+    bash scripts/vis_single.sh 6 $DATASET 36 $MODE $PART
     echo "$DATASET END----------"
 done

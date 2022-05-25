@@ -75,7 +75,7 @@ def get_mpii3d_joint_names():
         'spine3',  # 0,
         'spine4',  # 1,
         'spine2',  # 2,
-        'Spine (H36M)',  #'spine', # 3,
+        'Spine (H36M)',  # 'spine', # 3,
         'hip',  # 'pelvis', # 4,
         'neck',  # 5,
         'Head (H36M)',  # 'head', # 6,
@@ -92,12 +92,12 @@ def get_mpii3d_joint_names():
         'right_hand',  # 17,
         'lhip',  # left_hip',# 18,
         'lknee',  # 'left_knee',# 19,
-        'lankle',  #left ankle # 20
+        'lankle',  # left ankle # 20
         'left_foot',  # 21
         'left_toe',  # 22
         "rhip",  # 'right_hip',# 23
         "rknee",  # 'right_knee',# 24
-        "rankle",  #'right_ankle', # 25
+        "rankle",  # 'right_ankle', # 25
         'right_foot',  # 26
         'right_toe'  # 27
     ]

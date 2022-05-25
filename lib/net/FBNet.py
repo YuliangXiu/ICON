@@ -124,7 +124,7 @@ class LocalEnhancer(pl.LightningModule):
 
         ###### local enhancer layers #####
         for n in range(1, n_local_enhancers + 1):
-            ### downsample
+            # downsample
             ngf_global = ngf * (2**(n_local_enhancers - n))
             model_downsample = [
                 nn.ReflectionPad2d(3),
@@ -139,7 +139,7 @@ class LocalEnhancer(pl.LightningModule):
                 norm_layer(ngf_global * 2),
                 nn.ReLU(True)
             ]
-            ### residual blocks
+            # residual blocks
             model_upsample = []
             for i in range(n_blocks_local):
                 model_upsample += [
@@ -148,7 +148,7 @@ class LocalEnhancer(pl.LightningModule):
                                 norm_layer=norm_layer)
                 ]
 
-            ### upsample
+            # upsample
             model_upsample += [
                 nn.ConvTranspose2d(ngf_global * 2,
                                    ngf_global,
@@ -160,7 +160,7 @@ class LocalEnhancer(pl.LightningModule):
                 nn.ReLU(True)
             ]
 
-            ### final convolution
+            # final convolution
             if n == n_local_enhancers:
                 model_upsample += [
                     nn.ReflectionPad2d(3),
@@ -179,14 +179,14 @@ class LocalEnhancer(pl.LightningModule):
                                        count_include_pad=False)
 
     def forward(self, input):
-        ### create input pyramid
+        # create input pyramid
         input_downsampled = [input]
         for i in range(self.n_local_enhancers):
             input_downsampled.append(self.downsample(input_downsampled[-1]))
 
-        ### output at coarest level
+        # output at coarest level
         output_prev = self.model(input_downsampled[-1])
-        ### build up one layer at a time
+        # build up one layer at a time
         for n_local_enhancers in range(1, self.n_local_enhancers + 1):
             model_downsample = getattr(self,
                                        'model' + str(n_local_enhancers) + '_1')
@@ -218,7 +218,7 @@ class GlobalGenerator(pl.LightningModule):
             nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0),
             norm_layer(ngf), activation
         ]
-        ### downsample
+        # downsample
         for i in range(n_downsampling):
             mult = 2**i
             model += [
@@ -230,7 +230,7 @@ class GlobalGenerator(pl.LightningModule):
                 norm_layer(ngf * mult * 2), activation
             ]
 
-        ### resnet blocks
+        # resnet blocks
         mult = 2**n_downsampling
         for i in range(n_blocks):
             model += [
@@ -240,7 +240,7 @@ class GlobalGenerator(pl.LightningModule):
                             norm_layer=norm_layer)
             ]
 
-        ### upsample
+        # upsample
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
             model += [
@@ -335,7 +335,7 @@ class Encoder(pl.LightningModule):
             norm_layer(ngf),
             nn.ReLU(True)
         ]
-        ### downsample
+        # downsample
         for i in range(n_downsampling):
             mult = 2**i
             model += [
@@ -348,7 +348,7 @@ class Encoder(pl.LightningModule):
                 nn.ReLU(True)
             ]
 
-        ### upsample
+        # upsample
         for i in range(n_downsampling):
             mult = 2**(n_downsampling - i)
             model += [

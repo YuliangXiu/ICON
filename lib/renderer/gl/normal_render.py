@@ -31,10 +31,10 @@ from .norm_render import NormRender
 class NormalRender(NormRender):
     def __init__(self, width=1600, height=1200, name='Normal Renderer'):
         NormRender.__init__(self,
-                           width,
-                           height,
-                           name,
-                           program_files=['normal.vs', 'normal.fs'])
+                            width,
+                            height,
+                            name,
+                            program_files=['normal.vs', 'normal.fs'])
 
         self.norm_buffer = glGenBuffers(1)
 

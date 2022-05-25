@@ -67,6 +67,8 @@ Optional:
   bash fetch_hps.sh
   ```
 
+  :eyes: If you want to support your HPS in ICON, please refer to [commit #060e265](https://github.com/YuliangXiu/ICON/commit/060e265bd253c6a34e65c9d0a5288c6d7ffaf68e) and [commit #3663704](https://github.com/YuliangXiu/ICON/commit/36637046dcbb5667cdfbee3b9c91b934d4c5dd05), then fork repo & pull request.
+
 ## Citation
 :+1: Please consider citing these awesome HPS approaches
 

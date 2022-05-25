@@ -14,8 +14,15 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from lib.common.seg3d_lossless import Seg3dLossless
+from lib.dataset.Evaluator import Evaluator
+from lib.net import HGPIFuNet
+from lib.common.train_util import *
+from lib.renderer.gl.init_gl import initialize_GL_context
+from lib.common.render import Render
+from lib.dataset.mesh_util import SMPLX, update_mesh_shape_prior_losses, get_visibility
+import warnings
 import logging
-import sys
 import torch
 import smplx
 import numpy as np
@@ -26,19 +33,8 @@ import pytorch_lightning as pl
 torch.backends.cudnn.benchmark = True
 
 logging.getLogger("lightning").setLevel(logging.ERROR)
-import warnings
 
 warnings.filterwarnings("ignore")
-
-sys.path.insert(0, "../")
-
-from lib.dataset.mesh_util import SMPLX, update_mesh_shape_prior_losses, get_visibility
-from lib.common.render import Render
-from lib.renderer.gl.init_gl import initialize_GL_context
-from lib.common.train_util import *
-from lib.net import HGPIFuNet
-from lib.dataset.Evaluator import Evaluator
-from lib.common.seg3d_lossless import Seg3dLossless
 
 
 class ICON(pl.LightningModule):
@@ -81,7 +77,8 @@ class ICON(pl.LightningModule):
         self.resolutions = self.resolutions.astype(np.int16).tolist()
 
         self.icon_keys = ["smpl_verts", "smpl_faces", "smpl_vis", "smpl_cmap"]
-        self.pamir_keys = ["voxel_verts", "voxel_faces", "pad_v_num", "pad_f_num"]
+        self.pamir_keys = ["voxel_verts",
+                           "voxel_faces", "pad_v_num", "pad_f_num"]
 
         self.reconEngine = Seg3dLossless(
             query_func=query_func,
@@ -238,7 +235,8 @@ class ICON(pl.LightningModule):
             k.replace("train_", ""): torch.tensor(v) for k, v in metrics_log.items()
         }
 
-        metrics_return.update({"loss": error_G, "log": tf_log, "progress_bar": bar_log})
+        metrics_return.update(
+            {"loss": error_G, "log": tf_log, "progress_bar": bar_log})
 
         return metrics_return
 
@@ -388,10 +386,12 @@ class ICON(pl.LightningModule):
             )
 
             smpl_verts = smpl_out.vertices[0] * 100.0
-            smpl_verts = projection(smpl_verts, batch["calib"][0], format="tensor")
+            smpl_verts = projection(
+                smpl_verts, batch["calib"][0], format="tensor")
             smpl_verts[:, 1] *= -1
             # render optimized mesh (normal, T_normal, image [-1,1])
-            self.render.load_simple_mesh(smpl_verts, in_tensor_dict["smpl_faces"])
+            self.render.load_simple_mesh(
+                smpl_verts, in_tensor_dict["smpl_faces"])
             (
                 in_tensor_dict["T_normal_F"],
                 in_tensor_dict["T_normal_B"],
@@ -420,7 +420,8 @@ class ICON(pl.LightningModule):
             ).permute(1, 2, 0)
             gt_arr = ((gt_arr + 1.0) * 0.5).to(self.device)
             bg_color = (
-                torch.Tensor([0.5, 0.5, 0.5]).unsqueeze(0).unsqueeze(0).to(self.device)
+                torch.Tensor([0.5, 0.5, 0.5]).unsqueeze(
+                    0).unsqueeze(0).to(self.device)
             )
             gt_arr = ((gt_arr - bg_color).sum(dim=-1) != 0.0).float()
             loss += torch.abs(smpl_arr - gt_arr).mean()
@@ -465,7 +466,8 @@ class ICON(pl.LightningModule):
         deform_verts = torch.full(
             verts_pr.shape, 0.0, device=self.device, requires_grad=True
         )
-        optimizer_cloth = torch.optim.SGD([deform_verts], lr=1e-1, momentum=0.9)
+        optimizer_cloth = torch.optim.SGD(
+            [deform_verts], lr=1e-1, momentum=0.9)
         scheduler_cloth = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer_cloth, mode="min", factor=0.1, verbose=0, min_lr=1e-3, patience=5
         )
@@ -497,7 +499,8 @@ class ICON(pl.LightningModule):
 
             for k in losses.keys():
                 if k != "smpl":
-                    cloth_loss_per_cls = losses[k]["value"] * losses[k]["weight"]
+                    cloth_loss_per_cls = losses[k]["value"] * \
+                        losses[k]["weight"]
                     pbar_desc += f"{k}: {cloth_loss_per_cls:.3f} | "
                     cloth_loss += cloth_loss_per_cls
 
@@ -508,7 +511,8 @@ class ICON(pl.LightningModule):
 
         # convert from GT to SDF
         deform_verts = deform_verts.flatten().detach()
-        deform_verts[torch.topk(torch.abs(deform_verts), 30)[1]] = deform_verts.mean()
+        deform_verts[torch.topk(torch.abs(deform_verts), 30)[
+            1]] = deform_verts.mean()
         deform_verts = deform_verts.view(-1, 3).cpu()
 
         verts_pr += deform_verts
@@ -554,7 +558,8 @@ class ICON(pl.LightningModule):
 
         # update the new T_normal_F/B
         in_tensor_dict.update(
-            self.evaluator.render_normal(batch["smpl_verts"], batch["smpl_faces"])
+            self.evaluator.render_normal(
+                batch["smpl_verts"], batch["smpl_faces"])
         )
 
         # update the new smpl_vis
@@ -562,7 +567,8 @@ class ICON(pl.LightningModule):
         smpl_vis = get_visibility(
             xy,
             z,
-            torch.as_tensor(self.smpl_data.faces).type_as(batch["smpl_verts"]).long(),
+            torch.as_tensor(self.smpl_data.faces).type_as(
+                batch["smpl_verts"]).long(),
         )
         in_tensor_dict.update({"smpl_vis": smpl_vis.unsqueeze(0)})
 
@@ -577,23 +583,28 @@ class ICON(pl.LightningModule):
 
         with torch.no_grad():
             if self.cfg.optim_body:
-                features, inter, in_tensor_dict = self.optim_body(in_tensor_dict, batch)
+                features, inter, in_tensor_dict = self.optim_body(
+                    in_tensor_dict, batch)
             else:
-                features, inter = self.netG.filter(in_tensor_dict, return_inter=True)
+                features, inter = self.netG.filter(
+                    in_tensor_dict, return_inter=True)
             sdf = self.reconEngine(
                 opt=self.cfg, netG=self.netG, features=features, proj_matrix=None
             )
 
         # save inter results
         image = (
-            in_tensor_dict["image"][0].permute(1, 2, 0).detach().cpu().numpy() + 1.0
+            in_tensor_dict["image"][0].permute(
+                1, 2, 0).detach().cpu().numpy() + 1.0
         ) * 0.5
         smpl_F = (
-            in_tensor_dict["T_normal_F"][0].permute(1, 2, 0).detach().cpu().numpy()
+            in_tensor_dict["T_normal_F"][0].permute(
+                1, 2, 0).detach().cpu().numpy()
             + 1.0
         ) * 0.5
         smpl_B = (
-            in_tensor_dict["T_normal_B"][0].permute(1, 2, 0).detach().cpu().numpy()
+            in_tensor_dict["T_normal_B"][0].permute(
+                1, 2, 0).detach().cpu().numpy()
             + 1.0
         ) * 0.5
         image_inter = np.concatenate(
@@ -628,7 +639,8 @@ class ICON(pl.LightningModule):
         self.evaluator.set_mesh(self.result_eval, scale_factor=1.0)
         self.evaluator.space_transfer()
 
-        chamfer, p2s = self.evaluator.calculate_chamfer_p2s(sampled_points=1000)
+        chamfer, p2s = self.evaluator.calculate_chamfer_p2s(
+            sampled_points=1000)
         normal_consist = self.evaluator.calculate_normal_consist(
             save_demo_img=osp.join(self.export_dir, f"{mesh_rot}_nc.png")
         )
@@ -673,7 +685,8 @@ class ICON(pl.LightningModule):
         for dim in self.in_geo_dim:
             img = resize(
                 np.tile(
-                    ((inter[:dim].cpu().numpy() + 1.0) / 2.0).transpose(1, 2, 0),
+                    ((inter[:dim].cpu().numpy() + 1.0) /
+                     2.0).transpose(1, 2, 0),
                     (1, 1, int(3 / dim)),
                 ),
                 (height, height),
@@ -710,7 +723,8 @@ class ICON(pl.LightningModule):
                 anti_aliasing=True,
             )
             image_inter = self.tensor2image(height, inter[0])
-            image = np.concatenate([image_pred, image_gt] + image_inter, axis=1)
+            image = np.concatenate(
+                [image_pred, image_gt] + image_inter, axis=1)
 
             step_id = self.global_step if dataset == "train" else self.global_step + idx
             self.logger.experiment.add_image(

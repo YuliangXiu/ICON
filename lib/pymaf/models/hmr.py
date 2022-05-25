@@ -63,6 +63,7 @@ class Bottleneck(nn.Module):
 class ResNet_Backbone(nn.Module):
     """ Feature Extrator with ResNet backbone
     """
+
     def __init__(self, model='res50', pretrained=True):
         if model == 'res50':
             block, layers = Bottleneck, [3, 4, 6, 3]
@@ -176,6 +177,7 @@ class ResNet_Backbone(nn.Module):
 class HMR(nn.Module):
     """ SMPL Iterative Regressor with ResNet50 backbone
     """
+
     def __init__(self, block, layers, smpl_mean_params):
         self.inplanes = 64
         super().__init__()

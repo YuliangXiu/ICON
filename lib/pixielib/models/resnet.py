@@ -11,6 +11,9 @@ Loads different resnet models
     mark:   copied from pytorch source code
 '''
 
+
+
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -19,7 +22,6 @@ import torch.optim as optim
 import numpy as np
 import math
 import torchvision
-
 class ResNet(nn.Module):
     def __init__(self, block, layers, num_classes=1000):
         self.inplanes = 64
@@ -75,9 +77,10 @@ class ResNet(nn.Module):
         x2 = self.avgpool(x1)
         x2 = x2.view(x2.size(0), -1)
         # x = self.fc(x)
-        ## x2: [bz, 2048] for shape
-        ## x1: [bz, 2048, 7, 7] for texture
+        # x2: [bz, 2048] for shape
+        # x1: [bz, 2048, 7, 7] for texture
         return x2
+
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -117,10 +120,12 @@ class Bottleneck(nn.Module):
 
         return out
 
+
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -153,6 +158,7 @@ class BasicBlock(nn.Module):
 
         return out
 
+
 def copy_parameter_from_resnet(model, resnet_dict):
     cur_state_dict = model.state_dict()
     # import ipdb; ipdb.set_trace()
@@ -169,25 +175,31 @@ def copy_parameter_from_resnet(model, resnet_dict):
             continue
     # print('copy resnet state dict finished!')
 
+
 def load_ResNet50Model():
     model = ResNet(Bottleneck, [3, 4, 6, 3])
-    copy_parameter_from_resnet(model, torchvision.models.resnet50(pretrained = True).state_dict())
+    copy_parameter_from_resnet(
+        model, torchvision.models.resnet50(pretrained=True).state_dict())
     return model
+
 
 def load_ResNet101Model():
     model = ResNet(Bottleneck, [3, 4, 23, 3])
-    copy_parameter_from_resnet(model, torchvision.models.resnet101(pretrained = True).state_dict())
+    copy_parameter_from_resnet(
+        model, torchvision.models.resnet101(pretrained=True).state_dict())
     return model
+
 
 def load_ResNet152Model():
     model = ResNet(Bottleneck, [3, 8, 36, 3])
-    copy_parameter_from_resnet(model, torchvision.models.resnet152(pretrained = True).state_dict())
+    copy_parameter_from_resnet(
+        model, torchvision.models.resnet152(pretrained=True).state_dict())
     return model
 
 # model.load_state_dict(checkpoint['model_state_dict'])
 
 
-######## Unet
+# Unet
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
@@ -229,9 +241,11 @@ class Up(nn.Module):
 
         # if bilinear, use the normal convolutions to reduce the number of channels
         if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+            self.up = nn.Upsample(
+                scale_factor=2, mode='bilinear', align_corners=True)
         else:
-            self.up = nn.ConvTranspose2d(in_channels // 2, in_channels // 2, kernel_size=2, stride=2)
+            self.up = nn.ConvTranspose2d(
+                in_channels // 2, in_channels // 2, kernel_size=2, stride=2)
 
         self.conv = DoubleConv(in_channels, out_channels)
 
@@ -257,6 +271,7 @@ class OutConv(nn.Module):
 
     def forward(self, x):
         return self.conv(x)
+
 
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes, bilinear=True):

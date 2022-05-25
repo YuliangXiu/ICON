@@ -15,13 +15,9 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from lib.net.net_util import *
 import torch.nn as nn
 import torch.nn.functional as F
-
-import sys, os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
-from lib.net.net_util import *
 
 
 class HourGlass(nn.Module):

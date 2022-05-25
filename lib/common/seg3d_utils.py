@@ -233,8 +233,8 @@ def get_uncertain_point_coords_on_grid3D(uncertainty_map, num_points,
     num_points = min(D * H * W, num_points)
     point_scores, point_indices = torch.topk(uncertainty_map.view(
         R, D * H * W),
-                                             k=num_points,
-                                             dim=1)
+        k=num_points,
+        dim=1)
     point_coords = torch.zeros(R,
                                num_points,
                                3,
@@ -390,4 +390,3 @@ def calculate_uncertainty(logits, classes=None, balance_value=0.5):
             torch.arange(logits.shape[0], device=logits.device),
             classes].unsqueeze(1)
     return -torch.abs(gt_class_logits - balance_value)
-

@@ -51,7 +51,7 @@ class KeypointAttention(nn.Module):
         if self.act == 'softmax':
             normalized_heatmap = F.softmax(heatmaps.reshape(
                 batch_size, num_joints, -1),
-                                           dim=-1)
+                dim=-1)
         elif self.act == 'sigmoid':
             normalized_heatmap = torch.sigmoid(
                 heatmaps.reshape(batch_size, num_joints, -1))

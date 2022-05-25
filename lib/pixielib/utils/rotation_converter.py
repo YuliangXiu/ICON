@@ -11,6 +11,7 @@ batch_rodrigues: axis angle -> matrix
 '''
 pi = torch.Tensor([3.14159265358979323846])
 
+
 def rad2deg(tensor):
     """Function that converts angles from radians to degrees.
 
@@ -31,6 +32,7 @@ def rad2deg(tensor):
                         .format(type(tensor)))
 
     return 180. * tensor / pi.to(tensor.device).type(tensor.dtype)
+
 
 def deg2rad(tensor):
     """Function that converts angles from degrees to radians.
@@ -54,7 +56,9 @@ def deg2rad(tensor):
 
     return tensor * pi.to(tensor.device).type(tensor.dtype) / 180.
 
-######### to quaternion
+# to quaternion
+
+
 def euler_to_quaternion(r):
     x = r[..., 0]
     y = r[..., 1]
@@ -69,12 +73,13 @@ def euler_to_quaternion(r):
     sy = torch.sin(y)
     cx = torch.cos(x)
     sx = torch.sin(x)
-    quaternion = torch.zeros_like(r.repeat(1,2))[..., :4].to(r.device)
+    quaternion = torch.zeros_like(r.repeat(1, 2))[..., :4].to(r.device)
     quaternion[..., 0] += cx*cy*cz - sx*sy*sz
     quaternion[..., 1] += cx*sy*sz + cy*cz*sx
     quaternion[..., 2] += cx*cz*sy - sx*cy*sz
     quaternion[..., 3] += cx*cy*sz + sx*cz*sy
     return quaternion
+
 
 def rotation_matrix_to_quaternion(rotation_matrix, eps=1e-6):
     """Convert 3x4 rotation matrix to 4d quaternion vector
@@ -155,6 +160,7 @@ def rotation_matrix_to_quaternion(rotation_matrix, eps=1e-6):
     q *= 0.5
     return q
 
+
 def angle_axis_to_quaternion(angle_axis: torch.Tensor) -> torch.Tensor:
     """Convert an angle axis to a quaternion.
 
@@ -204,7 +210,9 @@ def angle_axis_to_quaternion(angle_axis: torch.Tensor) -> torch.Tensor:
     quaternion[..., 2:3] += a2 * k
     return torch.cat([w, quaternion], dim=-1)
 
-#### quaternion to
+# quaternion to
+
+
 def quaternion_to_rotation_matrix(quat):
     """Convert quaternion coefficients to rotation matrix.
     Args:
@@ -214,7 +222,8 @@ def quaternion_to_rotation_matrix(quat):
     """
     norm_quat = quat
     norm_quat = norm_quat / norm_quat.norm(p=2, dim=1, keepdim=True)
-    w, x, y, z = norm_quat[:, 0], norm_quat[:, 1], norm_quat[:, 2], norm_quat[:, 3]
+    w, x, y, z = norm_quat[:, 0], norm_quat[:,
+                                            1], norm_quat[:, 2], norm_quat[:, 3]
 
     B = quat.size(0)
 
@@ -226,6 +235,7 @@ def quaternion_to_rotation_matrix(quat):
                           2 * wz + 2 * xy, w2 - x2 + y2 - z2, 2 * yz - 2 * wx,
                           2 * xz - 2 * wy, 2 * wx + 2 * yz, w2 - x2 - y2 + z2], dim=1).view(B, 3, 3)
     return rotMat
+
 
 def quaternion_to_angle_axis(quaternion: torch.Tensor):
     """Convert quaternion vector to angle axis of rotation. TODO: CORRECT
@@ -267,23 +277,30 @@ def quaternion_to_angle_axis(quaternion: torch.Tensor):
         torch.atan2(sin_theta, cos_theta))
 
     k_pos: torch.Tensor = two_theta / sin_theta
-    k_neg: torch.Tensor = 2.0 * torch.ones_like(sin_theta).to(quaternion.device)
+    k_neg: torch.Tensor = 2.0 * \
+        torch.ones_like(sin_theta).to(quaternion.device)
     k: torch.Tensor = torch.where(sin_squared_theta > 0.0, k_pos, k_neg)
 
-    angle_axis: torch.Tensor = torch.zeros_like(quaternion).to(quaternion.device)[..., :3]
+    angle_axis: torch.Tensor = torch.zeros_like(
+        quaternion).to(quaternion.device)[..., :3]
     angle_axis[..., 0] += q1 * k
     angle_axis[..., 1] += q2 * k
     angle_axis[..., 2] += q3 * k
     return angle_axis
 
-## credit to Muhammed Kocabas
-### matrix to euler angle
+
+# credit to Muhammed Kocabas
+# matrix to euler angle
 # Device = Union[str, torch.device]
 _AXIS_TO_IND = {'x': 0, 'y': 1, 'z': 2}
+
+
 def _elementary_basis_vector(axis):
     b = torch.zeros(3)
     b[_AXIS_TO_IND[axis]] = 1
     return b
+
+
 def _compute_euler_from_matrix(dcm, seq='xyz', extrinsic=False):
     # The algorithm assumes intrinsic frame transformations. For representation
     # the paper uses transformation matrices, which are transpose of the
@@ -351,9 +368,9 @@ def _compute_euler_from_matrix(dcm, seq='xyz', extrinsic=False):
     # 5b
     safe_mask = torch.logical_and(safe1, safe2)
     angles[safe_mask, 0] = torch.atan2(dcm_transformed[safe_mask, 0, 2],
-                                      -dcm_transformed[safe_mask, 1, 2])
+                                       -dcm_transformed[safe_mask, 1, 2])
     angles[safe_mask, 2] = torch.atan2(dcm_transformed[safe_mask, 2, 0],
-                                      dcm_transformed[safe_mask, 2, 1])
+                                       dcm_transformed[safe_mask, 2, 1])
     if extrinsic:
         # For extrinsic, set first angle to zero so that after reversal we
         # ensure that third angle is zero
@@ -391,7 +408,7 @@ def _compute_euler_from_matrix(dcm, seq='xyz', extrinsic=False):
     else:
         # lambda = + or - pi/2, so we can ensure angle2 -> [-pi/2, pi/2]
         adjust_mask = torch.logical_or(angles[:, 1] < -np.pi / 2,
-                                    angles[:, 1] > np.pi / 2)
+                                       angles[:, 1] > np.pi / 2)
 
     # Dont adjust gimbal locked angle sequences
     adjust_mask = torch.logical_and(adjust_mask, safe_mask)
@@ -417,24 +434,30 @@ def _compute_euler_from_matrix(dcm, seq='xyz', extrinsic=False):
     angles = angles.to(orig_device)
     return angles
 
-#### batch converter
+# batch converter
+
+
 def batch_euler2axis(r):
     return quaternion_to_angle_axis(euler_to_quaternion(r))
+
 
 def batch_euler2matrix(r):
     return quaternion_to_rotation_matrix(euler_to_quaternion(r))
 
+
 def batch_matrix2euler(rot_mats):
     # Calculates rotation matrix to euler angles
     # Careful for extreme cases of eular angles like [0.0, pi, 0.0]
-    ### only y biw
+    # only y biw
     # TODO: add x, z
     sy = torch.sqrt(rot_mats[:, 0, 0] * rot_mats[:, 0, 0] +
                     rot_mats[:, 1, 0] * rot_mats[:, 1, 0])
     return torch.atan2(-rot_mats[:, 2, 0], sy)
 
+
 def batch_matrix2axis(rot_mats):
     return quaternion_to_angle_axis(rotation_matrix_to_quaternion(rot_mats))
+
 
 def batch_axis2matrix(theta):
     # angle axis to rotation matrix
@@ -443,11 +466,14 @@ def batch_axis2matrix(theta):
     # batch_rodrigues
     return quaternion_to_rotation_matrix(angle_axis_to_quaternion(theta))
 
+
 def batch_axis2euler(theta):
     return batch_matrix2euler(batch_axis2matrix(theta))
 
+
 def batch_axis2euler(r):
     return rot_mat_to_euler(batch_rodrigues(r))
+
 
 def batch_rodrigues(rot_vecs, epsilon=1e-8, dtype=torch.float32):
     '''  same as batch_matrix2axis
@@ -483,6 +509,7 @@ def batch_rodrigues(rot_vecs, epsilon=1e-8, dtype=torch.float32):
     ident = torch.eye(3, dtype=dtype, device=device).unsqueeze(dim=0)
     rot_mat = ident + sin * K + (1 - cos) * torch.bmm(K, K)
     return rot_mat
+
 
 def batch_cont2matrix(module_input):
     ''' Decoder for transforming a latent representation to rotation matrices

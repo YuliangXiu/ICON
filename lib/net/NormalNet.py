@@ -15,16 +15,12 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from lib.net.FBNet import define_G
+from lib.net.net_util import init_net, VGGLoss
+from lib.net.HGFilters import *
+from lib.net.BasePIFuNet import BasePIFuNet
 import torch
 import torch.nn as nn
-import sys, os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
-
-from lib.net.BasePIFuNet import BasePIFuNet
-from lib.net.HGFilters import *
-from lib.net.net_util import init_net, VGGLoss
-from lib.net.FBNet import define_G
 
 
 class NormalNet(BasePIFuNet):
@@ -39,6 +35,7 @@ class NormalNet(BasePIFuNet):
         4. Classification.
         5. During training, error is calculated on all stacks.
     '''
+
     def __init__(self, cfg, error_term=nn.SmoothL1Loss()):
 
         super(NormalNet, self).__init__(error_term=error_term)

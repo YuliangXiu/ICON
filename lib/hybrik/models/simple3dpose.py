@@ -20,7 +20,6 @@ ModelOutput = namedtuple(
 ModelOutput.__new__.__defaults__ = (None,) * len(ModelOutput._fields)
 
 
-
 def update_config(config_file):
     with open(config_file) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
@@ -85,11 +84,12 @@ class HybrIKBaseSMPLCam(nn.Module):
         self.final_layer = nn.Conv2d(
             self.deconv_dim[2], self.num_joints * self.depth_dim, kernel_size=1, stride=1, padding=0)
 
-        h36m_jregressor = np.load(os.path.join(data_path, 'J_regressor_h36m.npy'))
+        h36m_jregressor = np.load(os.path.join(
+            data_path, 'J_regressor_h36m.npy'))
         self.smpl = SMPL_layer(smpl_path,
-            h36m_jregressor=h36m_jregressor,
-            dtype=self.smpl_dtype
-        )
+                               h36m_jregressor=h36m_jregressor,
+                               dtype=self.smpl_dtype
+                               )
 
         self.joint_pairs_24 = ((1, 2), (4, 5), (7, 8),
                                (10, 11), (13, 14), (16, 17), (18, 19), (20, 21), (22, 23))
@@ -110,8 +110,8 @@ class HybrIKBaseSMPLCam(nn.Module):
         init_cam = torch.tensor([0.9, 0, 0])
         self.register_buffer(
             'init_cam',
-            torch.Tensor(init_cam).float()) 
-    
+            torch.Tensor(init_cam).float())
+
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.fc1 = nn.Linear(self.feature_channel, 1024)
         self.drop1 = nn.Dropout(p=0.5)
@@ -185,7 +185,7 @@ class HybrIKBaseSMPLCam(nn.Module):
             pred_jts = pred_jts.reshape(num_batches, self.num_joints * 3)
 
         return pred_jts
-    
+
     def flip_xyz_coord(self, pred_jts, flatten=True):
         if flatten:
             assert pred_jts.dim() == 2
@@ -220,7 +220,7 @@ class HybrIKBaseSMPLCam(nn.Module):
         return pred_phi
 
     def forward(self, x, flip_item=None, flip_output=False, gt_uvd=None, gt_uvd_weight=None, **kwargs):
-        
+
         batch_size = x.shape[0]
 
         # torch.cuda.synchronize()
@@ -236,19 +236,21 @@ class HybrIKBaseSMPLCam(nn.Module):
         out = out.reshape((out.shape[0], self.num_joints, -1))
 
         maxvals, _ = torch.max(out, dim=2, keepdim=True)
-        
+
         out = norm_heatmap(self.norm_type, out)
         assert out.dim() == 3, out.shape
 
         heatmaps = out / out.sum(dim=2, keepdim=True)
 
-        heatmaps = heatmaps.reshape((heatmaps.shape[0], self.num_joints, self.depth_dim, self.height_dim, self.width_dim))
+        heatmaps = heatmaps.reshape(
+            (heatmaps.shape[0], self.num_joints, self.depth_dim, self.height_dim, self.width_dim))
 
         hm_x0 = heatmaps.sum((2, 3))
         hm_y0 = heatmaps.sum((2, 4))
         hm_z0 = heatmaps.sum((3, 4))
 
-        range_tensor = torch.arange(hm_x0.shape[-1], dtype=torch.float32, device=hm_x0.device)
+        range_tensor = torch.arange(
+            hm_x0.shape[-1], dtype=torch.float32, device=hm_x0.device)
         hm_x = hm_x0 * range_tensor
         hm_y = hm_y0 * range_tensor
         hm_z = hm_z0 * range_tensor
@@ -267,7 +269,7 @@ class HybrIKBaseSMPLCam(nn.Module):
         x0 = self.avg_pool(x0)
         x0 = x0.view(x0.size(0), -1)
         init_shape = self.init_shape.expand(batch_size, -1)     # (B, 10,)
-        init_cam = self.init_cam.expand(batch_size, -1) # (B, 3,)
+        init_cam = self.init_cam.expand(batch_size, -1)  # (B, 3,)
 
         xc = x0
 
@@ -287,11 +289,12 @@ class HybrIKBaseSMPLCam(nn.Module):
         camDepth = self.focal_length / (self.input_size * camScale + 1e-9)
 
         pred_xyz_jts_29 = torch.zeros_like(pred_uvd_jts_29)
-        pred_xyz_jts_29[:, :, 2:] = pred_uvd_jts_29[:, :, 2:].clone() # unit: 2.2m
+        pred_xyz_jts_29[:, :, 2:] = pred_uvd_jts_29[:,
+                                                    :, 2:].clone()  # unit: 2.2m
         pred_xyz_jts_29_meter = (pred_uvd_jts_29[:, :, :2] * self.input_size / self.focal_length) \
-                                        * (pred_xyz_jts_29[:, :, 2:]*2.2 + camDepth) - camTrans # unit: m
+            * (pred_xyz_jts_29[:, :, 2:]*2.2 + camDepth) - camTrans  # unit: m
 
-        pred_xyz_jts_29[:, :, :2] = pred_xyz_jts_29_meter / 2.2 # unit: 2.2m
+        pred_xyz_jts_29[:, :, :2] = pred_xyz_jts_29_meter / 2.2  # unit: 2.2m
 
         camera_root = pred_xyz_jts_29[:, [0], ]*2.2
         camera_root[:, :, :2] += camTrans
@@ -305,10 +308,12 @@ class HybrIKBaseSMPLCam(nn.Module):
             pred_xyz_jts_29_orig, pred_phi_orig, pred_leaf_orig, pred_shape_orig = flip_item
 
         if flip_output:
-            pred_xyz_jts_29 = self.flip_xyz_coord(pred_xyz_jts_29, flatten=False)
+            pred_xyz_jts_29 = self.flip_xyz_coord(
+                pred_xyz_jts_29, flatten=False)
         if flip_output and flip_item is not None:
-            pred_xyz_jts_29 = (pred_xyz_jts_29 + pred_xyz_jts_29_orig.reshape(batch_size, 29, 3)) / 2
-        
+            pred_xyz_jts_29 = (
+                pred_xyz_jts_29 + pred_xyz_jts_29_orig.reshape(batch_size, 29, 3)) / 2
+
         pred_xyz_jts_29_flat = pred_xyz_jts_29.reshape(batch_size, -1)
 
         pred_phi = pred_phi.reshape(batch_size, 23, 2)
@@ -321,7 +326,8 @@ class HybrIKBaseSMPLCam(nn.Module):
             pred_shape = (pred_shape + pred_shape_orig) / 2
 
         output = self.smpl.hybrik(
-            pose_skeleton=pred_xyz_jts_29.type(self.smpl_dtype) * 2.2, # unit: meter
+            pose_skeleton=pred_xyz_jts_29.type(
+                self.smpl_dtype) * 2.2,  # unit: meter
             betas=pred_shape.type(self.smpl_dtype),
             phis=pred_phi.type(self.smpl_dtype),
             global_orient=None,
@@ -335,17 +341,20 @@ class HybrIKBaseSMPLCam(nn.Module):
         # pred_xyz_jts_17 = output.joints_from_verts.float() / 2.2
         pred_xyz_jts_17 = output.joints_from_verts.float() / 2
         pred_theta_mats = output.rot_mats.float().reshape(batch_size, 24, 3, 3)
-        pred_xyz_jts_24 = pred_xyz_jts_29[:, :24, :].reshape(batch_size, 72) / 2
+        pred_xyz_jts_24 = pred_xyz_jts_29[:,
+                                          :24, :].reshape(batch_size, 72) / 2
         pred_xyz_jts_24_struct = pred_xyz_jts_24_struct.reshape(batch_size, 72)
         pred_xyz_jts_17_flat = pred_xyz_jts_17.reshape(batch_size, 17 * 3)
 
-        transl = pred_xyz_jts_29[:, 0, :] * 2.2 - pred_xyz_jts_17[:, 0, :] * 2.2
+        transl = pred_xyz_jts_29[:, 0, :] * \
+            2.2 - pred_xyz_jts_17[:, 0, :] * 2.2
         transl[:, :2] += camTrans[:, 0]
         transl[:, 2] += camDepth[:, 0, 0]
 
         new_cam = torch.zeros_like(transl)
         new_cam[:, 1:] = transl[:, :2]
-        new_cam[:, 0] = self.focal_length / (self.input_size * transl[:, 2] + 1e-9)
+        new_cam[:, 0] = self.focal_length / \
+            (self.input_size * transl[:, 2] + 1e-9)
 
         # pred_aa = output.rot_aa.reshape(batch_size, 24, 3)
 

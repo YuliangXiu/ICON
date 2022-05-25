@@ -40,8 +40,7 @@ class TrainOptions():
             '--img_res',
             type=int,
             default=224,
-            help=
-            'Rescale bounding boxes to size [img_res, img_res] before feeding them in the network'
+            help='Rescale bounding boxes to size [img_res, img_res] before feeding them in the network'
         )
         train.add_argument(
             '--rot_factor',
@@ -52,15 +51,13 @@ class TrainOptions():
             '--noise_factor',
             type=float,
             default=0.4,
-            help=
-            'Randomly multiply pixel values with factor in the range [1-noise_factor, 1+noise_factor]'
+            help='Randomly multiply pixel values with factor in the range [1-noise_factor, 1+noise_factor]'
         )
         train.add_argument(
             '--scale_factor',
             type=float,
             default=0.25,
-            help=
-            'Rescale bounding boxes by a factor of [1-scale_factor,1+scale_factor]'
+            help='Rescale bounding boxes by a factor of [1-scale_factor,1+scale_factor]'
         )
         train.add_argument(
             '--openpose_train_weight',

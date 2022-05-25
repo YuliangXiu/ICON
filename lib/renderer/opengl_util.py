@@ -15,22 +15,15 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from lib.renderer.mesh import load_scan, compute_tangent, compute_normal, load_obj_mesh_mtl
+from lib.dataset.mesh_util import projection
+from lib.renderer.gl.prt_render import PRTRender
+from lib.renderer.camera import Camera
 import os
 import cv2
-import time
-import sys
 import math
 import random
 import numpy as np
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-
-from lib.renderer.camera import Camera
-from lib.renderer.gl.prt_render import PRTRender
-from lib.dataset.mesh_util import projection
-from lib.renderer.mesh import load_scan, compute_tangent, compute_normal, load_obj_mesh_mtl
-from lib.renderer.camera import Camera
 
 
 def render_result(rndr, shader_id, path, mask=False):

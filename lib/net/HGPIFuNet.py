@@ -15,21 +15,19 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
-import sys, os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
-
-import torch
-import torch.nn as nn
-from lib.net.BasePIFuNet import BasePIFuNet
-from termcolor import colored
-from lib.net.HGFilters import *
-from lib.net.VE import VolumeEncoder
-from lib.dataset.mesh_util import SMPLX
-from lib.net.MLP import MLP
-from lib.net.NormalNet import NormalNet
-from lib.dataset.mesh_util import cal_sdf_batch, feat_select, read_smpl_constants
 from lib.net.voxelize import Voxelization
+from lib.dataset.mesh_util import cal_sdf_batch, feat_select, read_smpl_constants
+from lib.net.NormalNet import NormalNet
+from lib.net.MLP import MLP
+from lib.dataset.mesh_util import SMPLX
+from lib.net.VE import VolumeEncoder
+from lib.net.HGFilters import *
+from termcolor import colored
+from lib.net.BasePIFuNet import BasePIFuNet
+import torch.nn as nn
+import torch
+import os
+
 
 maskout = False
 
@@ -46,6 +44,7 @@ class HGPIFuNet(BasePIFuNet):
         4. Classification.
         5. During training, error is calculated on all stacks.
     '''
+
     def __init__(self,
                  cfg,
                  projection_mode='orthogonal',
@@ -217,10 +216,10 @@ class HGPIFuNet(BasePIFuNet):
             if self.use_filter:
                 features_F = self.F_filter(in_filter[:,
                                                      self.channels_filter[0]]
-                                           )  #[(B,hg_dim,128,128) * 4]
+                                           )  # [(B,hg_dim,128,128) * 4]
                 features_B = self.F_filter(in_filter[:,
                                                      self.channels_filter[1]]
-                                           )  #[(B,hg_dim,128,128) * 4]
+                                           )  # [(B,hg_dim,128,128) * 4]
             else:
                 features_F = [in_filter[:, self.channels_filter[0]]]
                 features_B = [in_filter[:, self.channels_filter[1]]]
@@ -282,14 +281,14 @@ class HGPIFuNet(BasePIFuNet):
             # smpl_verts [B, N_vert, 3]
             # smpl_faces [B, N_face, 3]
             # points [B, 3, N]
-            
+
             smpl_sdf, smpl_norm, smpl_cmap, smpl_vis = cal_sdf_batch(
                 self.smpl_feat_dict['smpl_verts'],
                 self.smpl_feat_dict['smpl_faces'],
                 self.smpl_feat_dict['smpl_cmap'],
                 self.smpl_feat_dict['smpl_vis'],
                 xyz.permute(0, 2, 1).contiguous())
-            
+
             # smpl_sdf [B, N, 1]
             # smpl_norm [B, N, 3]
             # smpl_cmap [B, N, 3]
@@ -301,7 +300,8 @@ class HGPIFuNet(BasePIFuNet):
 
             feat_lst = [smpl_sdf]
             if 'cmap' in self.smpl_feats:
-                smpl_cmap[smpl_outlier.repeat(1,1,3)] = smpl_sdf[smpl_outlier].repeat(1,1,3)
+                smpl_cmap[smpl_outlier.repeat(
+                    1, 1, 3)] = smpl_sdf[smpl_outlier].repeat(1, 1, 3)
                 feat_lst.append(smpl_cmap)
             if 'norm' in self.smpl_feats:
                 feat_lst.append(smpl_norm)

@@ -14,6 +14,6 @@ do
     # resolution = 512
     # MODE = gen (process all subjects) | debug (only one subject)
     # PART = filename of render_list
-    bash render_single.sh 12 $DATASET 36 512 $MODE $PART
+    bash scripts/render_single.sh 12 $DATASET 36 512 $MODE $PART
     echo "$DATASET END----------"
 done

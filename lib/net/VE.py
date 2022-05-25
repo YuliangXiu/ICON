@@ -16,7 +16,6 @@
 # Contact: ps-license@tuebingen.mpg.de
 
 
-
 import torch.nn as nn
 import pytorch_lightning as pl
 
@@ -114,6 +113,7 @@ class Residual3D(BaseNetwork):
 
 class VolumeEncoder(BaseNetwork):
     """CycleGan Encoder"""
+
     def __init__(self, num_in=3, num_out=32, num_stacks=2):
         super(VolumeEncoder, self).__init__()
         self.num_in = num_in
