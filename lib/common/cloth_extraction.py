@@ -153,7 +153,7 @@ def extract_cloth(recon, segmentation, K, R, t, smpl = None):
         mesh.update_faces(mask)
         mesh.remove_unreferenced_vertices()
 
-        mesh.rezero()
+        # mesh.rezero()
 
         return mesh
     
