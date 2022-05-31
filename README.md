@@ -31,7 +31,7 @@
     <a href='https://icon.is.tue.mpg.de/' style='padding-left: 0.5rem;'>
       <img src='https://img.shields.io/badge/ICON-Page-orange?style=for-the-badge&logo=Google%20chrome&logoColor=orange' alt='Project Page'>
     <a href="https://discord.gg/Vqa7KBGRyk"><img src="https://img.shields.io/discord/940240966844035082?color=7289DA&labelColor=4a64bd&logo=discord&logoColor=white&style=for-the-badge"></a>
-    <a href="https://youtu.be/ZufrPvooR2Q"><img alt="youtube views" title="Subscribe to my YouTube channel" src="https://img.shields.io/youtube/views/ZufrPvooR2Q?logo=youtube&labelColor=ce4630&style=for-the-badge"/></a>
+    <a href="https://youtu.be/hZd6AYin2DE"><img alt="youtube views" title="Subscribe to my YouTube channel" src="https://img.shields.io/youtube/views/ZufrPvooR2Q?logo=youtube&labelColor=ce4630&style=for-the-badge"/></a>
   </p>
 </p>
 
@@ -183,11 +183,12 @@ python -m apps.infer -cfg ./configs/icon-nofilter.yaml -gpu 0 -in_dir ./examples
 
 ```bibtex
 @inproceedings{xiu2022icon,
-  title={{ICON}: {I}mplicit {C}lothed humans {O}btained from {N}ormals},
-  author={Xiu, Yuliang and Yang, Jinlong and Tzionas, Dimitrios and Black, Michael J.},
-  booktitle={IEEE/CVF Conf.~on Computer Vision and Pattern Recognition (CVPR)},
-  month = jun,
-  year={2022}
+  title     = {{ICON}: {I}mplicit {C}lothed humans {O}btained from {N}ormals},
+  author    = {Xiu, Yuliang and Yang, Jinlong and Tzionas, Dimitrios and Black, Michael J.},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  month     = {June},
+  year      = {2022},
+  pages     = {13296-13306}
 }
 ```
 

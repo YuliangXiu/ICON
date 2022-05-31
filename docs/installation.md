@@ -36,8 +36,7 @@ source activate icon
 pip install -r requirements.txt --use-deprecated=legacy-resolver
 ```
 
-
-:warning: If you have trouble assessing Google Drive, you need VPN to use `rembg` for the first time.
+:warning: `rembg` requires the access to Google Drive, please refer to [@Yuhuoo's answer](https://github.com/YuliangXiu/ICON/issues/36#issuecomment-1141984308) if the program got stuck in `remove(buf.getvalue())`.
 
 ## Register at [ICON's website](https://icon.is.tue.mpg.de/)
 
