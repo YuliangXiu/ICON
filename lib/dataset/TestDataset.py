@@ -228,7 +228,7 @@ class TestDataset():
             'uncrop_param': uncrop_param
             }
         else:
-            img_icon, img_hps, img_ori, img_mask, uncrop_param, segmentations = process_image(img_path, self.det, self.hps_type, 512, os.path.join(self.seg_dir, f'{img_name}.json'))
+            img_icon, img_hps, img_ori, img_mask, uncrop_param, segmentations = process_image(img_path, self.det, self.hps_type, 512, seg_path = os.path.join(self.seg_dir, f'{img_name}.json'))
             data_dict = {
             'name': img_name,
             'image': img_icon.to(self.device).unsqueeze(0),

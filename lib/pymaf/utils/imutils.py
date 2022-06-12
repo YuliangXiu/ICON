@@ -83,7 +83,7 @@ def get_transformer(input_res):
     return [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor, image_to_hybrik_tensor]
 
 
-def process_image(img_file, det, hps_type, input_res=512, seg_path = None):
+def process_image(img_file, det, hps_type, input_res=512, device = None, seg_path = None):
     """Read image, do preprocessing and possibly crop it according to the bounding box.
     If there are bounding box annotations, use them to crop the image.
     If no bounding box is specified but openpose detections are available, use them to get the bounding box.
