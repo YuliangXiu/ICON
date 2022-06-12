@@ -40,31 +40,6 @@ from PIL import ImageFile
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-# project related libs
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
-
-from lib.dataset.mesh_util import get_visibility, SMPLX
-from lib.dataset.body_model import TetraSMPLModel
-from lib.common.render import Render
-from lib.common.config import cfg
-
-# for pymaf
-from lib.pymaf.models import pymaf_net
-from lib.pymaf.core import path_config
-from lib.pymaf.utils.imutils import process_image, load_segmentation
-from lib.pymaf.utils.geometry import rotation_matrix_to_angle_axis
-
-# for pare
-from lib.pare.pare.core.tester import PARETester
-
-# for pixie
-import smplx
-from lib.pixielib.pixie import PIXIE
-from lib.pixielib.utils.config import cfg as pixie_cfg
-
-# for hybrik
-from lib.hybrik.models.simple3dpose import HybrIKBaseSMPLCam
-
 
 class TestDataset():
     def __init__(self, cfg, device):

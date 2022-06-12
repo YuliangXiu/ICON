@@ -95,9 +95,6 @@ def process_image(img_file, det, hps_type, input_res=512, device = None, seg_pat
     img_ori = load_img(img_file)
 
     in_height, in_width, _ = img_ori.shape
-
-    
-
     M = aug_matrix(in_width, in_height, input_res*2, input_res*2)
 
     # from rectangle to square
