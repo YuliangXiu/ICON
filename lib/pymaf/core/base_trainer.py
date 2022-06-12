@@ -1,15 +1,14 @@
 # This script is borrowed and extended from https://github.com/nkolot/SPIN/blob/master/utils/base_trainer.py
 from __future__ import division
+import logging
+from utils import CheckpointSaver
+from tensorboardX import SummaryWriter
 
 import torch
 from tqdm import tqdm
 
 tqdm.monitor_interval = 0
-from tensorboardX import SummaryWriter
 
-from utils import CheckpointSaver
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +17,7 @@ class BaseTrainer(object):
     """Base class for Trainer objects.
     Takes care of checkpointing/logging/resuming training.
     """
+
     def __init__(self, options):
         self.options = options
         if options.multiprocessing_distributed:

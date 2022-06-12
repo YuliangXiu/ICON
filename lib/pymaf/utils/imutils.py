@@ -17,16 +17,16 @@ from lib.common.cloth_extraction import load_segmentation
 from torchvision import transforms
 
 def load_img(img_file):
-    
+
     img = cv2.imread(img_file, cv2.IMREAD_UNCHANGED)
     if len(img.shape) == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-        
+
     if not img_file.endswith("png"):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     else:
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
-        
+
     return img
 
 def get_bbox(img, det):
@@ -46,7 +46,7 @@ def get_bbox(img, det):
 
 
 def get_transformer(input_res):
-    
+
     image_to_tensor = transforms.Compose([
         transforms.Resize(input_res),
         transforms.ToTensor(),
@@ -64,7 +64,7 @@ def get_transformer(input_res):
         transforms.Normalize(mean=constants.IMG_NORM_MEAN,
                              std=constants.IMG_NORM_STD)
     ])
-    
+
     image_to_pixie_tensor = transforms.Compose([
         transforms.Resize(224)
     ])
@@ -88,8 +88,9 @@ def process_image(img_file, det, hps_type, input_res=512, seg_path = None):
     If there are bounding box annotations, use them to crop the image.
     If no bounding box is specified but openpose detections are available, use them to get the bounding box.
     """
-    
-    [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor, image_to_pixie_tensor, image_to_hybrik_tensor] = get_transformer(input_res)
+
+    [image_to_tensor, mask_to_tensor, image_to_pymaf_tensor,
+        image_to_pixie_tensor, image_to_hybrik_tensor] = get_transformer(input_res)
 
     img_ori = load_img(img_file)
 
@@ -98,11 +99,11 @@ def process_image(img_file, det, hps_type, input_res=512, seg_path = None):
     
 
     M = aug_matrix(in_width, in_height, input_res*2, input_res*2)
-    
+
     # from rectangle to square
-    img_for_crop = cv2.warpAffine(img_ori, M[0:2, :], 
-                                    (input_res*2, input_res*2), flags=cv2.INTER_CUBIC)
-    
+    img_for_crop = cv2.warpAffine(img_ori, M[0:2, :],
+                                  (input_res*2, input_res*2), flags=cv2.INTER_CUBIC)
+
     if det is not None:
 
         # detection for bbox
@@ -121,9 +122,10 @@ def process_image(img_file, det, hps_type, input_res=512, seg_path = None):
 
     scale = max(height, width) / 180
     if hps_type == 'hybrik':
-        img_np = crop_for_hybrik(img_for_crop, center, np.array([scale * 180, scale * 180]))
+        img_np = crop_for_hybrik(img_for_crop, center,
+                                 np.array([scale * 180, scale * 180]))
     else:
-        img_np, cropping_parameters = crop(img_for_crop, center, scale, (input_res, input_res))
+        img_np = crop(img_for_crop, center, scale, (input_res, input_res))
 
     with torch.no_grad():
         buf = io.BytesIO()
@@ -140,14 +142,16 @@ def process_image(img_file, det, hps_type, input_res=512, seg_path = None):
     # for hps
     img_hps = img_np.astype(np.float32) / 255.
     img_hps = torch.from_numpy(img_hps).permute(2, 0, 1)
-    
-    if hps_type == 'hybrik':
-        img_hps = image_to_hybrik_tensor(img_hps).unsqueeze(0)
+
+    if hps_type == 'bev':
+        img_hps = img_np[:, :, [2, 1, 0]]
+    elif hps_type == 'hybrik':
+        img_hps = image_to_hybrik_tensor(img_hps).unsqueeze(0).to(device)
     elif hps_type != 'pixie':
-        img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0)
+        img_hps = image_to_pymaf_tensor(img_hps).unsqueeze(0).to(device)
     else:
-        img_hps = image_to_pixie_tensor(img_hps).unsqueeze(0)
-    
+        img_hps = image_to_pixie_tensor(img_hps).unsqueeze(0).to(device)
+
     # uncrop params
     uncrop_param = {'center': center,
                     'scale': scale,
@@ -187,8 +191,8 @@ def process_image(img_file, det, hps_type, input_res=512, seg_path = None):
 
     return img_tensor, img_hps, img_ori, img_mask, uncrop_param
 
+
 def get_transform(center, scale, res):
-    
     """Generate transformation matrix."""
     h = 200 * scale
     t = np.zeros((3, 3))
@@ -197,7 +201,7 @@ def get_transform(center, scale, res):
     t[0, 2] = res[1] * (-float(center[0]) / h + .5)
     t[1, 2] = res[0] * (-float(center[1]) / h + .5)
     t[2, 2] = 1
-    
+
     return t
 
 
@@ -213,13 +217,13 @@ def transform(pt, center, scale, res, invert=0):
 
 def crop(img, center, scale, res):
     """Crop image according to the supplied bounding box."""
-    
+
     # Upper left point
     ul = np.array(transform([0, 0], center, scale, res, invert=1))
-    
+
     # Bottom right point
     br = np.array(transform(res, center, scale, res, invert=1))
-    
+
     new_shape = [br[1] - ul[1], br[0] - ul[0]]
     if len(img.shape) > 2:
         new_shape += [img.shape[2]]
@@ -228,7 +232,7 @@ def crop(img, center, scale, res):
     # Range to fill new array
     new_x = max(0, -ul[0]), min(br[0], len(img[0])) - ul[0]
     new_y = max(0, -ul[1]), min(br[1], len(img)) - ul[1]
-    
+
     # Range to sample from original image
     old_x = max(0, ul[0]), min(len(img[0]), br[0])
     old_y = max(0, ul[1]), min(len(img), br[1])
@@ -258,6 +262,15 @@ def crop_for_hybrik(img, center, scale):
     trans = get_affine_transform(center, scale, 0, [inp_w, inp_h])
     new_img = cv2.warpAffine(img, trans, (int(inp_w), int(inp_h)), flags=cv2.INTER_LINEAR)
     return new_img
+
+
+def crop_for_hybrik(img, center, scale):
+    inp_h, inp_w = (256, 256)
+    trans = get_affine_transform(center, scale, 0, [inp_w, inp_h])
+    new_img = cv2.warpAffine(
+        img, trans, (int(inp_w), int(inp_h)), flags=cv2.INTER_LINEAR)
+    return new_img
+
 
 def get_affine_transform(center,
                          scale,
@@ -311,44 +324,45 @@ def get_affine_transform(center,
     return trans
 
 def corner_align(ul, br):
-    
+
     if ul[1]-ul[0] != br[1]-br[0]:
         ul[1] = ul[0]+br[1]-br[0]
-    
+
     return ul, br
 
+
 def uncrop(img, center, scale, orig_shape):
-    
     """'Undo' the image cropping/resizing.
     This function is used when evaluating mask/part segmentation.
     """
-    
+
     res = img.shape[:2]
-    
+
     # Upper left point
     ul = np.array(transform([0, 0], center, scale, res, invert=1))
     # Bottom right point
     br = np.array(transform(res, center, scale, res, invert=1))
-    
+
     # quick fix
     ul, br = corner_align(ul, br)
-    
+
     # size of cropped image
     crop_shape = [br[1] - ul[1], br[0] - ul[0]]
     new_img = np.zeros(orig_shape, dtype=np.uint8)
-    
+
     # Range to fill new array
     new_x = max(0, -ul[0]), min(br[0], orig_shape[1]) - ul[0]
     new_y = max(0, -ul[1]), min(br[1], orig_shape[0]) - ul[1]
-    
+
     # Range to sample from original image
     old_x = max(0, ul[0]), min(orig_shape[1], br[0])
     old_y = max(0, ul[1]), min(orig_shape[0], br[1])
-    
+
     img = np.array(Image.fromarray(img.astype(np.uint8)).resize(crop_shape))
-    
-    new_img[old_y[0]:old_y[1], old_x[0]:old_x[1]] = img[new_y[0]:new_y[1], new_x[0]:new_x[1]]
-    
+
+    new_img[old_y[0]:old_y[1], old_x[0]:old_x[1]
+            ] = img[new_y[0]:new_y[1], new_x[0]:new_x[1]]
+
     return new_img
 
 

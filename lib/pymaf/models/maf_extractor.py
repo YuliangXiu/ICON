@@ -2,7 +2,8 @@
 
 from packaging import version
 import torch
-import scipy, os
+import scipy
+import os
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
@@ -21,6 +22,7 @@ class MAF_Extractor(nn.Module):
     As discussed in the paper, we extract mesh-aligned features based on 2D projection of the mesh vertices.
     The features extrated from spatial feature maps will go through a MLP for dimension reduction.
     '''
+
     def __init__(self, device=torch.device('cuda')):
         super().__init__()
 

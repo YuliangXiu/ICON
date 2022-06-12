@@ -15,6 +15,8 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+import yaml
+import os.path as osp
 import torch
 import numpy as np
 import torch.nn.functional as F
@@ -544,11 +546,11 @@ def calc_knn_acc(preds, carn_verts, labels, pick_num):
     """
     N_knn_full = labels.shape[1]
     preds = preds.permute(0, 2, 1).reshape(-1, 3)
-    labels = labels.permute(0, 2, 1).reshape(-1, N_knn_full)  #[BxN, num_knn]
+    labels = labels.permute(0, 2, 1).reshape(-1, N_knn_full)  # [BxN, num_knn]
     labels = labels[:, :pick_num]
 
-    dist = torch.cdist(preds, carn_verts, p=2)  #[BxN, SMPL_V_num]
-    knn = dist.topk(k=pick_num, dim=1, largest=False)[1]  #[BxN, num_knn]
+    dist = torch.cdist(preds, carn_verts, p=2)  # [BxN, SMPL_V_num]
+    knn = dist.topk(k=pick_num, dim=1, largest=False)[1]  # [BxN, num_knn]
     cat_mat = torch.sort(torch.cat((knn, labels), dim=1))[0]
     bool_col = torch.zeros_like(cat_mat)[:, 0]
     for i in range(pick_num * 2 - 1):
@@ -590,9 +592,6 @@ def add_watermark(imgs, titles):
     return result
 
 
-from PIL import Image
-
-
 def make_test_gif(img_dir):
 
     if img_dir is not None and len(os.listdir(img_dir)) > 0:
@@ -616,10 +615,6 @@ def make_test_gif(img_dir):
                          append_images=img_lst,
                          duration=500,
                          loop=0)
-
-
-import os.path as osp
-import yaml
 
 
 def export_cfg(logger, cfg):

@@ -78,7 +78,8 @@ class SMPL_layer(nn.Module):
         super(SMPL_layer, self).__init__()
 
         self.ROOT_IDX = self.JOINT_NAMES.index('pelvis')
-        self.LEAF_IDX = [self.JOINT_NAMES.index(name) for name in self.LEAF_NAMES]
+        self.LEAF_IDX = [self.JOINT_NAMES.index(
+            name) for name in self.LEAF_NAMES]
         self.SPINE3_IDX = 9
 
         with open(model_path, 'rb') as smpl_file:
@@ -125,7 +126,8 @@ class SMPL_layer(nn.Module):
 
         # indices of parents for each joints
         parents = torch.zeros(len(self.JOINT_NAMES), dtype=torch.long)
-        parents[:(self.NUM_JOINTS + 1)] = to_tensor(to_np(self.smpl_data.kintree_table[0])).long()
+        parents[:(self.NUM_JOINTS + 1)
+                ] = to_tensor(to_np(self.smpl_data.kintree_table[0])).long()
         parents[0] = -1
         # extend kinematic tree
         parents[24] = 15
@@ -210,9 +212,14 @@ class SMPL_layer(nn.Module):
             vertices += transl.unsqueeze(dim=1)
             joints_from_verts_h36m += transl.unsqueeze(dim=1)
         else:
-            vertices = vertices - joints_from_verts_h36m[:, self.root_idx_17, :].unsqueeze(1).detach()
-            joints = joints - joints[:, self.root_idx_smpl, :].unsqueeze(1).detach()
-            joints_from_verts_h36m = joints_from_verts_h36m - joints_from_verts_h36m[:, self.root_idx_17, :].unsqueeze(1).detach()
+            vertices = vertices - \
+                joints_from_verts_h36m[:, self.root_idx_17, :].unsqueeze(
+                    1).detach()
+            joints = joints - \
+                joints[:, self.root_idx_smpl, :].unsqueeze(1).detach()
+            joints_from_verts_h36m = joints_from_verts_h36m - \
+                joints_from_verts_h36m[:, self.root_idx_17, :].unsqueeze(
+                    1).detach()
 
         output = ModelOutput(
             vertices=vertices, joints=joints, rot_mats=rot_mats, joints_from_verts=joints_from_verts_h36m)
@@ -269,8 +276,10 @@ class SMPL_layer(nn.Module):
             vertices += transl.unsqueeze(dim=1)
             # joints_from_verts += transl.unsqueeze(dim=1)
         else:
-            vertices = vertices - joints_from_verts[:, self.root_idx_17, :].unsqueeze(1).detach()
-            new_joints = new_joints - new_joints[:, self.root_idx_smpl, :].unsqueeze(1).detach()
+            vertices = vertices - \
+                joints_from_verts[:, self.root_idx_17, :].unsqueeze(1).detach()
+            new_joints = new_joints - \
+                new_joints[:, self.root_idx_smpl, :].unsqueeze(1).detach()
             # joints_from_verts = joints_from_verts - joints_from_verts[:, self.root_idx_17, :].unsqueeze(1).detach()
 
         output = ModelOutput(

@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class FitsDict():
     """ Dictionary keeping track of the best fit per image in the training set """
+
     def __init__(self, options, train_dataset):
         self.options = options
         self.train_dataset = train_dataset
@@ -32,7 +33,7 @@ class FitsDict():
                 self.fits_dict[ds_name] = torch.from_numpy(np.load(dict_file))
                 self.valid_fit_state[ds_name] = torch.ones(len(
                     self.fits_dict[ds_name]),
-                                                           dtype=torch.uint8)
+                    dtype=torch.uint8)
             else:
                 dict_file = os.path.join(path_config.FINAL_FITS_DIR,
                                          ds_name + '.npz')
@@ -117,7 +118,7 @@ class FitsDict():
             torch.stack([cos, -sin, zeros], dim=-1).unsqueeze(1),
             torch.stack([sin, cos, zeros], dim=-1).unsqueeze(1), r3
         ],
-                      dim=1)
+            dim=1)
         global_pose = pose[:, :3]
         global_pose_rotmat = angle_axis_to_rotation_matrix(global_pose)
         global_pose_rotmat_3b3 = global_pose_rotmat[:, :3, :3]

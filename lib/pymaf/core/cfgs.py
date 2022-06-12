@@ -49,7 +49,7 @@ cfg.MODEL = CN(new_allowed=True)
 
 cfg.MODEL.PyMAF = CN(new_allowed=True)
 
-## switch
+# switch
 cfg.TRAIN.VAL_LOOP = True
 
 cfg.TEST = CN(new_allowed=True)

@@ -15,13 +15,18 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from pytorch3d.structures import Meshes
+from lib.pymaf.utils.imutils import uncrop
+from lib.common.render_utils import Pytorch3dRasterizer, face_vertices
+from pytorch3d.renderer.mesh import rasterize_meshes
+from pdb import set_trace
 import numpy as np
 import cv2
 import torch
 import torchvision
 import trimesh
 from pytorch3d.io import load_obj
-import os, sys
+import os
 from termcolor import colored
 import os.path as osp
 from scipy.spatial import cKDTree
@@ -36,13 +41,6 @@ from pytorch3d.loss import (
 
 from PIL import Image, ImageFont, ImageDraw
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
-from pytorch3d.renderer.mesh import rasterize_meshes
-from lib.common.render_utils import Pytorch3dRasterizer, face_vertices
-from lib.pymaf.utils.imutils import uncrop
-from pytorch3d.structures import Meshes
-
-
 
 def get_mask(tensor, dim):
 
@@ -51,26 +49,27 @@ def get_mask(tensor, dim):
 
     return mask
 
+
 def blend_rgb_norm(rgb, norm, mask):
-    
+
     # [0,0,0] or [127,127,127] should be marked as mask
     final = rgb * (1-mask) + norm * (mask)
-    
+
     return final.astype(np.uint8)
 
+
 def unwrap(image, data):
-    
-    img_uncrop = uncrop(np.array(Image.fromarray(image).resize(data['uncrop_param']['box_shape'][:2])), 
-                                 data['uncrop_param']['center'], 
-                                 data['uncrop_param']['scale'], 
-                                 data['uncrop_param']['crop_shape'])
-            
-    
+
+    img_uncrop = uncrop(np.array(Image.fromarray(image).resize(data['uncrop_param']['box_shape'][:2])),
+                        data['uncrop_param']['center'],
+                        data['uncrop_param']['scale'],
+                        data['uncrop_param']['crop_shape'])
+
     img_orig = cv2.warpAffine(img_uncrop,
-                        np.linalg.inv(data['uncrop_param']['M'])[:2, :],
-                        data['uncrop_param']['ori_shape'][::-1][1:],
-                        flags=cv2.INTER_CUBIC)
-    
+                              np.linalg.inv(data['uncrop_param']['M'])[:2, :],
+                              data['uncrop_param']['ori_shape'][::-1][1:],
+                              flags=cv2.INTER_CUBIC)
+
     return img_orig
 
 
@@ -180,8 +179,8 @@ def feat_select(feat, select):
     # return [B, feat, N]
 
     dim = feat.shape[1] // 2
-    idx = torch.tile((1-select),(1,dim,1))*dim + \
-        torch.arange(0,dim).unsqueeze(0).unsqueeze(2).type_as(select)
+    idx = torch.tile((1-select), (1, dim, 1))*dim + \
+        torch.arange(0, dim).unsqueeze(0).unsqueeze(2).type_as(select)
     feat_select = torch.gather(feat, 1, idx.long())
 
     return feat_select
@@ -239,11 +238,11 @@ def barycentric_coordinates_of_projection(points, vertices):
     :param v0: first vertex of triangles. [B, 3]
     :returns: barycentric coordinates of ``p``'s projection in triangle defined by ``q``, ``u``, ``v``
             vectorized so ``p``, ``q``, ``u``, ``v`` can all be ``3xN``
-    """ 
+    """
     #(p, q, u, v)
-    v0, v1, v2 = vertices[:,0], vertices[:,0], vertices[:,0]
+    v0, v1, v2 = vertices[:, 0], vertices[:, 0], vertices[:, 0]
     p = points
-    
+
     q = v0
     u = v1 - v0
     v = v2 - v0
@@ -265,37 +264,45 @@ def barycentric_coordinates_of_projection(points, vertices):
 
 
 def cal_sdf_batch(verts, faces, cmaps, vis, points):
-    
+
     # verts [B, N_vert, 3]
     # faces [B, N_face, 3]
     # triangles [B, N_face, 3, 3]
     # points [B, N_point, 3]
     # cmaps [B, N_vert, 3]
 
+    Bsize = points.shape[0]
+
     normals = Meshes(verts, faces).verts_normals_padded()
-    
+
     triangles = face_vertices(verts, faces)
     normals = face_vertices(normals, faces)
     cmaps = face_vertices(cmaps, faces)
     vis = face_vertices(vis, faces)
-    
+
     residues, pts_ind, _ = point_to_mesh_distance(points, triangles)
-    closest_triangles = torch.gather(triangles, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
-    closest_normals = torch.gather(normals, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
-    closest_cmaps = torch.gather(cmaps, 1, pts_ind[:,:,None,None].expand(-1,-1,3,3)).view(-1,3,3)
-    closest_vis = torch.gather(vis, 1, pts_ind[:,:,None,None].expand(-1,-1,3,1)).view(-1,3,1)
-    
-    bary_weights = barycentric_coordinates_of_projection(points[0], closest_triangles)
-    
-    pts_cmap = (closest_cmaps*bary_weights[:,:,None]).sum(1).unsqueeze(0)
-    pts_vis = (closest_vis*bary_weights[:,:,None]).sum(1).unsqueeze(0).ge(1e-1)
-    pts_norm = (closest_normals*bary_weights[:,:,None]).sum(1).unsqueeze(0) * torch.tensor([-1.0, 1.0, -1.0]).type_as(normals)
+    closest_triangles = torch.gather(
+        triangles, 1, pts_ind[:, :, None, None].expand(-1, -1, 3, 3)).view(-1, 3, 3)
+    closest_normals = torch.gather(
+        normals, 1, pts_ind[:, :, None, None].expand(-1, -1, 3, 3)).view(-1, 3, 3)
+    closest_cmaps = torch.gather(
+        cmaps, 1, pts_ind[:, :, None, None].expand(-1, -1, 3, 3)).view(-1, 3, 3)
+    closest_vis = torch.gather(
+        vis, 1, pts_ind[:, :, None, None].expand(-1, -1, 3, 1)).view(-1, 3, 1)
+    bary_weights = barycentric_coordinates_of_projection(
+        points.view(-1, 3), closest_triangles)
+
+    pts_cmap = (closest_cmaps*bary_weights[:, :, None]).sum(1).unsqueeze(0)
+    pts_vis = (closest_vis*bary_weights[:,
+               :, None]).sum(1).unsqueeze(0).ge(1e-1)
+    pts_norm = (closest_normals*bary_weights[:, :, None]).sum(
+        1).unsqueeze(0) * torch.tensor([-1.0, 1.0, -1.0]).type_as(normals)
     pts_dist = torch.sqrt(residues) / torch.sqrt(torch.tensor(3))
 
     pts_signs = 2.0 * (check_sign(verts, faces[0], points).float() - 0.5)
     pts_sdf = (pts_dist * pts_signs).unsqueeze(-1)
 
-    return pts_sdf, pts_norm, pts_cmap, pts_vis
+    return pts_sdf.view(Bsize, -1, 1), pts_norm.view(Bsize, -1, 3), pts_cmap.view(Bsize, -1, 3), pts_vis.view(Bsize, -1, 1)
 
 
 def orthogonal(points, calibrations, transforms=None):
@@ -647,27 +654,29 @@ def get_optim_grid_image(per_loop_lst, loss=None, nrow=4, type='smpl'):
     grid_img = Image.fromarray(
         ((grid_img.permute(1, 2, 0).detach().cpu().numpy() + 1.0) * 0.5 *
          255.0).astype(np.uint8))
-    
+
     # add text
     draw = ImageDraw.Draw(grid_img)
     grid_size = 512
     if loss is not None:
         draw.text((10, 5), f"error: {loss:.3f}", (255, 0, 0), font=font)
-        
+
     if type == 'smpl':
         for col_id, col_txt in enumerate(
-            ['image', 'smpl-norm(render)', 'cloth-norm(pred)', 'diff-norm', 'diff-mask']):
-            draw.text((10+(col_id*grid_size), 5), col_txt, (255, 0, 0), font=font)
+                ['image', 'smpl-norm(render)', 'cloth-norm(pred)', 'diff-norm', 'diff-mask']):
+            draw.text((10+(col_id*grid_size), 5),
+                      col_txt, (255, 0, 0), font=font)
     elif type == 'cloth':
         for col_id, col_txt in enumerate(
-            ['image', 'cloth-norm(recon)', 'cloth-norm(pred)', 'diff-norm']):
-            draw.text((10+(col_id*grid_size), 5), col_txt, (255, 0, 0), font=font)
+                ['image', 'cloth-norm(recon)', 'cloth-norm(pred)', 'diff-norm']):
+            draw.text((10+(col_id*grid_size), 5),
+                      col_txt, (255, 0, 0), font=font)
         for col_id, col_txt in enumerate(
-            ['0', '90', '180', '270']):
-            draw.text((10+(col_id*grid_size), grid_size*2+5), col_txt, (255, 0, 0), font=font)
+                ['0', '90', '180', '270']):
+            draw.text((10+(col_id*grid_size), grid_size*2+5),
+                      col_txt, (255, 0, 0), font=font)
     else:
         print(f"{type} should be 'smpl' or 'cloth'")
-        
 
     grid_img = grid_img.resize((grid_img.size[0], grid_img.size[1]),
                                Image.ANTIALIAS)

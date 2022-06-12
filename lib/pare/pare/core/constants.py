@@ -160,7 +160,7 @@ J24_FLIP_PERM = [
 ]
 # Permutation indices for the full set of 49 joints
 J49_FLIP_PERM = [0, 1, 5, 6, 7, 2, 3, 4, 8, 12, 13, 14, 9, 10, 11, 16, 15, 18, 17, 22, 23, 24, 19, 20, 21]\
-              + [25+i for i in J24_FLIP_PERM]
+    + [25+i for i in J24_FLIP_PERM]
 
 SMPLH_TO_SMPL = np.arange(0, 156).reshape((-1, 3))[np.array([
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,

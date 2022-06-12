@@ -5,8 +5,7 @@ This file contains definitions of useful data stuctures and the paths
 for the datasets and data files necessary to run the code.
 Things you need to change: *_ROOT that indicate the path to each dataset
 """
-from os.path import join, expanduser
-import sys, os
+import os
 
 # pymaf
 pymaf_data_dir = os.path.join(os.path.dirname(__file__),
@@ -34,6 +33,6 @@ CKPT = os.path.join(pare_data_dir,
 
 # hybrik
 hybrik_data_dir = os.path.join(os.path.dirname(__file__),
-                             "../../../data/hybrik_data")
+                               "../../../data/hybrik_data")
 HYBRIK_CFG = os.path.join(hybrik_data_dir, 'hybrik_config.yaml')
 HYBRIK_CKPT = os.path.join(hybrik_data_dir, 'pretrained_w_cam.pth')

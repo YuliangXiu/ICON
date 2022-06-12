@@ -179,7 +179,8 @@ hparams.PARE.USE_BRANCH_NONLOCAL = None
 hparams.PARE.USE_HMR_REGRESSION = False
 hparams.PARE.USE_COATTENTION = False
 hparams.PARE.NUM_COATTENTION_ITER = 1
-hparams.PARE.COATTENTION_CONV = 'simple'  # 'double_1', 'double_3', 'single_1', 'single_3', 'simple'
+# 'double_1', 'double_3', 'single_1', 'single_3', 'simple'
+hparams.PARE.COATTENTION_CONV = 'simple'
 hparams.PARE.USE_UPSAMPLING = False
 hparams.PARE.DECONV_CONV_KERNEL_SIZE = 4
 hparams.PARE.USE_SOFT_ATTENTION = False
@@ -359,7 +360,8 @@ def run_grid_search_experiments(
         logdir = config_to_run.LOG_DIR + '/occlusion_test'
     elif script == 'eval.py':
         if config_to_run.DATASET.USE_GENDER:
-            logdir = config_to_run.LOG_DIR + '/evaluation_mesh_gender_' + config_to_run.DATASET.VAL_DS
+            logdir = config_to_run.LOG_DIR + \
+                '/evaluation_mesh_gender_' + config_to_run.DATASET.VAL_DS
         else:
             logdir = config_to_run.LOG_DIR + '/evaluation_mesh_' + config_to_run.DATASET.VAL_DS
     elif script == 'visualize_activations.py':
@@ -370,9 +372,11 @@ def run_grid_search_experiments(
         logdir = config_to_run.LOG_DIR + '/vis_parts'
     elif script == 'eval_cam.py':
         if config_to_run.DATASET.USE_GENDER:
-            logdir = config_to_run.LOG_DIR + '/evaluation_mesh_j24_gender_' + config_to_run.DATASET.VAL_DS
+            logdir = config_to_run.LOG_DIR + \
+                '/evaluation_mesh_j24_gender_' + config_to_run.DATASET.VAL_DS
         else:
-            logdir = config_to_run.LOG_DIR + '/evaluation_mesh_j24_' + config_to_run.DATASET.VAL_DS
+            logdir = config_to_run.LOG_DIR + \
+                '/evaluation_mesh_j24_' + config_to_run.DATASET.VAL_DS
     else:
         logdir = os.path.join(config_to_run.LOG_DIR,
                               config_to_run.PROJECT_NAME,

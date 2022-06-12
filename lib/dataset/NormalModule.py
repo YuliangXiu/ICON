@@ -15,7 +15,6 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
-import sys
 import numpy as np
 from torch.utils.data import DataLoader
 from .NormalDataset import NormalDataset

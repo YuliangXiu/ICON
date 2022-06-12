@@ -15,12 +15,24 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from lib.hybrik.models.simple3dpose import HybrIKBaseSMPLCam
+from lib.pixielib.utils.config import cfg as pixie_cfg
+from lib.pixielib.pixie import PIXIE
+import smplx
+from lib.pare.pare.core.tester import PARETester
+from lib.pymaf.utils.geometry import rotation_matrix_to_angle_axis, batch_rodrigues
+from lib.pymaf.utils.imutils import process_image
+from lib.pymaf.core import path_config
+from lib.pymaf.models import pymaf_net
+from lib.common.config import cfg
+from lib.common.render import Render
+from lib.dataset.body_model import TetraSMPLModel
+from lib.dataset.mesh_util import get_visibility, SMPLX
 import os.path as osp
 import os
 import torch
 import glob
 import numpy as np
-import sys
 import random
 import human_det
 from termcolor import colored
@@ -65,7 +77,7 @@ class TestDataset():
         self.hps_type = cfg['hps_type']
         self.smpl_type = 'smpl' if cfg['hps_type'] != 'pixie' else 'smplx'
         self.smpl_gender = 'neutral'
-        
+
         self.device = device
 
         if self.has_det:
@@ -84,35 +96,54 @@ class TestDataset():
 
         # smpl related
         self.smpl_data = SMPLX()
-        
-        self.get_smpl_model = lambda smpl_type, smpl_gender : smplx.create(
+
+        self.get_smpl_model = lambda smpl_type, smpl_gender: smplx.create(
             model_path=self.smpl_data.model_dir,
             gender=smpl_gender,
             model_type=smpl_type,
             ext='npz')
-        
+
         # Load SMPL model
-        self.smpl_model = self.get_smpl_model(self.smpl_type, self.smpl_gender).to(self.device)
+        self.smpl_model = self.get_smpl_model(
+            self.smpl_type, self.smpl_gender).to(self.device)
         self.faces = self.smpl_model.faces
-        
+
         if self.hps_type == 'pymaf':
             self.hps = pymaf_net(path_config.SMPL_MEAN_PARAMS,
                                  pretrained=True).to(self.device)
             self.hps.load_state_dict(torch.load(
                 path_config.CHECKPOINT_FILE)['model'],
-                                     strict=True)
-            self.hps.eval()     
-            
+                strict=True)
+            self.hps.eval()
+
         elif self.hps_type == 'pare':
             self.hps = PARETester(path_config.CFG, path_config.CKPT).model
         elif self.hps_type == 'pixie':
-            self.hps = PIXIE(config = pixie_cfg, device=self.device)
+            self.hps = PIXIE(config=pixie_cfg, device=self.device)
             self.smpl_model = self.hps.smplx
         elif self.hps_type == 'hybrik':
-            smpl_path = osp.join(self.smpl_data.model_dir, "smpl/SMPL_NEUTRAL.pkl")
-            self.hps = HybrIKBaseSMPLCam(cfg_file=path_config.HYBRIK_CFG, smpl_path=smpl_path, data_path=path_config.hybrik_data_dir)
-            self.hps.load_state_dict(torch.load(path_config.HYBRIK_CKPT, map_location='cpu'), strict=False)
+            smpl_path = osp.join(self.smpl_data.model_dir,
+                                 "smpl/SMPL_NEUTRAL.pkl")
+            self.hps = HybrIKBaseSMPLCam(
+                cfg_file=path_config.HYBRIK_CFG, smpl_path=smpl_path, data_path=path_config.hybrik_data_dir)
+            self.hps.load_state_dict(torch.load(
+                path_config.HYBRIK_CKPT, map_location='cpu'), strict=False)
             self.hps.to(self.device)
+        elif self.hps_type == 'bev':
+            try:
+                import bev
+            except:
+                print(
+                    'Could not find bev, installing via pip install --upgrade simple-romp')
+                os.system('pip install simple-romp==1.0.3')
+                import bev
+            settings = bev.main.default_settings
+            # change the argparse settings of bev here if you prefer other settings.
+            settings.mode = 'image'
+            settings.GPU = int(str(self.device).split(':')[1])
+            settings.show_largest = True
+            # settings.show = True # uncommit this to show the original BEV predictions
+            self.hps = bev.BEV(settings)
 
         print(colored(f"Using {self.hps_type} as HPS Estimator\n", "green"))
 
@@ -189,7 +220,6 @@ class TestDataset():
 
         img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, self.hps_type, 512)
         if self.seg_dir is None:
-            img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, self.hps_type, 512)
             data_dict = {
             'name': img_name,
             'image': img_icon.to(self.device).unsqueeze(0),
@@ -209,7 +239,7 @@ class TestDataset():
             }
 
         with torch.no_grad():
-            preds_dict = self.hps.forward(img_hps.to(self.device))
+            preds_dict = self.hps.forward(img_hps)
 
         data_dict['smpl_faces'] = torch.Tensor(
             self.faces.astype(np.int16)).long().unsqueeze(0).to(
@@ -229,7 +259,7 @@ class TestDataset():
             data_dict['betas'] = preds_dict['pred_shape']
             data_dict['smpl_verts'] = preds_dict['smpl_vertices']
             scale, tranX, tranY = preds_dict['pred_cam'][0, :3]
-            
+
         elif self.hps_type == 'pixie':
             data_dict.update(preds_dict)
             data_dict['body_pose'] = preds_dict['body_pose']
@@ -246,16 +276,30 @@ class TestDataset():
             scale, tranX, tranY = preds_dict['pred_camera'][0, :3]
             scale = scale * 2
 
+        elif self.hps_type == 'bev':
+            data_dict['betas'] = torch.from_numpy(preds_dict['smpl_betas'])[
+                [0], :10].to(self.device).float()
+            pred_thetas = batch_rodrigues(torch.from_numpy(
+                preds_dict['smpl_thetas'][0]).reshape(-1, 3)).float()
+            data_dict['body_pose'] = pred_thetas[1:][None].to(self.device)
+            data_dict['global_orient'] = pred_thetas[[0]][None].to(self.device)
+            data_dict['smpl_verts'] = torch.from_numpy(
+                preds_dict['verts'][[0]]).to(self.device).float()
+            tranX = preds_dict['cam_trans'][0, 0]
+            tranY = preds_dict['cam'][0, 1] + 0.28
+            scale = preds_dict['cam'][0, 0] * 1.1
+
         data_dict['scale'] = scale
-        data_dict['trans'] = torch.tensor([tranX, tranY, 0.0]).to(self.device)
-        
+        data_dict['trans'] = torch.tensor(
+            [tranX, tranY, 0.0]).to(self.device).float()
+
         # data_dict info (key-shape):
         # scale, tranX, tranY - tensor.float
         # betas - [1,10] / [1, 200]
         # body_pose - [1, 23, 3, 3] / [1, 21, 3, 3]
         # global_orient - [1, 1, 3, 3]
         # smpl_verts - [1, 6890, 3] / [1, 10475, 3]
-        
+
         return data_dict
 
     def render_normal(self, verts, faces, deform_verts=None):
@@ -263,59 +307,67 @@ class TestDataset():
         # render optimized mesh (normal, T_normal, image [-1,1])
         self.render.load_simple_mesh(verts, faces, deform_verts)
         return self.render.get_clean_image()
-    
+
     def visualize_alignment(self, data):
-        
+
         import vedo
         import trimesh
-        
+
         if self.hps_type != 'pixie':
             smpl_out = self.smpl_model(betas=data['betas'],
-                                        body_pose=data['body_pose'],
-                                        global_orient=data['global_orient'],
-                                        pose2rot=False)
-            smpl_verts = ((smpl_out.vertices + data['trans'])* data['scale']).detach().cpu().numpy()[0]
+                                       body_pose=data['body_pose'],
+                                       global_orient=data['global_orient'],
+                                       pose2rot=False)
+            smpl_verts = (
+                (smpl_out.vertices + data['trans']) * data['scale']).detach().cpu().numpy()[0]
         else:
             smpl_verts, _, _ = self.smpl_model(shape_params=data['betas'],
-                                        expression_params=data['exp'],
-                                        body_pose=data['body_pose'],
-                                        global_pose=data['global_orient'],
-                                        jaw_pose=data['jaw_pose'],
-                                        left_hand_pose=data['left_hand_pose'],
-                                        right_hand_pose=data['right_hand_pose'])
-            
-            smpl_verts = ((smpl_verts + data['trans'])* data['scale']).detach().cpu().numpy()[0]
-        
+                                               expression_params=data['exp'],
+                                               body_pose=data['body_pose'],
+                                               global_pose=data['global_orient'],
+                                               jaw_pose=data['jaw_pose'],
+                                               left_hand_pose=data['left_hand_pose'],
+                                               right_hand_pose=data['right_hand_pose'])
+
+            smpl_verts = (
+                (smpl_verts + data['trans']) * data['scale']).detach().cpu().numpy()[0]
+
         smpl_verts *= np.array([1.0, -1.0, -1.0])
-        faces = data['smpl_faces'][0].detach().cpu().numpy() 
-            
-        
+        faces = data['smpl_faces'][0].detach().cpu().numpy()
+
         image_P = data['image']
         image_F, image_B = self.render_normal(smpl_verts, faces)
-        
+
         # create plot
         vp = vedo.Plotter(title="", size=(1500, 1500))
         vis_list = []
 
-        image_F = (0.5 * ( 1.0 + image_F[0].permute(1,2,0).detach().cpu().numpy()) * 255.0)
-        image_B = (0.5 * ( 1.0 + image_B[0].permute(1,2,0).detach().cpu().numpy()) * 255.0)
-        image_P = (0.5 * ( 1.0 + image_P[0].permute(1,2,0).detach().cpu().numpy()) * 255.0)
-        
-        vis_list.append(vedo.Picture(image_P*0.5+image_F*0.5).scale(2.0/image_P.shape[0]).pos(-1.0, -1.0, 1.0))
-        vis_list.append(vedo.Picture(image_F).scale(2.0/image_F.shape[0]).pos(-1.0, -1.0, -0.5))
-        vis_list.append(vedo.Picture(image_B).scale(2.0/image_B.shape[0]).pos(-1.0, -1.0, -1.0))
-        
+        image_F = (
+            0.5 * (1.0 + image_F[0].permute(1, 2, 0).detach().cpu().numpy()) * 255.0)
+        image_B = (
+            0.5 * (1.0 + image_B[0].permute(1, 2, 0).detach().cpu().numpy()) * 255.0)
+        image_P = (
+            0.5 * (1.0 + image_P[0].permute(1, 2, 0).detach().cpu().numpy()) * 255.0)
+
+        vis_list.append(vedo.Picture(image_P*0.5+image_F *
+                        0.5).scale(2.0/image_P.shape[0]).pos(-1.0, -1.0, 1.0))
+        vis_list.append(vedo.Picture(image_F).scale(
+            2.0/image_F.shape[0]).pos(-1.0, -1.0, -0.5))
+        vis_list.append(vedo.Picture(image_B).scale(
+            2.0/image_B.shape[0]).pos(-1.0, -1.0, -1.0))
+
         # create a mesh
         mesh = trimesh.Trimesh(smpl_verts, faces, process=False)
-        mesh.visual.vertex_colors = [200,200,0]
+        mesh.visual.vertex_colors = [200, 200, 0]
         vis_list.append(mesh)
-        
+
         vp.show(*vis_list, bg="white", axes=1, interactive=True)
 
+
 if __name__ == '__main__':
-    
-    cfg.merge_from_file("../configs/icon-filter.yaml")
-    cfg.merge_from_file('../lib/pymaf/configs/pymaf_config.yaml')
+
+    cfg.merge_from_file("./configs/icon-filter.yaml")
+    cfg.merge_from_file('./lib/pymaf/configs/pymaf_config.yaml')
 
     cfg_show_list = [
         'test_gpus', ['0'], 'mcube_res', 512, 'clean_mesh', False
@@ -323,16 +375,16 @@ if __name__ == '__main__':
 
     cfg.merge_from_list(cfg_show_list)
     cfg.freeze()
-    
+
     os.environ['CUDA_VISIBLE_DEVICES'] = "0"
     device = torch.device('cuda:0')
-    
+
     dataset = TestDataset(
         {
-            'image_dir': "../examples",
+            'image_dir': "./examples",
             'has_det': True,    # w/ or w/o detection
-            'hps_type': 'hybrik'  # pymaf/pare/pixie/hybrik
+            'hps_type': 'bev'  # pymaf/pare/pixie/hybrik/bev
         }, device)
 
-    
-    dataset.visualize_alignment(dataset[1])
+    for i in range(len(dataset)):
+        dataset.visualize_alignment(dataset[i])

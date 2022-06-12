@@ -1,7 +1,7 @@
 name: icon-nofilter
-ckpt_dir: "../data/ckpt/"
-resume_path: "../data/ckpt/icon-nofilter.ckpt"
-normal_path: "../data/ckpt/normal.ckpt"
+ckpt_dir: "./data/ckpt/"
+resume_path: "./data/ckpt/icon-nofilter.ckpt"
+normal_path: "./data/ckpt/normal.ckpt"
 
 test_mode: True
 batch_size: 1

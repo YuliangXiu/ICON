@@ -1,6 +1,4 @@
 from __future__ import division, print_function
-import os, sys
-import os.path as osp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,6 +6,7 @@ import numpy as np
 from torch.autograd import Function
 
 import voxelize_cuda
+
 
 class VoxelizationFunction(Function):
     """
@@ -66,6 +65,7 @@ class Voxelization(nn.Module):
     """
     Wrapper around the autograd function VoxelizationFunction
     """
+
     def __init__(self, smpl_vertex_code, smpl_face_code, smpl_face_indices,
                  smpl_tetraderon_indices, volume_res, sigma,
                  smooth_kernel_size, batch_size, device):

@@ -15,6 +15,7 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+from torchvision import models
 import torch
 from torch.nn import init
 import torch.nn as nn
@@ -158,7 +159,8 @@ def cal_gradient_penalty(netD,
     Returns the gradient penalty loss
     """
     if lambda_gp > 0.0:
-        if type == 'real':  # either use real images, fake images, or a linear interpolation of two.
+        # either use real images, fake images, or a linear interpolation of two.
+        if type == 'real':
             interpolatesv = real_data
         elif type == 'fake':
             interpolatesv = fake_data
@@ -182,7 +184,7 @@ def cal_gradient_penalty(netD,
             retain_graph=True,
             only_inputs=True)
         gradients = gradients[0].view(real_data.size(0), -1)  # flat the data
-        gradient_penalty = (((gradients + 1e-16).norm(2, dim=1) - constant)**
+        gradient_penalty = (((gradients + 1e-16).norm(2, dim=1) - constant) **
                             2).mean() * lambda_gp  # added eps
         return gradient_penalty, gradients
     else:
@@ -276,9 +278,6 @@ class ConvBlock(nn.Module):
         out3 += residual
 
         return out3
-
-
-from torchvision import models
 
 
 class Vgg19(torch.nn.Module):

@@ -79,10 +79,10 @@ class HoppeMesh:
         :param points: pts
         :param normals: normals
         '''
-        self.verts = verts  #[n, 3]
-        self.faces = faces  #[m, 3]
-        self.vert_normals = vert_normals  #[n, 3]
-        self.face_normals = face_normals  #[m, 3]
+        self.verts = verts  # [n, 3]
+        self.faces = faces  # [m, 3]
+        self.vert_normals = vert_normals  # [n, 3]
+        self.face_normals = face_normals  # [m, 3]
 
         self.kd_tree = cKDTree(self.verts)
         self.len = len(self.verts)
@@ -113,4 +113,4 @@ class HoppeMesh:
         save_ply(path, self.verts, self.colors[:, 0:3] / 255.0)
 
     def triangles(self):
-        return self.verts[self.faces]  #[n, 3, 3]
+        return self.verts[self.faces]  # [n, 3, 3]

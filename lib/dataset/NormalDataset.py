@@ -15,15 +15,10 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
-import os
-import sys
 import os.path as osp
 import numpy as np
 from PIL import Image
-import torch
 import torchvision.transforms as transforms
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 
 
 class NormalDataset():

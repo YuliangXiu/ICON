@@ -159,7 +159,7 @@ def face_vertices(vertices, faces):
     faces = faces + (torch.arange(bs, dtype=torch.int32).to(device) *
                      nv)[:, None, None]
     vertices = vertices.reshape((bs * nv, vertices.shape[-1]))
-    
+
     return vertices[faces.long()]
 
 
@@ -169,6 +169,7 @@ class Pytorch3dRasterizer(nn.Module):
         x,y,z are in image space, normalized
         can only render squared image now
     """
+
     def __init__(self, image_size=224):
         """
         use fixed raster_settings for rendering faces

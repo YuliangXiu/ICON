@@ -28,6 +28,7 @@ from ...utils.geometry import perspective_projection, convert_weak_perspective_t
 
 class SMPL(_SMPL):
     """ Extension of the official SMPL implementation to support more joints """
+
     def __init__(self, *args, **kwargs):
         super(SMPL, self).__init__(*args, **kwargs)
         joints = [constants.JOINT_MAP[i] for i in constants.JOINT_NAMES]

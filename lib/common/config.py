@@ -24,12 +24,12 @@ _C = CN(new_allowed=True)
 _C.name = 'default'
 _C.gpus = [0]
 _C.test_gpus = [1]
-_C.root = "../data/"
-_C.ckpt_dir = '../data/ckpt/'
+_C.root = "./data/"
+_C.ckpt_dir = './data/ckpt/'
 _C.resume_path = ''
 _C.normal_path = ''
 _C.corr_path = ''
-_C.results_path = '../data/results/'
+_C.results_path = './data/results/'
 _C.projection_mode = 'orthogonal'
 _C.num_views = 1
 _C.sdf = False
@@ -173,10 +173,10 @@ def get_cfg_defaults():
 cfg = _C  # users can `from config import cfg`
 
 # cfg = get_cfg_defaults()
-# cfg.merge_from_file('../configs/example.yaml')
+# cfg.merge_from_file('./configs/example.yaml')
 
 # # Now override from a list (opts could come from the command line)
-# opts = ['dataset.root', '../data/XXXX', 'learning_rate', '1e-2']
+# opts = ['dataset.root', './data/XXXX', 'learning_rate', '1e-2']
 # cfg.merge_from_list(opts)
 
 

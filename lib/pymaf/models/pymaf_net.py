@@ -1,5 +1,4 @@
 import torch
-import sys, os
 import torch.nn as nn
 import numpy as np
 
@@ -167,6 +166,7 @@ class PyMAF(nn.Module):
     """ PyMAF based Deep Regressor for Human Mesh Recovery
     PyMAF: 3D Human Pose and Shape Regression with Pyramidal Mesh Alignment Feedback Loop, in ICCV, 2021
     """
+
     def __init__(self, smpl_mean_params=SMPL_MEAN_PARAMS, pretrained=True):
         super().__init__()
         self.feature_extractor = ResNet_Backbone(

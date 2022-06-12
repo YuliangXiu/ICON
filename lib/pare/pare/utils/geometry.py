@@ -93,7 +93,7 @@ def quat_to_rotmat(quat):
         w2 - x2 + y2 - z2, 2 * yz - 2 * wx, 2 * xz - 2 * wy, 2 * wx + 2 * yz,
         w2 - x2 - y2 + z2
     ],
-                         dim=1).view(B, 3, 3)
+        dim=1).view(B, 3, 3)
     return rotMat
 
 
@@ -310,7 +310,7 @@ def convert_perspective_to_weak_perspective(
         perspective_camera[:, 0],
         perspective_camera[:, 1],
     ],
-                                          dim=-1)
+        dim=-1)
     return weak_perspective_camera
 
 
@@ -329,7 +329,7 @@ def convert_weak_perspective_to_perspective(
         weak_perspective_camera[:, 1], weak_perspective_camera[:, 2],
         2 * focal_length / (img_res * weak_perspective_camera[:, 0] + 1e-9)
     ],
-                                     dim=-1)
+        dim=-1)
     return perspective_camera
 
 
@@ -634,7 +634,7 @@ def look_at(eye, at=np.array([0, 0, 0]), up=np.array([0, 0, 1]), eps=1e-5):
 
     r_mat = np.concatenate((x_axis.reshape(-1, 3, 1), y_axis.reshape(
         -1, 3, 1), z_axis.reshape(-1, 3, 1)),
-                           axis=2)
+        axis=2)
 
     return r_mat
 
@@ -735,7 +735,7 @@ def quaternion_to_rotation_matrix(quat):
         w2 - x2 + y2 - z2, 2 * yz - 2 * wx, 2 * xz - 2 * wy, 2 * wx + 2 * yz,
         w2 - x2 - y2 + z2
     ],
-                         dim=1).view(B, 3, 3)
+        dim=1).view(B, 3, 3)
     return rotMat
 
 

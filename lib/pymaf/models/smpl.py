@@ -19,6 +19,7 @@ H36M_TO_J14 = H36M_TO_J17[:14]
 
 class SMPL(_SMPL):
     """ Extension of the official SMPL implementation to support more joints """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         joints = [constants.JOINT_MAP[i] for i in constants.JOINT_NAMES]
