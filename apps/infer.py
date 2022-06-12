@@ -34,21 +34,10 @@ from PIL import Image
 import torch
 import trimesh
 import numpy as np
-import pickle
+
 torch.backends.cudnn.benchmark = True
 
-# project related libs
-sys.path.insert(0, '../')
-from ICON import ICON
-from lib.dataset.TestDataset import TestDataset
-from lib.dataset.mesh_util import load_checkpoint, update_mesh_shape_prior_losses, get_optim_grid_image, blend_rgb_norm, unwrap
-from lib.common.config import cfg
-from lib.common.render import query_color
-from lib.common.cloth_extraction import extract_cloth
-
 logging.getLogger("trimesh").setLevel(logging.ERROR)
-
-
 def tensor2variable(tensor, device):
     # [1,23,3,3]
     return torch.tensor(tensor, device=device, requires_grad=True)
