@@ -117,10 +117,7 @@
 ## TODO
 
 - [x] testing code and pretrained models (\*self-implemented version)
-      <<<<<<< HEAD
-  - [x] # ICON (w/ & w/o global encoder, w/ PyMAF/HybrIK/PIXIE/PARE as HPS)
   - [x] ICON (w/ & w/o global encoder, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
-    > > > > > > > 0f7a2d92a67c425668b5fa185906135fddc4fb37
   - [x] PIFu\* (RGB image + predicted normal map as input)
   - [x] PaMIR\* (RGB image + predicted normal map as input, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
@@ -201,10 +198,7 @@ Here are some great resources we benefit from:
 - [PaMIR](https://github.com/ZhengZerong/PaMIR), [PIFu](https://github.com/shunsukesaito/PIFu), [PIFuHD](https://github.com/facebookresearch/pifuhd), and [MonoPort](https://github.com/Project-Splinter/MonoPort) for Benchmark
 - [SCANimate](https://github.com/shunsukesaito/SCANimate) and [AIST++](https://github.com/google/aistplusplus_api) for Animation
 - [rembg](https://github.com/danielgatis/rembg) for Human Segmentation
-  <<<<<<< HEAD
-- # [smplx](https://github.com/vchoutas/smplx), [PARE](https://github.com/mkocabas/PARE), [PyMAF](https://github.com/HongwenZhang/PyMAF), [PIXIE](https://github.com/YadiraF/PIXIE), and [HybrIK](https://github.com/Jeff-sjtu/HybrIK) for Human Pose & Shape Estimation
 - [smplx](https://github.com/vchoutas/smplx), [PARE](https://github.com/mkocabas/PARE), [PyMAF](https://github.com/HongwenZhang/PyMAF), [PIXIE](https://github.com/YadiraF/PIXIE), [BEV](https://github.com/Arthur151/ROMP), and [HybrIK](https://github.com/Jeff-sjtu/HybrIK) for Human Pose & Shape Estimation
-  > > > > > > > 0f7a2d92a67c425668b5fa185906135fddc4fb37
 - [CAPE](https://github.com/qianlim/CAPE) and [THuman](https://github.com/ZhengZerong/DeepHuman/tree/master/THUmanDataset) for Dataset
 - [PyTorch3D](https://github.com/facebookresearch/pytorch3d) for Differential Rendering
 

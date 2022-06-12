@@ -185,6 +185,7 @@ class HybrIKBaseSMPLCam(nn.Module):
             pred_jts = pred_jts.reshape(num_batches, self.num_joints * 3)
 
         return pred_jts
+
     def flip_xyz_coord(self, pred_jts, flatten=True):
         if flatten:
             assert pred_jts.dim() == 2
@@ -219,6 +220,7 @@ class HybrIKBaseSMPLCam(nn.Module):
         return pred_phi
 
     def forward(self, x, flip_item=None, flip_output=False, gt_uvd=None, gt_uvd_weight=None, **kwargs):
+
         batch_size = x.shape[0]
 
         # torch.cuda.synchronize()
@@ -234,6 +236,7 @@ class HybrIKBaseSMPLCam(nn.Module):
         out = out.reshape((out.shape[0], self.num_joints, -1))
 
         maxvals, _ = torch.max(out, dim=2, keepdim=True)
+
         out = norm_heatmap(self.norm_type, out)
         assert out.dim() == 3, out.shape
 
