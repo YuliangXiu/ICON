@@ -40,6 +40,7 @@
 
 ## News :triangular_flag_on_post:
 
+- [2022/06/13] ETH Zürich students from 3DV course create an add-on for [garment-extraction](docs/garment-extraction.md).  
 - [2022/05/16] <a href="https://github.com/Arthur151/ROMP">BEV</a> is supported as optional HPS by <a href="https://scholar.google.com/citations?hl=en&user=fkGxgrsAAAAJ">Yu Sun</a>, see [commit #060e265](https://github.com/YuliangXiu/ICON/commit/060e265bd253c6a34e65c9d0a5288c6d7ffaf68e).
 - [2022/05/15] Training code is released, please check [Training Instruction](docs/training.md).
 - [2022/04/26] <a href="https://github.com/Jeff-sjtu/HybrIK">HybrIK (SMPL)</a> is supported as optional HPS by <a href="https://jeffli.site/">Jiefeng Li</a>, see [commit #3663704](https://github.com/YuliangXiu/ICON/commit/36637046dcbb5667cdfbee3b9c91b934d4c5dd05).
@@ -66,6 +67,9 @@
     </li>
     <li>
     <a href="#training">Training</a>
+    </li>
+    <li>
+    <a href="#add-on">Add-on</a>
     </li>
     <li>
       <a href="#demo">Demo</a>
@@ -144,40 +148,9 @@ Please follow the [Dataset Instruction](docs/dataset.md) to generate the train/v
 
 Please follow the [Training Instruction](docs/training.md) to train your own model using THuman2.0.
 
-## Extracting clothes from bodies
+## Add-on
+1. [Garment Extraction from Fashion Images](docs/garment-extraction.md), supported by ETH Zürich students as 3DV course project.
 
-It is possible to extract only clothing item from the resulting 3d meshes. The user can provide a segmentation file along with a image to get the clothes. The segmentation file must be on the following format:
-
-```json
-  {
-  "item1": {
-    "segmentation": [
-      [
-        x1,y1,x2,y2,.......
-      ],
-      [
-        .....
-      ]
-    ],
-    "category_id": 0,
-    "category_name": "{clothing description}"
-  },
-  "item2": {
-    "segmentation": [
-      [
-        x1,y1,x2,y2,.......
-      ],
-      [
-        .....
-      ]
-    ],
-    "category_id": 0,
-    "category_name": "{clothing description}"
-  }
-}
-```
-
-Where x1, y1, ... are the coordinates of the segmentation boundaries. "category_id" identifies the type of clothing (we use https://github.com/switchablenorms/DeepFashion2#data-organization). The segmentation file and the image file must have the same name. Check out the examples in the "segmentation" folder and the corresponding images in the "example" folder. To run ICON with segmentation you need to add -seg_dir {path_to_segmentation_folder} to the run command.
 
 ## Demo
 

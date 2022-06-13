@@ -17,6 +17,7 @@
 import logging
 from lib.common.render import query_color, image2vid
 from lib.common.config import cfg
+from lib.common.cloth_extraction import extract_cloth
 from lib.dataset.mesh_util import (
     load_checkpoint,
     update_mesh_shape_prior_losses,
@@ -25,6 +26,7 @@ from lib.dataset.mesh_util import (
     unwrap,
 )
 from lib.dataset.TestDataset import TestDataset
+
 from apps.ICON import ICON
 import os
 from termcolor import colored
@@ -33,11 +35,14 @@ import numpy as np
 from PIL import Image
 import torch
 import trimesh
+import pickle
 import numpy as np
 
 torch.backends.cudnn.benchmark = True
 
 logging.getLogger("trimesh").setLevel(logging.ERROR)
+
+
 def tensor2variable(tensor, device):
     # [1,23,3,3]
     return torch.tensor(tensor, device=device, requires_grad=True)
@@ -47,7 +52,7 @@ if __name__ == "__main__":
 
     # loading cfg file
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument("-gpu", "--gpu_device", type=int, default=0)
     parser.add_argument("-colab", action="store_true")
     parser.add_argument("-loop_smpl", "--loop_smpl", type=int, default=100)
@@ -97,10 +102,10 @@ if __name__ == "__main__":
     model = load_checkpoint(model, cfg)
 
     dataset_param = {
-            'image_dir': args.in_dir,
-            'seg_dir': args.seg_dir,
-            'has_det': True,            # w/ or w/o detection
-            'hps_type': args.hps_type   # pymaf/pare/pixie
+        'image_dir': args.in_dir,
+        'seg_dir': args.seg_dir,
+        'has_det': True,            # w/ or w/o detection
+        'hps_type': args.hps_type   # pymaf/pare/pixie
     }
 
     if args.hps_type == "pixie" and "pamir" in args.config:
@@ -539,25 +544,27 @@ if __name__ == "__main__":
             in_tensor['smpl_faces'].detach().cpu()[0],
             process=False,
             maintains_order=True
-            )
+        )
         smpl_obj.export(
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
 
         if not (args.seg_dir is None):
-            os.makedirs(os.path.join(args.out_dir, cfg.name, "clothes"), exist_ok=True)
-            os.makedirs(os.path.join(args.out_dir, cfg.name, "clothes", "info"), exist_ok=True)
+            os.makedirs(os.path.join(
+                args.out_dir, cfg.name, "clothes"), exist_ok=True)
+            os.makedirs(os.path.join(args.out_dir, cfg.name,
+                        "clothes", "info"), exist_ok=True)
             for seg in data['segmentations']:
-                ## These matrices work for PyMaf, not sure about the other hps type
-                K = np.array([[ 1.0000,  0.0000,  0.0000,  0.0000],
-                            [ 0.0000,  1.0000,  0.0000,  0.0000],
-                            [ 0.0000,  0.0000, -0.5000,  0.0000],
-                            [-0.0000, -0.0000,  0.5000,  1.0000]]).T
+                # These matrices work for PyMaf, not sure about the other hps type
+                K = np.array([[1.0000,  0.0000,  0.0000,  0.0000],
+                              [0.0000,  1.0000,  0.0000,  0.0000],
+                              [0.0000,  0.0000, -0.5000,  0.0000],
+                              [-0.0000, -0.0000,  0.5000,  1.0000]]).T
 
                 R = np.array([[-1.,  0.,  0.],
-                        [ 0.,  1.,  0.],
-                        [ 0.,  0., -1.]])
+                              [0.,  1.,  0.],
+                              [0.,  0., -1.]])
 
-                t = np.array([[ -0.,  -0., 100.]])
+                t = np.array([[-0.,  -0., 100.]])
                 clothing_obj = extract_cloth(recon_obj, seg, K, R, t, smpl_obj)
                 if clothing_obj is not None:
                     cloth_type = seg['type'].replace(' ', '_')
@@ -573,6 +580,8 @@ if __name__ == "__main__":
                     with open(os.path.join(args.out_dir, cfg.name, "clothes", "info", f"{file_id}_info.pkl"), 'wb') as fp:
                         pickle.dump(cloth_info, fp)
 
-                    clothing_obj.export(os.path.join(args.out_dir, cfg.name, "clothes", f"{file_id}.obj"))
+                    clothing_obj.export(os.path.join(
+                        args.out_dir, cfg.name, "clothes", f"{file_id}.obj"))
                 else:
-                    print(f"Unable to extract clothing of type {seg['type']} from image {data['name']}")
+                    print(
+                        f"Unable to extract clothing of type {seg['type']} from image {data['name']}")
