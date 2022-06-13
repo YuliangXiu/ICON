@@ -18,12 +18,13 @@ vedo==2020.4.2
 rtree==0.9.7
 pytorch_lightning==1.2.5
 PyMCubes
-kornia
+kornia==0.4.0
 chumpy
 cython==0.29.20
 rembg>=2.0.3
 opencv-python
 opencv_contrib_python
+scikit-learn
 simple-romp==1.0.4
 protobuf==3.20.0
 git+https://github.com/Project-Splinter/human_det

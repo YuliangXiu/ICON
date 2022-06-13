@@ -39,6 +39,7 @@
 <br />
 
 ## News :triangular_flag_on_post:
+
 - [2022/05/16] <a href="https://github.com/Arthur151/ROMP">BEV</a> is supported as optional HPS by <a href="https://scholar.google.com/citations?hl=en&user=fkGxgrsAAAAJ">Yu Sun</a>, see [commit #060e265](https://github.com/YuliangXiu/ICON/commit/060e265bd253c6a34e65c9d0a5288c6d7ffaf68e).
 - [2022/05/15] Training code is released, please check [Training Instruction](docs/training.md).
 - [2022/04/26] <a href="https://github.com/Jeff-sjtu/HybrIK">HybrIK (SMPL)</a> is supported as optional HPS by <a href="https://jeffli.site/">Jiefeng Li</a>, see [commit #3663704](https://github.com/YuliangXiu/ICON/commit/36637046dcbb5667cdfbee3b9c91b934d4c5dd05).
@@ -89,52 +90,47 @@
 <br />
 <br />
 
-
-
-
 ## Who needs ICON?
+
 - Given an RGB image, you could get:
   - image (png): segmentation, normal images (body + cloth), overlap result (rgb + normal)
   - mesh (obj): SMPL-(X) body, reconstructed clothed human
   - video (mp4): self-rotated clothed human
 
-|![Intermediate Results](assets/intermediate_results.png)|
-|:--:|
-|*ICON's intermediate results*|
-|![Iterative Refinement](assets/refinement.gif)|
-|*ICON's SMPL Pose Refinement*|
-|![Final Results](assets/overlap1.gif)![Final Results](assets/overlap2.gif)|
-|*ICON's normal prediction + reconstructed mesh (w/o & w/ smooth)*|
+|          ![Intermediate Results](assets/intermediate_results.png)          |
+| :------------------------------------------------------------------------: |
+|                       _ICON's intermediate results_                        |
+|               ![Iterative Refinement](assets/refinement.gif)               |
+|                       _ICON's SMPL Pose Refinement_                        |
+| ![Final Results](assets/overlap1.gif)![Final Results](assets/overlap2.gif) |
+|     _ICON's normal prediction + reconstructed mesh (w/o & w/ smooth)_      |
 
 - If you want to create a **realistic and animatable 3D clothed avatar** direclty from video / sequential images
   - fully-textured with per-vertex color
   - can be animated by SMPL pose parameters
   - natural pose-dependent clothing deformation
 
-|![ICON+SCANimate+AIST++](assets/scanimate.gif)|
-|:--:|
-|*3D Clothed Avatar, created from 400+ images using **ICON+SCANimate**, animated by AIST++*|
-
-
+|                       ![ICON+SCANimate+AIST++](assets/scanimate.gif)                       |
+| :----------------------------------------------------------------------------------------: |
+| _3D Clothed Avatar, created from 400+ images using **ICON+SCANimate**, animated by AIST++_ |
 
 ## TODO
 
-- [x] testing code and pretrained models (*self-implemented version)
+- [x] testing code and pretrained models (\*self-implemented version)
   - [x] ICON (w/ & w/o global encoder, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
-  - [x] PIFu* (RGB image + predicted normal map as input)
-  - [x] PaMIR* (RGB image + predicted normal map as input, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
+  - [x] PIFu\* (RGB image + predicted normal map as input)
+  - [x] PaMIR\* (RGB image + predicted normal map as input, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
 - [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
       <img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'>
-    </a>
+      </a>
 - [x] dataset processing
   - [x] RGB/Normal Rendering
   - [x] Visibility computing
 - [ ] training codes
   - [x] ICON (w/ & w/o global encoder, w/ SMPL-X)
-  - [x] PIFu* (RGB image + predicted normal map as input)
-  - [ ] PaMIR* (RGB image + predicted normal map as input, w/ voxelized SMPL)
+  - [x] PIFu\* (RGB image + predicted normal map as input)
+  - [ ] PaMIR\* (RGB image + predicted normal map as input, w/ voxelized SMPL)
 - [ ] evaluation on CAPE (Hard, Easy)
-
 
 ## Installation
 
@@ -145,7 +141,43 @@ Please follow the [Installation Instruction](docs/installation.md) to setup all 
 Please follow the [Dataset Instruction](docs/dataset.md) to generate the train/val/test dataset from raw scans (THuman2.0).
 
 ## Training
+
 Please follow the [Training Instruction](docs/training.md) to train your own model using THuman2.0.
+
+## Extracting clothes from bodies
+
+It is possible to extract only clothing item from the resulting 3d meshes. The user can provide a segmentation file along with a image to get the clothes. The segmentation file must be on the following format:
+
+```json
+  {
+  "item1": {
+    "segmentation": [
+      [
+        x1,y1,x2,y2,.......
+      ],
+      [
+        .....
+      ]
+    ],
+    "category_id": 0,
+    "category_name": "{clothing description}"
+  },
+  "item2": {
+    "segmentation": [
+      [
+        x1,y1,x2,y2,.......
+      ],
+      [
+        .....
+      ]
+    ],
+    "category_id": 0,
+    "category_name": "{clothing description}"
+  }
+}
+```
+
+Where x1, y1, ... are the coordinates of the segmentation boundaries. "category_id" identifies the type of clothing (we use https://github.com/switchablenorms/DeepFashion2#data-organization). The segmentation file and the image file must have the same name. Check out the examples in the "segmentation" folder and the corresponding images in the "example" folder. To run ICON with segmentation you need to add -seg_dir {path_to_segmentation_folder} to the run command.
 
 ## Demo
 
@@ -167,17 +199,14 @@ python -m apps.infer -cfg ./configs/icon-nofilter.yaml -gpu 0 -in_dir ./examples
 
 ## More Qualitative Results
 
-|![Comparison](assets/compare.gif)|
-|:--:| 
-| *Comparison with other state-of-the-art methods* |
-|![extreme](assets/normal-pred.png)|
-| *Predicted normals on in-the-wild images with extreme poses* |
-
-
+|              ![Comparison](assets/compare.gif)               |
+| :----------------------------------------------------------: |
+|       _Comparison with other state-of-the-art methods_       |
+|              ![extreme](assets/normal-pred.png)              |
+| _Predicted normals on in-the-wild images with extreme poses_ |
 
 <br/>
 <br/>
-
 
 ## Citation
 
@@ -208,17 +237,17 @@ Here are some great resources we benefit from:
 - [CAPE](https://github.com/qianlim/CAPE) and [THuman](https://github.com/ZhengZerong/DeepHuman/tree/master/THUmanDataset) for Dataset
 - [PyTorch3D](https://github.com/facebookresearch/pytorch3d) for Differential Rendering
 
-
 Some images used in the qualitative examples come from [pinterest.com](https://www.pinterest.com/).
 
-This project has received funding from the European Union’s Horizon 2020 research and innovation programme under the Marie Skłodowska-Curie grant agreement No.860768 ([CLIPE Project](https://www.clipe-itn.eu)). 
-
+This project has received funding from the European Union’s Horizon 2020 research and innovation programme under the Marie Skłodowska-Curie grant agreement No.860768 ([CLIPE Project](https://www.clipe-itn.eu)).
 
 ## License
+
 This code and model are available for non-commercial scientific research purposes as defined in the [LICENSE](LICENSE) file. By downloading and using the code and model you agree to the terms in the [LICENSE](LICENSE).
 
 ## Disclosure
-MJB has received research gift funds from Adobe, Intel, Nvidia, Meta/Facebook, and Amazon.  MJB has financial interests in Amazon, Datagen Technologies, and Meshcapade GmbH.  While MJB was a part-time employee of Amazon during this project, his research was performed solely at, and funded solely by, the Max Planck Society.
+
+MJB has received research gift funds from Adobe, Intel, Nvidia, Meta/Facebook, and Amazon. MJB has financial interests in Amazon, Datagen Technologies, and Meshcapade GmbH. While MJB was a part-time employee of Amazon during this project, his research was performed solely at, and funded solely by, the Max Planck Society.
 
 ## Contact
 

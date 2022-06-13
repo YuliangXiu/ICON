@@ -47,6 +47,7 @@ class TestDataset():
         random.seed(1993)
 
         self.image_dir = cfg['image_dir']
+        self.seg_dir = cfg['seg_dir']
         self.has_det = cfg['has_det']
         self.hps_type = cfg['hps_type']
         self.smpl_type = 'smpl' if cfg['hps_type'] != 'pixie' else 'smplx'
@@ -191,16 +192,27 @@ class TestDataset():
 
         img_path = self.subject_list[index]
         img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
-        img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(
-            img_path, self.det, self.hps_type, 512, device=self.device)
 
-        data_dict = {
+        img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path, self.det, self.hps_type, 512)
+        if self.seg_dir is None:
+            data_dict = {
             'name': img_name,
             'image': img_icon.to(self.device).unsqueeze(0),
             'ori_image': img_ori,
             'mask': img_mask,
             'uncrop_param': uncrop_param
-        }
+            }
+        else:
+            img_icon, img_hps, img_ori, img_mask, uncrop_param, segmentations = process_image(img_path, self.det, self.hps_type, 512, seg_path = os.path.join(self.seg_dir, f'{img_name}.json'))
+            data_dict = {
+            'name': img_name,
+            'image': img_icon.to(self.device).unsqueeze(0),
+            'ori_image': img_ori,
+            'mask': img_mask,
+            'uncrop_param': uncrop_param,
+            'segmentations': segmentations
+            }
+
         with torch.no_grad():
             preds_dict = self.hps.forward(img_hps)
 

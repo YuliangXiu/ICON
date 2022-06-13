@@ -38,8 +38,6 @@ import numpy as np
 torch.backends.cudnn.benchmark = True
 
 logging.getLogger("trimesh").setLevel(logging.ERROR)
-
-
 def tensor2variable(tensor, device):
     # [1,23,3,3]
     return torch.tensor(tensor, device=device, requires_grad=True)
@@ -49,7 +47,7 @@ if __name__ == "__main__":
 
     # loading cfg file
     parser = argparse.ArgumentParser()
-
+    
     parser.add_argument("-gpu", "--gpu_device", type=int, default=0)
     parser.add_argument("-colab", action="store_true")
     parser.add_argument("-loop_smpl", "--loop_smpl", type=int, default=100)
@@ -61,6 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("-in_dir", "--in_dir", type=str, default="./examples")
     parser.add_argument("-out_dir", "--out_dir",
                         type=str, default="./results")
+    parser.add_argument('-seg_dir', '--seg_dir', type=str, default=None)
     parser.add_argument(
         "-cfg", "--config", type=str, default="./configs/icon-filter.yaml"
     )
@@ -98,9 +97,10 @@ if __name__ == "__main__":
     model = load_checkpoint(model, cfg)
 
     dataset_param = {
-        "image_dir": args.in_dir,
-        "has_det": True,  # w/ or w/o detection
-        "hps_type": args.hps_type,  # pymaf/pare/pixie
+            'image_dir': args.in_dir,
+            'seg_dir': args.seg_dir,
+            'has_det': True,            # w/ or w/o detection
+            'hps_type': args.hps_type   # pymaf/pare/pixie
     }
 
     if args.hps_type == "pixie" and "pamir" in args.config:
@@ -536,7 +536,43 @@ if __name__ == "__main__":
         smpl_obj = trimesh.Trimesh(
             in_tensor["smpl_verts"].detach().cpu()[0] *
             torch.tensor([1.0, -1.0, 1.0]),
-            in_tensor["smpl_faces"].detach().cpu()[0],
-        )
+            in_tensor['smpl_faces'].detach().cpu()[0],
+            process=False,
+            maintains_order=True
+            )
         smpl_obj.export(
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
+
+        if not (args.seg_dir is None):
+            os.makedirs(os.path.join(args.out_dir, cfg.name, "clothes"), exist_ok=True)
+            os.makedirs(os.path.join(args.out_dir, cfg.name, "clothes", "info"), exist_ok=True)
+            for seg in data['segmentations']:
+                ## These matrices work for PyMaf, not sure about the other hps type
+                K = np.array([[ 1.0000,  0.0000,  0.0000,  0.0000],
+                            [ 0.0000,  1.0000,  0.0000,  0.0000],
+                            [ 0.0000,  0.0000, -0.5000,  0.0000],
+                            [-0.0000, -0.0000,  0.5000,  1.0000]]).T
+
+                R = np.array([[-1.,  0.,  0.],
+                        [ 0.,  1.,  0.],
+                        [ 0.,  0., -1.]])
+
+                t = np.array([[ -0.,  -0., 100.]])
+                clothing_obj = extract_cloth(recon_obj, seg, K, R, t, smpl_obj)
+                if clothing_obj is not None:
+                    cloth_type = seg['type'].replace(' ', '_')
+                    cloth_info = {
+                        'betas': optimed_betas,
+                        'body_pose': optimed_pose,
+                        'global_orient': optimed_orient,
+                        'pose2rot': False,
+                        'clothing_type': cloth_type,
+                    }
+
+                    file_id = f"{data['name']}_{cloth_type}"
+                    with open(os.path.join(args.out_dir, cfg.name, "clothes", "info", f"{file_id}_info.pkl"), 'wb') as fp:
+                        pickle.dump(cloth_info, fp)
+
+                    clothing_obj.export(os.path.join(args.out_dir, cfg.name, "clothes", f"{file_id}.obj"))
+                else:
+                    print(f"Unable to extract clothing of type {seg['type']} from image {data['name']}")

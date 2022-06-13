@@ -5,14 +5,15 @@ Start by cloning the repo:
 ```bash
 git clone git@github.com:YuliangXiu/ICON.git
 cd ICON
-```  
+```
 
 ## Environment
-  * Ubuntu 20 / 18
-  * **CUDA=11.0, GPU Memory > 12GB** 
-  * Python = 3.8
-  * PyTorch = 1.8.2 LTS (official [Get Started](https://pytorch.org/get-started/locally/))
-  * PyTorch3D (official [INSTALL.md](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md), recommend [install-from-local-clone](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone))
+
+- Ubuntu 20 / 18
+- **CUDA=11.0, GPU Memory > 12GB**
+- Python = 3.8
+- PyTorch = 1.8.2 LTS (official [Get Started](https://pytorch.org/get-started/locally/))
+- PyTorch3D (official [INSTALL.md](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md), recommend [install-from-local-clone](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md#2-install-from-a-local-clone))
 
 ```bash
 # install conda, skip if already have
@@ -24,7 +25,7 @@ rm Miniconda3-py38_4.10.3-Linux-x86_64.sh
 conda config --env --set always_yes true
 conda update -n base -c defaults conda -y
 
-# Note: 
+# Note:
 # For google colab, please refer to ICON/colab.sh
 # create conda env and install required libs (~20min)
 
@@ -42,33 +43,37 @@ pip install -r requirements.txt --use-deprecated=legacy-resolver
 
 ![Register](../assets/register.png)
 Required:
-  * [SMPL](http://smpl.is.tue.mpg.de/):  SMPL Model (Male, Female)
-  * [SMPLIFY](http://smplify.is.tue.mpg.de/): SMPL Model (Neutral)
-  * [ICON](https://icon.is.tue.mpg.de/): pretrained models and extra data for ICON
+
+- [SMPL](http://smpl.is.tue.mpg.de/): SMPL Model (Male, Female)
+- [SMPLIFY](http://smplify.is.tue.mpg.de/): SMPL Model (Neutral)
+- [ICON](https://icon.is.tue.mpg.de/): pretrained models and extra data for ICON
 
 Optional:
-  * [SMPL-X](http://smpl-x.is.tue.mpg.de/): SMPL-X Model, used for training
-  * [AGORA](https://agora.is.tue.mpg.de/): SMIL Kid Model, used for training
-  * [PARE](https://pare.is.tue.mpg.de/): optional SMPL HPS estimator
-  * [PIXIE](https://pixie.is.tue.mpg.de/): optional SMPL-X HPS estimator
 
+- [SMPL-X](http://smpl-x.is.tue.mpg.de/): SMPL-X Model, used for training
+- [AGORA](https://agora.is.tue.mpg.de/): SMIL Kid Model, used for training
+- [PARE](https://pare.is.tue.mpg.de/): optional SMPL HPS estimator
+- [PIXIE](https://pixie.is.tue.mpg.de/): optional SMPL-X HPS estimator
 
 :warning: Click **Register now** on all dependencies, then you can download them all with **ONE** account.
 
 ## Downloading required models and extra data
-  ```bash
-  cd ICON
-  bash fetch_data.sh # requires username and password
-  ```
-  * Download [PyMAF](https://github.com/HongwenZhang/PyMAF#necessary-files), [PARE (optional, SMPL)](https://github.com/mkocabas/PARE#demo), [PIXIE (optional, SMPL-X)](https://pixie.is.tue.mpg.de/), [HybrIK (optional, SMPL)](https://github.com/Jeff-sjtu/HybrIK)
-  
-  ```bash
-  bash fetch_hps.sh
-  ```
 
-  :eyes: If you want to support your HPS in ICON, please refer to [commit #060e265](https://github.com/YuliangXiu/ICON/commit/060e265bd253c6a34e65c9d0a5288c6d7ffaf68e) and [commit #3663704](https://github.com/YuliangXiu/ICON/commit/36637046dcbb5667cdfbee3b9c91b934d4c5dd05), then fork repo & pull request.
+```bash
+cd ICON
+bash fetch_data.sh # requires username and password
+```
+
+- Download [PyMAF](https://github.com/HongwenZhang/PyMAF#necessary-files), [PARE (optional, SMPL)](https://github.com/mkocabas/PARE#demo), [PIXIE (optional, SMPL-X)](https://pixie.is.tue.mpg.de/), [HybrIK (optional, SMPL)](https://github.com/Jeff-sjtu/HybrIK)
+
+```bash
+bash fetch_hps.sh
+```
+
+:eyes: If you want to support your HPS in ICON, please refer to [commit #060e265](https://github.com/YuliangXiu/ICON/commit/060e265bd253c6a34e65c9d0a5288c6d7ffaf68e) and [commit #3663704](https://github.com/YuliangXiu/ICON/commit/36637046dcbb5667cdfbee3b9c91b934d4c5dd05), then fork repo & pull request.
 
 ## Citation
+
 :+1: Please consider citing these awesome HPS approaches
 
 <details><summary>PyMAF, PARE, PIXIE, HybrIK, BEV</summary>
@@ -93,7 +98,7 @@ Optional:
 }
 
 @inproceedings{PIXIE:2021,
-  title={Collaborative Regression of Expressive Bodies using Moderation}, 
+  title={Collaborative Regression of Expressive Bodies using Moderation},
   author={Yao Feng and Vasileios Choutas and Timo Bolkart and Dimitrios Tzionas and Michael J. Black},
   booktitle={International Conference on 3D Vision (3DV)},
   year={2021}
@@ -122,6 +127,7 @@ Optional:
 }
 
 ```
+
 </details>
 
 <br>
@@ -203,4 +209,5 @@ data/
     ├── tetrahedrons_{male,female,neutral}_{adult,kid}.txt
     └── vertices.txt
 ```
+
 </details>
