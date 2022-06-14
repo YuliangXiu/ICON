@@ -103,11 +103,9 @@ if __name__ == "__main__":
             "test_mode",
             True,
             "dataset.types",
-            ["renderpeople", "cape"],
-            "dataset.rp_type",
-            "pifu450",
+            ["thuman2"],
             "dataset.scales",
-            [1.0, 100.0],
+            [100.0],
         ]
         cfg.merge_from_list(cfg_test_mode)
 

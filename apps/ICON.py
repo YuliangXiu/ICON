@@ -60,9 +60,9 @@ class ICON(pl.LightningModule):
         self.evaluator = Evaluator(
             device=torch.device(f"cuda:{self.cfg.gpus[0]}"))
 
-        # # set test engine
-        # if self.cfg.test_mode:
-        #     self.evaluator.init_gl()
+        # set test engine
+        if self.cfg.test_mode:
+            self.evaluator.init_gl()
 
         self.resolutions = (
             np.logspace(
@@ -657,9 +657,7 @@ class ICON(pl.LightningModule):
             outputs,
             rot_num=3,
             split={
-                "renderpeople": (0, 50),
-                "cape-easy": (50, 100),
-                "cape-hard": (100, 200),
+                "thuman2": (0, 5),
             },
         )
 

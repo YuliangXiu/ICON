@@ -455,32 +455,13 @@ def bar_log_convert(log_dict, name=None, rot=None):
     return new_log_dict
 
 
-# def accumulate(outputs):
-#     acc_log_dict = {}
-#     hparam_log_dict = {}
-#     for id in range(len(outputs)):
-#         output = outputs[id]
-#         for key in output.keys():
-#             if key not in acc_log_dict.keys():
-#                 acc_log_dict[key] = output[key]
-#                 hparam_log_dict["hparam/"+key] = output[key]
-#             else:
-#                 acc_log_dict[key] += output[key]
-#                 hparam_log_dict["hparam/"+key] += output[key]
-
-#     for key in hparam_log_dict.keys():
-#         hparam_log_dict[key] /= len(outputs)
-
-#     return hparam_log_dict
-
-
 def accumulate(outputs, rot_num, split):
 
     hparam_log_dict = {}
 
     metrics = outputs[0].keys()
     datasets = split.keys()
-
+    
     for dataset in datasets:
         for metric in metrics:
             keyword = f"hparam/{dataset}-{metric}"
@@ -492,19 +473,7 @@ def accumulate(outputs, rot_num, split):
             hparam_log_dict[keyword] /= (split[dataset][1] -
                                          split[dataset][0]) * rot_num
 
-    out_lst = []
-    for dataset in ['renderpeople', 'cape-easy', 'cape-hard']:
-        # for dataset in ['cape-easy', 'cape-hard']:
-        # for dataset in ['renderpeople']:
-        for metric in ['chamfer', 'p2s', 'NC']:
-            out_lst.append(hparam_log_dict[f'hparam/{dataset}-{metric}'])
-
-    for i in range(3):
-        out_lst.append((out_lst[i + 3] + out_lst[i + 3 * 2] * 2.0) / 3.0)
-
-    out_str1 = " & ".join([f"{item:.3f}" for item in out_lst])
-
-    print(colored(out_str1, "green"))
+    print(colored(hparam_log_dict, "green"))
 
     return hparam_log_dict
 

@@ -205,10 +205,12 @@ class PIFuDataset():
             data_dict, is_valid=self.split == "val", is_sdf=self.use_sdf))
         data_dict.update(self.load_smpl(data_dict, self.vis))
 
-        if not self.vis:
-            del data_dict['mesh']
+        if (not self.vis) and (self.split != 'test'):
+            
             del data_dict['verts']
             del data_dict['faces']
+        
+        del data_dict['mesh']
 
         path_keys = [
             key for key in data_dict.keys() if '_path' in key or '_dir' in key

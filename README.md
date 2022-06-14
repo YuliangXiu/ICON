@@ -69,6 +69,9 @@
     <a href="#training">Training</a>
     </li>
     <li>
+    <a href="#evaluation">Evaluation</a>
+    </li>
+    <li>
     <a href="#add-on">Add-on</a>
     </li>
     <li>
@@ -130,11 +133,11 @@
 - [x] dataset processing
   - [x] RGB/Normal Rendering
   - [x] Visibility computing
-- [ ] training codes
+- [ ] training code
   - [x] ICON (w/ & w/o global encoder, w/ SMPL-X)
   - [x] PIFu\* (RGB image + predicted normal map as input)
   - [ ] PaMIR\* (RGB image + predicted normal map as input, w/ voxelized SMPL)
-- [ ] evaluation on CAPE (Hard, Easy)
+- [x] evaluation code
 
 ## Installation
 
@@ -147,6 +150,10 @@ Please follow the [Dataset Instruction](docs/dataset.md) to generate the train/v
 ## Training
 
 Please follow the [Training Instruction](docs/training.md) to train your own model using THuman2.0.
+
+## Evaluation
+
+Please follow the [Evaluation Instruction](docs/evaluation.md) to benchmark models on THuman2.0.
 
 ## Add-on
 1. [Garment Extraction from Fashion Images](docs/garment-extraction.md), supported by ETH Zürich students as 3DV course project.
