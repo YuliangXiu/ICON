@@ -88,6 +88,34 @@ def load_fit_body(fitted_path, scale, smpl_type='smplx', smpl_gender='neutral', 
     return smpl_mesh, smpl_joints
 
 
+def load_ori_fit_body(fitted_path, smpl_type='smplx', smpl_gender='neutral'):
+
+    param = np.load(fitted_path, allow_pickle=True)
+    for key in param.keys():
+        param[key] = torch.as_tensor(param[key])
+
+    smpl_model = get_smpl_model(smpl_type, smpl_gender)
+    model_forward_params = dict(betas=param['betas'],
+                                global_orient=param['global_orient'],
+                                body_pose=param['body_pose'],
+                                left_hand_pose=param['left_hand_pose'],
+                                right_hand_pose=param['right_hand_pose'],
+                                jaw_pose=param['jaw_pose'],
+                                leye_pose=param['leye_pose'],
+                                reye_pose=param['reye_pose'],
+                                expression=param['expression'],
+                                return_verts=True)
+
+    smpl_out = smpl_model(**model_forward_params)
+
+    smpl_verts = smpl_out.vertices[0].detach()
+    smpl_mesh = trimesh.Trimesh(smpl_verts,
+                                smpl_model.faces,
+                                process=False, maintain_order=True)
+
+    return smpl_mesh
+
+
 def save_obj_mesh(mesh_path, verts, faces):
     file = open(mesh_path, 'w')
     for v in verts:

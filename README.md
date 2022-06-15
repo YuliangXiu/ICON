@@ -24,7 +24,7 @@
   <br>
     <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
     <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white"></a>
-    <a href="https://paperswithcode.com/sota/3d-human-reconstruction-on-cape?p=icon-implicit-clothed-humans-obtained-from"><img src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/icon-implicit-clothed-humans-obtained-from/3d-human-reconstruction-on-cape"></a><br></br>
+    <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'><img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'></a><br></br>
     <a href='https://arxiv.org/abs/2112.09127'>
       <img src='https://img.shields.io/badge/Paper-PDF-green?style=for-the-badge&logo=arXiv&logoColor=green' alt='Paper PDF'>
     </a>
@@ -55,9 +55,6 @@
   <ol>
     <li>
       <a href="#who-needs-ICON">Who needs ICON</a>
-    </li>
-    <li>
-      <a href="#todo">TODO</a>
     </li>
     <li>
       <a href="#installation">Installation</a>
@@ -99,10 +96,16 @@
 
 ## Who needs ICON?
 
-- Given an RGB image, you could get:
-  - image (png): segmentation, normal images (body + cloth), overlap result (rgb + normal)
-  - mesh (obj): SMPL-(X) body, reconstructed clothed human
-  - video (mp4): self-rotated clothed human
+- Given a raw RGB image, you could get:
+  - image (png): 
+    - segmented human RGB
+    - normal maps of body and cloth
+    - pixel-aligned normal-RGB overlap
+  - mesh (obj):
+    - SMPL-(X) body from *PyMAF, PIXIE, PARE, HybrIK, BEV*
+    - 3D clothed human reconstruction
+  - video (mp4): 
+    - self-rotated clothed human
 
 |          ![Intermediate Results](assets/intermediate_results.png)          |
 | :------------------------------------------------------------------------: |
@@ -121,39 +124,24 @@
 | :----------------------------------------------------------------------------------------: |
 | _3D Clothed Avatar, created from 400+ images using **ICON+SCANimate**, animated by AIST++_ |
 
-## TODO
+- If you want to **Train & Evaluate** on **PIFu/PaMIR/ICON** using your own data, please check [dataset.md](./docs/dataset.md) to prepare dataset, [training.md](./docs/training.md) for training, and [evaluation.md](./docs/evaluation.md) for benchmark evaluation.
 
-- [x] testing code and pretrained models (\*self-implemented version)
-  - [x] ICON (w/ & w/o global encoder, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
-  - [x] PIFu\* (RGB image + predicted normal map as input)
-  - [x] PaMIR\* (RGB image + predicted normal map as input, w/ PyMAF/HybrIK/BEV/PIXIE/PARE as HPS)
-- [x] colab notebook <a href='https://colab.research.google.com/drive/1-AWeWhPvCTBX0KfMtgtMk10uPU05ihoA?usp=sharing' style='padding-left: 0.5rem;'>
-      <img src='https://colab.research.google.com/assets/colab-badge.svg' alt='Google Colab'>
-      </a>
-- [x] dataset processing
-  - [x] RGB/Normal Rendering
-  - [x] Visibility computing
-- [ ] training code
-  - [x] ICON (w/ & w/o global encoder, w/ SMPL-X)
-  - [x] PIFu\* (RGB image + predicted normal map as input)
-  - [ ] PaMIR\* (RGB image + predicted normal map as input, w/ voxelized SMPL)
-- [x] evaluation code
-
+<br><br>
 ## Installation
 
 Please follow the [Installation Instruction](docs/installation.md) to setup all the required packages, extra data, and models.
 
 ## Dataset
 
-Please follow the [Dataset Instruction](docs/dataset.md) to generate the train/val/test dataset from raw scans (THuman2.0).
+Please follow the [Dataset Instruction](docs/dataset.md) to generate the train/val/test dataset from THuman2.0
 
 ## Training
 
-Please follow the [Training Instruction](docs/training.md) to train your own model using THuman2.0.
+Please follow the [Training Instruction](docs/training.md) to train your own model using THuman2.0
 
 ## Evaluation
 
-Please follow the [Evaluation Instruction](docs/evaluation.md) to benchmark models on THuman2.0.
+Please follow the [Evaluation Instruction](docs/evaluation.md) to benchmark trained models on THuman2.0
 
 ## Add-on
 1. [Garment Extraction from Fashion Images](docs/garment-extraction.md), supported by ETH Zürich students as 3DV course project.
@@ -220,6 +208,12 @@ Here are some great resources we benefit from:
 Some images used in the qualitative examples come from [pinterest.com](https://www.pinterest.com/).
 
 This project has received funding from the European Union’s Horizon 2020 research and innovation programme under the Marie Skłodowska-Curie grant agreement No.860768 ([CLIPE Project](https://www.clipe-itn.eu)).
+
+<br>
+
+--------------
+
+<br>
 
 ## License
 

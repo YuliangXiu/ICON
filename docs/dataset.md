@@ -11,7 +11,15 @@
 
 Please refer to [THuman2.0-Dataset](https://github.com/ytrock/THuman2.0-Dataset) to download the original scans into `data/thuman2/scans`, and its SMPL-X(male) fits into `data/thuman2/fits`. Then generate `all.txt` by `ls > ../all.txt` under `data/thuman2/scans`, which contains all the subject names (0000~0525).
 
-:eyes: `./sample_data` contains one example of THuman2.0 and shows the data folder structure.
+PaMIR only support SMPL instead of SMPL-X, please download THuman2.0's SMPL fits (.obj, .pkl) and put them at `./data/thuman2.0/smpl`
+
+```bash
+wget https://download.is.tue.mpg.de/icon/smpl.zip --no-check-certificate -O ./data/thuman2/smpl.zip
+unzip ./data/thuman2/smpl.zip -d ./data/thuman2/
+rm ./data/thuman2/smpl.zip
+```
+
+:eyes: `./sample_data` contains one example of THuman2.0 which shows the data folder structure.
 
 ## Debug Mode
 

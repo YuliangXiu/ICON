@@ -21,7 +21,7 @@ dataset:
   zray_type: False
   semantic_p: False
   remove_outlier: False
-
+  
   noise_type: ['pose', 'beta']
   noise_scale: [0.05, 0.5]
 

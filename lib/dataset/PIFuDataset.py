@@ -1,7 +1,9 @@
 from lib.renderer.mesh import load_fit_body
 from lib.dataset.hoppeMesh import HoppeMesh
+from lib.dataset.body_model import TetraSMPLModel
 from lib.common.render import Render
 from lib.dataset.mesh_util import SMPLX, projection, cal_sdf_batch, get_visibility
+from lib.pare.pare.utils.geometry import rotation_matrix_to_angle_axis
 from termcolor import colored
 import os.path as osp
 import numpy as np
@@ -10,9 +12,9 @@ import random
 import trimesh
 import torch
 import vedo
-from ipdb import set_trace
 from kaolin.ops.mesh import check_sign
 import torchvision.transforms as transforms
+from ipdb import set_trace
 
 
 class PIFuDataset():
@@ -81,10 +83,12 @@ class PIFuDataset():
             if dataset in ['thuman2']:
                 mesh_dir = osp.join(dataset_dir, "scans")
                 smplx_dir = osp.join(dataset_dir, "fits")
+                smpl_dir = osp.join(dataset_dir, "smpl")
 
             self.datasets_dict[dataset] = {
                 "subjects": np.loadtxt(osp.join(dataset_dir, "all.txt"), dtype=str),
                 "smplx_dir": smplx_dir,
+                "smpl_dir": smpl_dir,
                 "mesh_dir": mesh_dir,
                 "scale": self.scales[dataset_id]
             }
@@ -149,7 +153,7 @@ class PIFuDataset():
             print(colored(f"total: {len(subject_list)}", "yellow"))
             random.shuffle(subject_list)
 
-        # subject_list = ["thuman2/0499"]
+        # subject_list = ["thuman2/0008"]
         return subject_list
 
     def __len__(self):
@@ -178,6 +182,7 @@ class PIFuDataset():
             'scale': self.datasets_dict[dataset]["scale"],
             'mesh_path': osp.join(self.datasets_dict[dataset]["mesh_dir"], f"{subject}/{subject}.obj"),
             'smplx_path': osp.join(self.datasets_dict[dataset]["smplx_dir"], f"{subject}/smplx_param.pkl"),
+            'smpl_path': osp.join(self.datasets_dict[dataset]["smpl_dir"], f"{subject}.pkl"),
             'calib_path': osp.join(self.root, render_folder, 'calib', f'{rotation:03d}.txt'),
             'vis_path': osp.join(self.root, render_folder, 'vis', f'{rotation:03d}.pt'),
             'image_path': osp.join(self.root, render_folder, 'render', f'{rotation:03d}.png')
@@ -205,12 +210,16 @@ class PIFuDataset():
             data_dict, is_valid=self.split == "val", is_sdf=self.use_sdf))
         data_dict.update(self.load_smpl(data_dict, self.vis))
 
-        if (not self.vis) and (self.split != 'test'):
-            
+        if self.prior_type == 'pamir':
+            data_dict.update(self.load_smpl_voxel(data_dict))
+
+        if (self.split != 'test') and (not self.vis):
+
             del data_dict['verts']
             del data_dict['faces']
-        
-        del data_dict['mesh']
+
+        if not self.vis:
+            del data_dict['mesh']
 
         path_keys = [
             key for key in data_dict.keys() if '_path' in key or '_dir' in key
@@ -267,23 +276,30 @@ class PIFuDataset():
                   smpl_betas,
                   noise_type,
                   noise_scale,
+                  type,
                   hashcode):
 
         np.random.seed(hashcode)
 
-        if 'beta' in noise_type:
-            if beta_num != 11:
-                smpl_betas += (np.random.rand(beta_num) -
-                               0.5) * 2.0 * noise_scale[noise_type.index("beta")]
+        if type == 'smplx':
+            noise_idx = self.noise_smplx_idx
+        else:
+            noise_idx = self.noise_smpl_idx
+
+        if 'beta' in noise_type and noise_scale[noise_type.index("beta")] > 0.0:
+            smpl_betas += (np.random.rand(beta_num) -
+                           0.5) * 2.0 * noise_scale[noise_type.index("beta")]
             smpl_betas = smpl_betas.astype(np.float32)
 
-        if 'pose' in noise_type:
-            smpl_pose[self.noise_smplx_idx] += (
-                np.random.rand(len(self.noise_smplx_idx)) -
+        if 'pose' in noise_type and noise_scale[noise_type.index("pose")] > 0.0:
+            smpl_pose[noise_idx] += (
+                np.random.rand(len(noise_idx)) -
                 0.5) * 2.0 * np.pi * noise_scale[noise_type.index("pose")]
             smpl_pose = smpl_pose.astype(np.float32)
-
-        return torch.as_tensor(smpl_pose[None, ...]), torch.as_tensor(smpl_betas[None, ...])
+        if type == 'smplx':
+            return torch.as_tensor(smpl_pose[None, ...]), torch.as_tensor(smpl_betas[None, ...])
+        else:
+            return smpl_pose, smpl_betas
 
     def compute_smpl_verts(self, data_dict, noise_type=None, noise_scale=None):
 
@@ -293,13 +309,13 @@ class PIFuDataset():
         smplx_param = np.load(data_dict['smplx_path'], allow_pickle=True)
         smplx_pose = smplx_param["body_pose"]  # [1,63]
         smplx_betas = smplx_param["betas"]  # [1,10]
-
         smplx_pose, smplx_betas = self.add_noise(
             smplx_betas.shape[1],
             smplx_pose[0],
             smplx_betas[0],
             noise_type,
             noise_scale,
+            type='smplx',
             hashcode=(hash(f"{data_dict['subject']}_{data_dict['rotation']}")) % (10**8))
 
         smplx_out, _ = load_fit_body(fitted_path=data_dict['smplx_path'],
@@ -314,6 +330,56 @@ class PIFuDataset():
                            "betas": torch.as_tensor(smplx_betas)})
 
         return smplx_out.vertices, smplx_dict
+
+    def compute_voxel_verts(self,
+                            data_dict,
+                            noise_type=None,
+                            noise_scale=None):
+
+        smpl_param = np.load(data_dict['smpl_path'], allow_pickle=True)
+        smplx_param = np.load(data_dict['smplx_path'], allow_pickle=True)
+
+        smpl_pose = rotation_matrix_to_angle_axis(
+            torch.as_tensor(smpl_param['full_pose'][0])).numpy()
+        smpl_betas = smpl_param["betas"]
+
+        smpl_path = osp.join(self.smplx.model_dir, "smpl/SMPL_MALE.pkl")
+        tetra_path = osp.join(self.smplx.tedra_dir,
+                              "tetra_male_adult_smpl.npz")
+
+        smpl_model = TetraSMPLModel(smpl_path, tetra_path, 'adult')
+
+        smpl_pose, smpl_betas = self.add_noise(
+            smpl_model.beta_shape[0],
+            smpl_pose.flatten(),
+            smpl_betas[0],
+            noise_type,
+            noise_scale,
+            type='smpl',
+            hashcode=(hash(f"{data_dict['subject']}_{data_dict['rotation']}")) % (10**8))
+
+        smpl_model.set_params(pose=smpl_pose.reshape(-1, 3),
+                              beta=smpl_betas,
+                              trans=smpl_param["transl"])
+        
+        verts = (np.concatenate([smpl_model.verts, smpl_model.verts_added],
+                                axis=0) * smplx_param["scale"] + smplx_param["translation"]
+                 ) * self.datasets_dict[data_dict['dataset']]['scale']
+        faces = np.loadtxt(osp.join(self.smplx.tedra_dir, "tetrahedrons_male_adult.txt"),
+                           dtype=np.int32) - 1
+
+        pad_v_num = int(8000 - verts.shape[0])
+        pad_f_num = int(25100 - faces.shape[0])
+
+        verts = np.pad(verts, ((0, pad_v_num), (0, 0)),
+                       mode='constant',
+                       constant_values=0.0).astype(np.float32)
+        faces = np.pad(faces, ((0, pad_f_num), (0, 0)),
+                       mode='constant',
+                       constant_values=0.0).astype(np.int32)
+        
+
+        return verts, faces, pad_v_num, pad_f_num
 
     def load_smpl(self, data_dict, vis=False):
 
@@ -379,6 +445,22 @@ class PIFuDataset():
             })
 
         return return_dict
+
+    def load_smpl_voxel(self, data_dict):
+
+        smpl_verts, smpl_faces, pad_v_num, pad_f_num = self.compute_voxel_verts(
+            data_dict, self.noise_type,
+            self.noise_scale)  # compute using smpl model
+        smpl_verts = projection(smpl_verts, data_dict['calib'])
+
+        smpl_verts *= 0.5
+
+        return {
+            'voxel_verts': smpl_verts,
+            'voxel_faces': smpl_faces,
+            'pad_v_num': pad_v_num,
+            'pad_f_num': pad_f_num
+        }
 
     def get_sampling_geo(self, data_dict, is_valid=False, is_sdf=False):
 
@@ -543,13 +625,24 @@ class PIFuDataset():
         mesh.visual.vertex_colors = [128.0, 128.0, 128.0, 255.0]
         vis_list.append(mesh)
 
+        if 'voxel_verts' in data_dict.keys():
+            print(colored("voxel verts", "green"))
+            voxel_verts = data_dict['voxel_verts'] * 2.0
+            voxel_faces = data_dict['voxel_faces']
+            voxel_verts[:, 1] *= -1
+            voxel = trimesh.Trimesh(
+                voxel_verts, voxel_faces[:, [0, 2, 1]], process=False, maintain_order=True)
+            voxel.visual.vertex_colors = [0.0, 128.0, 0.0, 255.0]
+            vis_list.append(voxel)
+
         if 'smpl_verts' in data_dict.keys():
+            print(colored("smpl verts", "green"))
             smplx_verts = data_dict['smpl_verts']
             smplx_faces = data_dict['smpl_faces']
             smplx_verts[:, 1] *= -1
             smplx = trimesh.Trimesh(
                 smplx_verts, smplx_faces[:, [0, 2, 1]], process=False, maintain_order=True)
-            smplx.visual.vertex_colors = ((smplx.vertex_normals + 1.0) * 0.5)
+            smplx.visual.vertex_colors = [128.0, 128.0, 0.0, 255.0]
             vis_list.append(smplx)
 
         # create a picure

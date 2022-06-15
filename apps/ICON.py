@@ -536,13 +536,10 @@ class ICON(pl.LightningModule):
         # export paths
         mesh_name = batch["subject"][0]
         mesh_rot = batch["rotation"][0].item()
-        ckpt_dir = self.cfg.resume_path.split("/")[-2]
+        ckpt_dir = self.cfg.name
 
-        if (self.cfg.dataset.online_smpl) or (self.cfg.optim_body):
-            for kid, key in enumerate(self.cfg.dataset.noise_type):
-                ckpt_dir += f"_{key}_{self.cfg.dataset.noise_scale[kid]}"
-        else:
-            ckpt_dir += "_perfect_smpl"
+        for kid, key in enumerate(self.cfg.dataset.noise_type):
+            ckpt_dir += f"_{key}_{self.cfg.dataset.noise_scale[kid]}"
 
         if self.cfg.optim_cloth:
             ckpt_dir += "_optim_cloth"
