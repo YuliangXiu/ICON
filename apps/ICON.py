@@ -60,10 +60,6 @@ class ICON(pl.LightningModule):
         self.evaluator = Evaluator(
             device=torch.device(f"cuda:{self.cfg.gpus[0]}"))
 
-        # set test engine
-        if self.cfg.test_mode:
-            self.evaluator.init_gl()
-
         self.resolutions = (
             np.logspace(
                 start=5,
@@ -529,6 +525,9 @@ class ICON(pl.LightningModule):
         #            'smpl_verts', 'smpl_faces', 'smpl_vis', 'smpl_cmap', 'pts_signs',
         #            'type', 'gender', 'age', 'body_pose', 'global_orient', 'betas', 'transl'])
 
+        if self.evaluator._normal_render is None:
+            self.evaluator.init_gl()
+            
         self.netG.eval()
         self.netG.training = False
         in_tensor_dict = {}
