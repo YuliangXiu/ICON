@@ -240,7 +240,7 @@ def barycentric_coordinates_of_projection(points, vertices):
             vectorized so ``p``, ``q``, ``u``, ``v`` can all be ``3xN``
     """
     #(p, q, u, v)
-    v0, v1, v2 = vertices[:, 0], vertices[:, 0], vertices[:, 0]
+    v0, v1, v2 = vertices[:, 0], vertices[:, 1], vertices[:, 2]
     p = points
 
     q = v0
