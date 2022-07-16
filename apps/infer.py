@@ -21,14 +21,17 @@ from lib.common.cloth_extraction import extract_cloth
 from lib.dataset.mesh_util import (
     load_checkpoint,
     update_mesh_shape_prior_losses,
+    save_normal_tensor,
     get_optim_grid_image,
     blend_rgb_norm,
     unwrap,
+    remesh,
 )
 from lib.dataset.TestDataset import TestDataset
 
 from apps.ICON import ICON
 import os
+import cv2
 from termcolor import colored
 import argparse
 import numpy as np
@@ -58,9 +61,10 @@ if __name__ == "__main__":
     parser.add_argument("-loop_smpl", "--loop_smpl", type=int, default=100)
     parser.add_argument("-patience", "--patience", type=int, default=5)
     parser.add_argument("-vis_freq", "--vis_freq", type=int, default=10)
-    parser.add_argument("-loop_cloth", "--loop_cloth", type=int, default=100)
+    parser.add_argument("-loop_cloth", "--loop_cloth", type=int, default=0)
     parser.add_argument("-hps_type", "--hps_type", type=str, default="pymaf")
     parser.add_argument("-export_video", action="store_true")
+    parser.add_argument("-export_BNI", action="store_true")
     parser.add_argument("-in_dir", "--in_dir", type=str, default="./examples")
     parser.add_argument("-out_dir", "--out_dir",
                         type=str, default="./results")
@@ -200,11 +204,11 @@ if __name__ == "__main__":
 
                 smpl_verts = (smpl_verts + optimed_trans) * data["scale"]
 
-            smpl_verts *= torch.tensor([1.0, -1.0, -1.0]).to(device)
-
             # render optimized mesh (normal, T_normal, image [-1,1])
             in_tensor["T_normal_F"], in_tensor["T_normal_B"] = dataset.render_normal(
-                smpl_verts, in_tensor["smpl_faces"]
+                smpl_verts *
+                torch.tensor([1.0, -1.0, -1.0]
+                             ).to(device), in_tensor["smpl_faces"]
             )
             T_mask_F, T_mask_B = dataset.render.get_silhouette_image()
 
@@ -238,7 +242,7 @@ if __name__ == "__main__":
             for k in ["smpl", "silhouette"]:
                 smpl_loss += losses[k]["value"] * losses[k]["weight"]
 
-            loop_smpl.set_description(f"Body Fitting = {smpl_loss:.3f}")
+            loop_smpl.set_description(f"Body Fitting Error= {smpl_loss:.3f}")
 
             if i % args.vis_freq == 0:
 
@@ -270,7 +274,8 @@ if __name__ == "__main__":
             smpl_loss.backward(retain_graph=True)
             optimizer_smpl.step()
             scheduler_smpl.step(smpl_loss)
-            in_tensor["smpl_verts"] = smpl_verts
+            in_tensor["smpl_verts"] = smpl_verts * \
+                torch.tensor([1.0, 1.0, -1.0]).to(device)
 
         # visualize the optimization process
         # 1. SMPL Fitting
@@ -278,6 +283,9 @@ if __name__ == "__main__":
 
         os.makedirs(os.path.join(args.out_dir, cfg.name,
                     "refinement"), exist_ok=True)
+
+        os.makedirs(os.path.join(args.out_dir, cfg.name,
+                    "normal_integration"), exist_ok=True)
 
         # visualize the final results in self-rotation mode
         os.makedirs(os.path.join(args.out_dir, cfg.name, "vid"), exist_ok=True)
@@ -379,24 +387,10 @@ if __name__ == "__main__":
                          f"obj/{data['name']}_recon.obj")
         )
 
-        # # remeshing for better surface topology (minor improvement, yet time-consuming)
-        # if cfg.net.prior_type == 'icon':
-        #     import pymeshlab
-        #     ms = pymeshlab.MeshSet()
-        #     ms.load_new_mesh(
-        #         os.path.join(args.out_dir, cfg.name,
-        #                      f"obj/{data['name']}_recon.obj"))
-        #     ms.laplacian_smooth()
-        #     ms.remeshing_isotropic_explicit_remeshing(
-        #         targetlen=pymeshlab.Percentage(0.5))
-        #     ms.save_current_mesh(
-        #         os.path.join(args.out_dir, cfg.name,
-        #                      f"obj/{data['name']}_recon.obj"))
-        #     polished_mesh = trimesh.load_mesh(
-        #         os.path.join(args.out_dir, cfg.name,
-        #                      f"obj/{data['name']}_recon.obj"))
-        #     verts_pr = torch.tensor(polished_mesh.vertices).float()
-        #     faces_pr = torch.tensor(polished_mesh.faces).long()
+        # remeshing for better surface topology (minor improvement, yet time-consuming)
+        if cfg.net.prior_type == 'icon' and cfg.remesh:
+            verts_pr, faces_pr = remesh(os.path.join(args.out_dir, cfg.name,
+                                                     f"obj/{data['name']}_recon.obj"))
 
         deform_verts = torch.full(
             verts_pr.shape, 0.0, device=device, requires_grad=True
@@ -412,7 +406,21 @@ if __name__ == "__main__":
             patience=args.patience,
         )
 
+        if args.export_BNI:
+            # save normals, depths and masks
+            dataset.render.load_simple_mesh(verts_pr, faces_pr, deform_verts)
+            depth_maps = dataset.render.get_depth_map(cam_ids=[0, 2])
+            in_tensor['depth_F'] = depth_maps[0]
+            in_tensor['depth_B'] = depth_maps[1]
+
+            in_tensor['verts_pr'] = verts_pr
+            in_tensor['faces_pr'] = faces_pr
+
+            save_normal_tensor(in_tensor, os.path.join(
+                args.out_dir, cfg.name, f"normal_integration/{data['name']}"), depth_scale=model.resolutions[-1]-1)
+
         if args.loop_cloth == 0:
+
             per_loop_lst = []
             in_tensor["P_normal_F"], in_tensor["P_normal_B"] = dataset.render_normal(
                 verts_pr.unsqueeze(0).to(device),
@@ -457,7 +465,7 @@ if __name__ == "__main__":
                 if k not in ["smpl", "silhouette"]:
                     cloth_loss += losses[k]["value"] * losses[k]["weight"]
 
-            pbar_desc = f"Cloth Refinement: {cloth_loss:.3f}"
+            pbar_desc = f"Cloth Refinement Error: {cloth_loss:.3f}"
             loop_cloth.set_description(pbar_desc)
 
             if i % args.vis_freq == 0:
@@ -547,6 +555,14 @@ if __name__ == "__main__":
         )
         smpl_obj.export(
             f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.obj")
+
+        smpl_info = {'betas': optimed_betas,
+                     'pose': optimed_pose,
+                     'orient': optimed_orient,
+                     'trans': optimed_trans}
+
+        np.save(
+            f"{args.out_dir}/{cfg.name}/obj/{data['name']}_smpl.npy", smpl_info, allow_pickle=True)
 
         if not (args.seg_dir is None):
             os.makedirs(os.path.join(

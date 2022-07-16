@@ -129,7 +129,6 @@ class TestDataset():
 
     def compute_vis_cmap(self, smpl_verts, smpl_faces):
 
-        smpl_verts *= torch.tensor([1.0, -1.0, 1.0]).to(self.device)
         (xy, z) = torch.as_tensor(smpl_verts).split([2, 1], dim=1)
         smpl_vis = get_visibility(xy, -z, torch.as_tensor(smpl_faces).long())
         if self.smpl_type == 'smpl':

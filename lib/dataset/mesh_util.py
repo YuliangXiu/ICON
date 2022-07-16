@@ -42,6 +42,22 @@ from pytorch3d.loss import (
 from PIL import Image, ImageFont, ImageDraw
 
 
+def remesh(obj_path):
+
+    import pymeshlab
+    ms = pymeshlab.MeshSet()
+    ms.load_new_mesh(obj_path)
+    ms.laplacian_smooth()
+    ms.remeshing_isotropic_explicit_remeshing(
+        targetlen=pymeshlab.Percentage(0.5))
+    ms.save_current_mesh(obj_path)
+    polished_mesh = trimesh.load_mesh(obj_path)
+    verts_pr = torch.tensor(polished_mesh.vertices).float()
+    faces_pr = torch.tensor(polished_mesh.faces).long()
+
+    return verts_pr, faces_pr
+
+
 def get_mask(tensor, dim):
 
     mask = torch.abs(tensor).sum(dim=dim, keepdims=True) > 0.0
@@ -643,6 +659,97 @@ def add_alpha(colors, alpha=0.7):
                         constant_values=alpha)
 
     return colors_pad
+
+
+def save_normal_tensor(in_tensor, png_path, depth_scale):
+
+    def tensor2numpy(t, mask=False):
+        if not mask:
+            return t.squeeze(0).permute(1, 2, 0).detach().cpu().numpy()
+        else:
+            return (t.squeeze(0).abs().sum(dim=0, keepdim=True) != 0.0).float().permute(1, 2, 0).detach().cpu().numpy()
+
+    def numpy2png(t):
+        return ((t + 1.0) * 0.5 * 255.0).astype(np.uint8)
+
+    def depth2arr(t):
+
+        return (t.float().detach().cpu().numpy())
+
+    def depth2png(t):
+
+        t_copy = t.copy()
+        t_copy -= t_copy[t > -1.0].min()
+        t_copy /= t_copy[t > -1.0].max()
+        t_copy = (-t_copy+1.0) * 255.0
+
+        return t_copy[..., None].astype(np.uint8)
+
+    def verts_transform(t):
+
+        t *= depth_scale * 0.5
+        t += depth_scale * 0.5
+        t = t[:, [1, 0, 2]] * \
+            torch.Tensor([2.0, 2.0, -2.0]) + \
+            torch.Tensor([0.0, 0.0, depth_scale])
+
+        return t
+
+    image_arr = tensor2numpy(in_tensor['image'])
+    normal_F_arr = tensor2numpy(in_tensor['normal_F'])
+    normal_B_arr = tensor2numpy(in_tensor['normal_B'])
+    mask_normal_arr = tensor2numpy(in_tensor['image'], True)
+
+    depth_F_arr = depth2arr(in_tensor['depth_F'])
+    depth_B_arr = depth2arr(in_tensor['depth_B'])
+
+    T_normal_F_arr = tensor2numpy(in_tensor['T_normal_F'])
+    T_normal_B_arr = tensor2numpy(in_tensor['T_normal_B'])
+    T_mask_normal_arr = tensor2numpy(in_tensor['T_normal_F'], True)
+
+    Image.fromarray(numpy2png(image_arr)).save(png_path+"_image.png")
+    Image.fromarray(numpy2png(normal_F_arr)).save(png_path+"_normal_F.png")
+    Image.fromarray(numpy2png(normal_B_arr)).save(png_path+"_normal_B.png")
+    Image.fromarray(numpy2png(T_normal_F_arr)).save(png_path+"_T_normal_F.png")
+    Image.fromarray(numpy2png(T_normal_B_arr)).save(png_path+"_T_normal_B.png")
+
+    # write binary mask
+    cv2.imwrite(png_path+"_mask.png",
+                (mask_normal_arr * 255.0).astype(np.uint8))
+    cv2.imwrite(png_path+"_T_mask.png",
+                (T_mask_normal_arr * 255.0).astype(np.uint8))
+
+    # write depth map as pngs with scaling to 0~255
+    cv2.imwrite(png_path+"_depth_F.png", depth2png(depth_F_arr))
+    cv2.imwrite(png_path+"_depth_B.png", depth2png(depth_B_arr))
+
+    normal_integration_dict = {}
+
+    # clothed human
+    normal_integration_dict['normal_map_F'] = normal_F_arr
+    normal_integration_dict['normal_map_B'] = normal_B_arr
+    normal_integration_dict['mask'] = mask_normal_arr
+    normal_integration_dict['depth_F'] = (depth_F_arr-100.0) * depth_scale
+    normal_integration_dict['depth_B'] = (100.0-depth_B_arr) * depth_scale
+    normal_integration_dict['depth_mask'] = depth_F_arr > -1.0
+
+    # smpl body
+    normal_integration_dict['T_normal_F'] = T_normal_F_arr
+    normal_integration_dict['T_normal_B'] = T_normal_B_arr
+    normal_integration_dict['T_mask'] = T_mask_normal_arr
+
+    np.save(png_path+".npy", normal_integration_dict, allow_pickle=True)
+
+    # obj export
+    smpl_obj = trimesh.Trimesh(verts_transform(
+        in_tensor['smpl_verts'].detach().cpu()[0] * torch.tensor([1.0, -1.0, 1.0])),
+        in_tensor['smpl_faces'].detach().cpu()[0], process=False, maintains_order=True)
+    recon_obj = trimesh.Trimesh(verts_transform(
+        in_tensor['verts_pr']).detach().cpu(),
+        in_tensor['faces_pr'].detach().cpu(), process=False, maintains_order=True)
+
+    smpl_obj.export(png_path+"_smpl.obj")
+    recon_obj.export(png_path+"_recon.obj")
 
 
 def get_optim_grid_image(per_loop_lst, loss=None, nrow=4, type='smpl'):

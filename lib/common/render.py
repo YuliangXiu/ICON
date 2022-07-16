@@ -420,6 +420,19 @@ class Render:
 
         return images.cpu().numpy()
 
+    def get_depth_map(self, cam_ids=[0, 2]):
+
+        depth_maps = []
+        for cam_id in cam_ids:
+            self.init_renderer(self.get_camera(cam_id), "clean_mesh", "gray")
+            fragments = self.meshRas(self.mesh)
+            depth_map = fragments.zbuf[..., 0].squeeze(0)
+            if cam_id == 2:
+                depth_map = torch.fliplr(depth_map)
+            depth_maps.append(depth_map)
+
+        return depth_maps
+
     def get_clean_image(self, cam_ids=[0, 2]):
 
         images = []

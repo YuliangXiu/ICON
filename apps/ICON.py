@@ -317,7 +317,6 @@ class ICON(pl.LightningModule):
 
     def compute_vis_cmap(self, smpl_type, smpl_verts, smpl_faces):
 
-        smpl_verts *= torch.tensor([1.0, -1.0, 1.0]).to(self.device)
         (xy, z) = torch.as_tensor(smpl_verts).split([2, 1], dim=1)
         smpl_vis = get_visibility(xy, -z, torch.as_tensor(smpl_faces).long())
         if smpl_type == "smpl":
@@ -392,6 +391,7 @@ class ICON(pl.LightningModule):
                 in_tensor_dict["T_normal_F"],
                 in_tensor_dict["T_normal_B"],
             ) = self.render.get_clean_image()
+
             T_mask_F, T_mask_B = self.render.get_silhouette_image()
 
             with torch.no_grad():
@@ -527,7 +527,7 @@ class ICON(pl.LightningModule):
 
         if self.evaluator._normal_render is None:
             self.evaluator.init_gl()
-            
+
         self.netG.eval()
         self.netG.training = False
         in_tensor_dict = {}
@@ -752,10 +752,19 @@ class ICON(pl.LightningModule):
         )
 
         verts_pr, faces_pr = self.reconEngine.export_mesh(sdf)
+
         if self.clean_mesh_flag:
             verts_pr, faces_pr = clean_mesh(verts_pr, faces_pr)
 
         # convert from GT to SDF
+        # recon_obj = trimesh.Trimesh(
+        #     (verts_pr[:, [1, 0, 2]] * np.array([2.0, 2.0, -2.0])) +
+        #     np.array([0, 0, 256]),
+        #     faces_pr, process=False, maintains_order=True
+        # )
+        # recon_obj.export(
+        #     "./results/icon-filter/normal_integration/recon.obj")
+
         verts_pr -= (self.resolutions[-1] - 1) / 2.0
         verts_pr /= (self.resolutions[-1] - 1) / 2.0
 
