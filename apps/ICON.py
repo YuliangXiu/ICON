@@ -756,15 +756,6 @@ class ICON(pl.LightningModule):
         if self.clean_mesh_flag:
             verts_pr, faces_pr = clean_mesh(verts_pr, faces_pr)
 
-        # convert from GT to SDF
-        # recon_obj = trimesh.Trimesh(
-        #     (verts_pr[:, [1, 0, 2]] * np.array([2.0, 2.0, -2.0])) +
-        #     np.array([0, 0, 256]),
-        #     faces_pr, process=False, maintains_order=True
-        # )
-        # recon_obj.export(
-        #     "./results/icon-filter/normal_integration/recon.obj")
-
         verts_pr -= (self.resolutions[-1] - 1) / 2.0
         verts_pr /= (self.resolutions[-1] - 1) / 2.0
 

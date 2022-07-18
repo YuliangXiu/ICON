@@ -582,7 +582,7 @@ class Seg3dLossless(nn.Module):
 
     def export_mesh(self, occupancys):
 
-        final = occupancys[:-1, :-1, :-1].contiguous()
+        final = occupancys[1:, 1:, 1:].contiguous()
 
         if final.shape[0] > 256:
             # for voxelgrid larger than 256^3, the required GPU memory will be > 9GB
