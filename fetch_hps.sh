@@ -1,13 +1,8 @@
 urle () { [[ "${1}" ]] || return 1; local LANG=C i x; for (( i = 0; i < ${#1}; i++ )); do x="${1:i:1}"; [[ "${x}" == [a-zA-Z0-9.~-] ]] && echo -n "${x}" || printf '%%%02X' "'${x}"; done; echo; }
 
-# fetch DensePose UV data from facebookresearch/DensePose
-mkdir -p data/pymaf_data/UV_data && cd data/pymaf_data/UV_data
-wget https://dl.fbaipublicfiles.com/densepose/densepose_uv_data.tar.gz
-tar xvf densepose_uv_data.tar.gz
-rm densepose_uv_data.tar.gz
-cd ..
 
 # download mesh_downsampling file
+mkdir -p data/pymaf_data && cd data/pymaf_data/
 wget https://github.com/nkolot/GraphCMR/raw/master/data/mesh_downsampling.npz
 
 # Model constants etc from https://github.com/nkolot/SPIN/blob/master/fetch_data.sh

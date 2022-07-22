@@ -113,11 +113,11 @@ class PIFuDataset():
         self.device = torch.device(f"cuda:{cfg.gpus[0]}")
         self.render = Render(size=512, device=self.device)
 
-    def render_normal(self, verts, faces, deform_verts=None):
+    def render_normal(self, verts, faces):
 
         # render optimized mesh (normal, T_normal, image [-1,1])
-        self.render.load_simple_mesh(verts, faces, deform_verts)
-        return self.render.get_clean_image()
+        self.render.load_meshes(verts, faces)
+        return self.render.get_rgb_image()
 
     def get_subject_list(self, split):
 

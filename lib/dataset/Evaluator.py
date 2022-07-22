@@ -15,11 +15,9 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
-from lib.renderer.gl.normal_render import NormalRender
 from lib.dataset.mesh_util import projection
 from lib.common.render import Render
 from PIL import Image
-import os
 import numpy as np
 import torch
 from torch import nn
@@ -34,6 +32,7 @@ class Evaluator:
 
     @staticmethod
     def init_gl():
+        from lib.renderer.gl.normal_render import NormalRender
         Evaluator._normal_render = NormalRender(width=512, height=512)
 
     def __init__(self, device):

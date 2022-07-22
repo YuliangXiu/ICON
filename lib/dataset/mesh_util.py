@@ -15,13 +15,9 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
-from pytorch3d.structures import Meshes
-from lib.pymaf.utils.imutils import uncrop
-from lib.common.render_utils import Pytorch3dRasterizer, face_vertices
-from pytorch3d.renderer.mesh import rasterize_meshes
-from pdb import set_trace
 import numpy as np
 import cv2
+import pymeshlab
 import torch
 import torchvision
 import trimesh
@@ -30,32 +26,124 @@ import os
 from termcolor import colored
 import os.path as osp
 from scipy.spatial import cKDTree
+
+from pytorch3d.structures import Meshes
+import torch.nn.functional as F
+from lib.pymaf.utils.imutils import uncrop
+from lib.common.render_utils import Pytorch3dRasterizer, face_vertices
+
+from pytorch3d.renderer.mesh import rasterize_meshes
+from PIL import Image, ImageFont, ImageDraw
 from kaolin.ops.mesh import check_sign
 from kaolin.metrics.trianglemesh import point_to_mesh_distance
 
 from pytorch3d.loss import (
-    mesh_edge_loss,
     mesh_laplacian_smoothing,
-    mesh_normal_consistency,
+    mesh_normal_consistency
 )
 
-from PIL import Image, ImageFont, ImageDraw
+
+def tensor2variable(tensor, device):
+    # [1,23,3,3]
+    return torch.tensor(tensor, device=device, requires_grad=True)
 
 
-def remesh(obj_path):
+def normal_loss(vec1, vec2):
 
-    import pymeshlab
+    # vec1_mask = vec1.sum(dim=1) != 0.0
+    # vec2_mask = vec2.sum(dim=1) != 0.0
+    # union_mask = vec1_mask * vec2_mask
+    vec_sim = torch.nn.CosineSimilarity(dim=1, eps=1e-6)(vec1, vec2)
+    # vec_diff = ((vec_sim-1.0)**2)[union_mask].mean()
+    vec_diff = ((vec_sim-1.0)**2).mean()
+
+    return vec_diff
+
+
+class GMoF(torch.nn.Module):
+    def __init__(self, rho=1):
+        super(GMoF, self).__init__()
+        self.rho = rho
+
+    def extra_repr(self):
+        return 'rho = {}'.format(self.rho)
+
+    def forward(self, residual):
+        dist = torch.div(residual, residual + self.rho ** 2)
+        return self.rho ** 2 * dist
+
+
+def mesh_edge_loss(meshes, target_length: float = 0.0):
+    """
+    Computes mesh edge length regularization loss averaged across all meshes
+    in a batch. Each mesh contributes equally to the final loss, regardless of
+    the number of edges per mesh in the batch by weighting each mesh with the
+    inverse number of edges. For example, if mesh 3 (out of N) has only E=4
+    edges, then the loss for each edge in mesh 3 should be multiplied by 1/E to
+    contribute to the final loss.
+
+    Args:
+        meshes: Meshes object with a batch of meshes.
+        target_length: Resting value for the edge length.
+
+    Returns:
+        loss: Average loss across the batch. Returns 0 if meshes contains
+        no meshes or all empty meshes.
+    """
+    if meshes.isempty():
+        return torch.tensor(
+            [0.0], dtype=torch.float32, device=meshes.device, requires_grad=True
+        )
+
+    N = len(meshes)
+    edges_packed = meshes.edges_packed()  # (sum(E_n), 3)
+    verts_packed = meshes.verts_packed()  # (sum(V_n), 3)
+    edge_to_mesh_idx = meshes.edges_packed_to_mesh_idx()  # (sum(E_n), )
+    num_edges_per_mesh = meshes.num_edges_per_mesh()  # N
+
+    # Determine the weight for each edge based on the number of edges in the
+    # mesh it corresponds to.
+    # TODO (nikhilar) Find a faster way of computing the weights for each edge
+    # as this is currently a bottleneck for meshes with a large number of faces.
+    weights = num_edges_per_mesh.gather(0, edge_to_mesh_idx)
+    weights = 1.0 / weights.float()
+
+    verts_edges = verts_packed[edges_packed]
+    v0, v1 = verts_edges.unbind(1)
+    loss = ((v0 - v1).norm(dim=1, p=2) - target_length) ** 2.0
+    loss_vertex = loss * weights
+    # loss_outlier = torch.topk(loss, 100)[0].mean()
+    # loss_all = (loss_vertex.sum() + loss_outlier.mean()) / N
+    loss_all = loss_vertex.sum() / N
+
+    return loss_all
+
+
+def remesh(obj_path, perc, device):
+
     ms = pymeshlab.MeshSet()
     ms.load_new_mesh(obj_path)
     ms.laplacian_smooth()
     ms.remeshing_isotropic_explicit_remeshing(
-        targetlen=pymeshlab.Percentage(0.5))
-    ms.save_current_mesh(obj_path)
-    polished_mesh = trimesh.load_mesh(obj_path)
-    verts_pr = torch.tensor(polished_mesh.vertices).float()
-    faces_pr = torch.tensor(polished_mesh.faces).long()
+        targetlen=pymeshlab.Percentage(perc), adaptive=True)
+    ms.save_current_mesh(obj_path.replace("recon", "remesh"))
+    polished_mesh = trimesh.load_mesh(obj_path.replace("recon", "remesh"))
+    verts_pr = torch.tensor(polished_mesh.vertices).float().unsqueeze(0).to(device)
+    faces_pr = torch.tensor(polished_mesh.faces).long().unsqueeze(0).to(device)
 
     return verts_pr, faces_pr
+
+
+def possion(mesh, obj_path):
+
+    mesh.export(obj_path)
+    ms = pymeshlab.MeshSet()
+    ms.load_new_mesh(obj_path)
+    ms.surface_reconstruction_screened_poisson(depth=10)
+    ms.set_current_mesh(1)
+    ms.save_current_mesh(obj_path)
+
+    return trimesh.load(obj_path)
 
 
 def get_mask(tensor, dim):
@@ -95,10 +183,10 @@ def update_mesh_shape_prior_losses(mesh, losses):
     # and (b) the edge length of the predicted mesh
     losses["edge"]['value'] = mesh_edge_loss(mesh)
     # mesh normal consistency
-    losses["normal"]['value'] = mesh_normal_consistency(mesh)
+    losses["nc"]['value'] = mesh_normal_consistency(mesh)
     # mesh laplacian smoothing
-    losses["laplacian"]['value'] = mesh_laplacian_smoothing(mesh,
-                                                            method="uniform")
+    losses["laplacian"]['value'] = mesh_laplacian_smoothing(
+        mesh, method="uniform")
 
 
 def rename(old_dict, old_name, new_name):
@@ -661,97 +749,6 @@ def add_alpha(colors, alpha=0.7):
     return colors_pad
 
 
-def save_normal_tensor(in_tensor, png_path, depth_scale):
-
-    def tensor2numpy(t, mask=False):
-        if not mask:
-            return t.squeeze(0).permute(1, 2, 0).detach().cpu().numpy()
-        else:
-            return (t.squeeze(0).abs().sum(dim=0, keepdim=True) != 0.0).float().permute(1, 2, 0).detach().cpu().numpy()
-
-    def numpy2png(t):
-        return ((t + 1.0) * 0.5 * 255.0).astype(np.uint8)
-
-    def depth2arr(t):
-
-        return (t.float().detach().cpu().numpy())
-
-    def depth2png(t):
-
-        t_copy = t.copy()
-        t_copy -= t_copy[t > -1.0].min()
-        t_copy /= t_copy[t > -1.0].max()
-        t_copy = (-t_copy+1.0) * 255.0
-
-        return t_copy[..., None].astype(np.uint8)
-
-    def verts_transform(t):
-
-        t *= depth_scale * 0.5
-        t += depth_scale * 0.5
-        t = t[:, [1, 0, 2]] * \
-            torch.Tensor([2.0, 2.0, -2.0]) + \
-            torch.Tensor([0.0, 0.0, depth_scale])
-
-        return t
-
-    image_arr = tensor2numpy(in_tensor['image'])
-    normal_F_arr = tensor2numpy(in_tensor['normal_F'])
-    normal_B_arr = tensor2numpy(in_tensor['normal_B'])
-    mask_normal_arr = tensor2numpy(in_tensor['image'], True)
-
-    depth_F_arr = depth2arr(in_tensor['depth_F'])
-    depth_B_arr = depth2arr(in_tensor['depth_B'])
-
-    T_normal_F_arr = tensor2numpy(in_tensor['T_normal_F'])
-    T_normal_B_arr = tensor2numpy(in_tensor['T_normal_B'])
-    T_mask_normal_arr = tensor2numpy(in_tensor['T_normal_F'], True)
-
-    Image.fromarray(numpy2png(image_arr)).save(png_path+"_image.png")
-    Image.fromarray(numpy2png(normal_F_arr)).save(png_path+"_normal_F.png")
-    Image.fromarray(numpy2png(normal_B_arr)).save(png_path+"_normal_B.png")
-    Image.fromarray(numpy2png(T_normal_F_arr)).save(png_path+"_T_normal_F.png")
-    Image.fromarray(numpy2png(T_normal_B_arr)).save(png_path+"_T_normal_B.png")
-
-    # write binary mask
-    cv2.imwrite(png_path+"_mask.png",
-                (mask_normal_arr * 255.0).astype(np.uint8))
-    cv2.imwrite(png_path+"_T_mask.png",
-                (T_mask_normal_arr * 255.0).astype(np.uint8))
-
-    # write depth map as pngs with scaling to 0~255
-    cv2.imwrite(png_path+"_depth_F.png", depth2png(depth_F_arr))
-    cv2.imwrite(png_path+"_depth_B.png", depth2png(depth_B_arr))
-
-    normal_integration_dict = {}
-
-    # clothed human
-    normal_integration_dict['normal_map_F'] = normal_F_arr
-    normal_integration_dict['normal_map_B'] = normal_B_arr
-    normal_integration_dict['mask'] = mask_normal_arr
-    normal_integration_dict['depth_F'] = (depth_F_arr-100.0) * depth_scale
-    normal_integration_dict['depth_B'] = (100.0-depth_B_arr) * depth_scale
-    normal_integration_dict['depth_mask'] = depth_F_arr > -1.0
-
-    # smpl body
-    normal_integration_dict['T_normal_F'] = T_normal_F_arr
-    normal_integration_dict['T_normal_B'] = T_normal_B_arr
-    normal_integration_dict['T_mask'] = T_mask_normal_arr
-
-    np.save(png_path+".npy", normal_integration_dict, allow_pickle=True)
-
-    # obj export
-    smpl_obj = trimesh.Trimesh(verts_transform(
-        in_tensor['smpl_verts'].detach().cpu()[0] * torch.tensor([1.0, -1.0, 1.0])),
-        in_tensor['smpl_faces'].detach().cpu()[0], process=False, maintains_order=True)
-    recon_obj = trimesh.Trimesh(verts_transform(
-        in_tensor['verts_pr']).detach().cpu(),
-        in_tensor['faces_pr'].detach().cpu(), process=False, maintains_order=True)
-
-    smpl_obj.export(png_path+"_smpl.obj")
-    recon_obj.export(png_path+"_recon.obj")
-
-
 def get_optim_grid_image(per_loop_lst, loss=None, nrow=4, type='smpl'):
 
     font_path = os.path.join(os.path.dirname(__file__), "tbfo.ttf")
@@ -807,7 +804,7 @@ def clean_mesh(verts, faces):
     return final_verts, final_faces
 
 
-def merge_mesh(verts_A, faces_A, verts_B, faces_B):
+def merge_mesh(verts_A, faces_A, verts_B, faces_B, color=False):
 
     sep_mesh = trimesh.Trimesh(np.concatenate([verts_A, verts_B], axis=0),
                                np.concatenate(
@@ -815,11 +812,11 @@ def merge_mesh(verts_A, faces_A, verts_B, faces_B):
                                    axis=0),
                                maintain_order=True,
                                process=False)
-
-    colors = np.ones_like(sep_mesh.vertices)
-    colors[:verts_A.shape[0]] *= np.array([255.0, 0.0, 0.0])
-    colors[verts_A.shape[0]:] *= np.array([0.0, 255.0, 0.0])
-    sep_mesh.visual.vertex_colors = colors
+    if color:
+        colors = np.ones_like(sep_mesh.vertices)
+        colors[:verts_A.shape[0]] *= np.array([255.0, 0.0, 0.0])
+        colors[verts_A.shape[0]:] *= np.array([0.0, 255.0, 0.0])
+        sep_mesh.visual.vertex_colors = colors
 
     # union_mesh = trimesh.boolean.union([trimesh.Trimesh(verts_A, faces_A),
     #                                     trimesh.Trimesh(verts_B, faces_B)], engine='blender')

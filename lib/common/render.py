@@ -32,14 +32,14 @@ from pytorch3d.renderer import (
     TexturesVertex,
 )
 from pytorch3d.renderer.mesh import TexturesVertex
-from pytorch3d.structures import Meshes, Pointclouds
+from pytorch3d.structures import Meshes
 from lib.dataset.mesh_util import SMPLX, get_visibility
 
 import lib.common.render_utils as util
 import torch
 import numpy as np
 from PIL import Image
-from pytorch3d.io import load_obj
+from tqdm import tqdm
 import os
 import cv2
 import math
@@ -73,21 +73,15 @@ def query_color(verts, faces, image, device):
     faces = faces.long().to(device)
 
     (xy, z) = verts.split([2, 1], dim=1)
-    visibility = get_visibility(xy, z, faces[:, [0, 2, 1]])
+    visibility = get_visibility(xy, z, faces[:, [0, 2, 1]]).flatten()
     uv = xy.unsqueeze(0).unsqueeze(2)  # [B, N, 2]
     uv = uv * torch.tensor([1.0, -1.0]).type_as(uv)
-    colors = torch.nn.functional.grid_sample(
-        image, uv, align_corners=True
-    )  # [B, C, N, 1]
-    colors = (
-        (colors[0, :, :, 0].permute(1, 0) + 1.0) * 0.5 * 255.0
-    ).detach().cpu() * visibility
+    colors = (torch.nn.functional.grid_sample(image, uv, align_corners=True)[
+              0, :, :, 0].permute(1, 0) + 1.0) * 0.5 * 255.0
+    colors[visibility == 0.0] = ((Meshes(verts.unsqueeze(0), faces.unsqueeze(
+        0)).verts_normals_padded().squeeze(0) + 1.0) * 0.5 * 255.0)[visibility == 0.0]
 
-    # mesh = trimesh.Trimesh(verts.detach().cpu(), faces.detach().cpu(), process=False, maintains_order=True)
-    # mesh.visual.vertex_colors = colors
-    # mesh.show()
-
-    return colors
+    return colors.detach().cpu()
 
 
 class cleanShader(torch.nn.Module):
@@ -240,81 +234,30 @@ class Render:
                 ),
             )
 
-    def load_mesh(self, verts, faces, verts_rgb, verts_dense=None, load_seg=False):
-        """load mesh into the pytorch3d renderer
+    def VF2Mesh(self, verts, faces):
 
-        Args:
-            verts ([N,3]): verts
-            faces ([N,3]): faces
-            verts_rgb ([N,3]): verts colors
-            verts_dense ([N,3], optinoal): verts dense correspondense results. Defaults to None.
-            load_seg (bool, optional): needs to render seg or not. Defaults to False.
-        """
-
-        self.type = type
-        self.load_seg = load_seg
-
-        # data format convert
         if not torch.is_tensor(verts):
-            verts = torch.as_tensor(verts).float().unsqueeze(0).to(self.device)
-            faces = torch.as_tensor(faces).int().unsqueeze(0).to(self.device)
-            if verts_rgb is not None:
-                verts_rgb = (
-                    torch.as_tensor(verts_rgb)[:, :3]
-                    .float()
-                    .unsqueeze(0)
-                    .to(self.device)
-                )
-        else:
-            verts = verts.float().unsqueeze(0).to(self.device)
-            faces = faces.int().unsqueeze(0).to(self.device)
-            if verts_rgb is not None:
-                verts_rgb = verts_rgb[:, :3].float(
-                ).unsqueeze(0).to(self.device)
+            verts = torch.tensor(verts)
+        if not torch.is_tensor(faces):
+            faces = torch.tensor(faces)
 
-        # dense correspondence results data format convert
-        if verts_dense is not None:
-            if not torch.is_tensor(verts_dense):
-                verts_dense = torch.from_numpy(verts_dense)
-            verts_dense = verts_dense[:, :3].unsqueeze(0).to(self.device)
+        if verts.ndimension() == 2:
+            verts = verts.unsqueeze(0).float()
+        if faces.ndimension() == 2:
+            faces = faces.unsqueeze(0).long()
 
-        # camera setting
-        self.mesh_y_center = (
-            0.5 * (verts.max(dim=1)[0][0, 1] + verts.min(dim=1)[0][0, 1])
-        ).item()
-        self.scale = 90.0 / (self.mesh_y_center + 1e-10)
-        self.cam_pos = [
-            (0, self.mesh_y_center, self.dis),
-            (self.dis, self.mesh_y_center, 0),
-            (0, self.mesh_y_center, -self.dis),
-            (-self.dis, self.mesh_y_center, 0),
-        ]
+        verts = verts.to(self.device)
+        faces = faces.to(self.device)
 
-        # self.verts is for UV rendering, so it is [smpl_num, 3]
-        # verts is for normal rendering, so it is [sample_num, 3]
+        mesh = Meshes(verts, faces).to(self.device)
 
-        if verts_rgb is not None:
-            self.type = "color"
-            textures = TexturesVertex(verts_features=verts_rgb)
-            self.verts = verts_rgb.squeeze(0)[self.knn].squeeze(1)
+        mesh.textures = TexturesVertex(
+            verts_features=(mesh.verts_normals_padded() + 1.0) * 0.5
+        )
 
-        self.mesh = Meshes(verts=verts, faces=faces,
-                           textures=textures).to(self.device)
+        return mesh
 
-        _, faces, aux = load_obj(self.smplx.tpose_path, device=self.device)
-        uvcoords = aux.verts_uvs[None, ...]  # (N, V, 2)
-        self.uvfaces = faces.textures_idx[None, ...]  # (N, F, 3)
-        self.verts = self.verts[None, ...]  # (N, V, 3)
-        self.faces = faces.verts_idx[None, ...]  # (N, F, 3)
-
-        # uv coords
-        uvcoords = torch.cat(
-            [uvcoords, uvcoords[:, :, 0:1] * 0.0 + 1.0], -1
-        )  # [bz, ntv, 3]
-        self.uvcoords = uvcoords * 2 - 1
-        uvcoords[..., 1] = -uvcoords[..., 1]
-
-    def load_simple_mesh(self, verts, faces, deform_verts=None):
+    def load_meshes(self, verts, faces):
         """load mesh into the pytorch3d renderer
 
         Args:
@@ -336,96 +279,19 @@ class Render:
 
         self.type = "color"
 
-        if not torch.is_tensor(verts):
-            verts = torch.tensor(verts)
-        if not torch.is_tensor(faces):
-            faces = torch.tensor(faces)
-
-        if verts.ndimension() == 2:
-            verts = verts.unsqueeze(0).float()
-        if faces.ndimension() == 2:
-            faces = faces.unsqueeze(0).long()
-
-        verts = verts.to(self.device)
-        faces = faces.to(self.device)
-
-        # verts_rgb = (compute_normal_batch(verts, faces) + 1.0) * 0.5
-
-        if deform_verts is not None:
-
-            deform_verts_copy = deform_verts.clone()
-            false_ids = torch.topk(torch.abs(deform_verts).sum(dim=1), 30)[1]
-            deform_verts_copy[false_ids] = deform_verts_copy.mean(dim=0)
-
-            self.mesh = (
-                Meshes(verts, faces).to(
-                    self.device).offset_verts(deform_verts_copy)
-            )
+        if isinstance(verts, list):
+            self.meshes = []
+            for V, F in zip(verts, faces):
+                self.meshes.append(self.VF2Mesh(V, F))
         else:
-            self.mesh = Meshes(verts, faces).to(self.device)
-
-        textures = TexturesVertex(
-            verts_features=(self.mesh.verts_normals_padded() + 1.0) * 0.5
-        )
-        self.mesh.textures = textures
-
-    def load_pcd(self, verts, verts_rgb):
-        """load pointcloud into the pytorch3d renderer
-
-        Args:
-            verts ([N,3]): verts
-            verts_rgb ([N,3]): verts colors
-        """
-
-        # data format convert
-        if not torch.is_tensor(verts):
-            verts = torch.as_tensor(verts).float().unsqueeze(0).to(self.device)
-            if verts_rgb is not None:
-                verts_rgb = (
-                    torch.as_tensor(verts_rgb)[:, :3]
-                    .float()
-                    .unsqueeze(0)
-                    .to(self.device)
-                )
-        else:
-            verts = verts.float().unsqueeze(0).to(self.device)
-            if verts_rgb is not None:
-                verts_rgb = verts_rgb[:, :3].float(
-                ).unsqueeze(0).to(self.device)
-
-        # camera setting
-        self.mesh_y_center = (
-            0.5 * (verts.max(dim=1)[0][0, 1] + verts.min(dim=1)[0][0, 1])
-        ).item()
-        self.scale = 90.0 / (self.mesh_y_center + 1e-10)
-        self.cam_pos = [
-            (0, self.mesh_y_center, self.dis),
-            (self.dis, self.mesh_y_center, 0),
-            (0, self.mesh_y_center, -self.dis),
-            (-self.dis, self.mesh_y_center, 0),
-        ]
-
-        pcd = Pointclouds(points=verts, features=verts_rgb).to(self.device)
-        return pcd
-
-    def get_image(self):
-        images = torch.zeros((self.size, self.size * len(self.cam_pos), 3)).to(
-            self.device
-        )
-        for cam_id in range(len(self.cam_pos)):
-            self.init_renderer(self.get_camera(cam_id), "ori_mesh", "gray")
-            images[:, self.size * cam_id: self.size * (cam_id + 1), :] = self.renderer(
-                self.mesh
-            )[0, :, :, :3]
-
-        return images.cpu().numpy()
+            self.meshes = [self.VF2Mesh(verts, faces)]
 
     def get_depth_map(self, cam_ids=[0, 2]):
 
         depth_maps = []
         for cam_id in cam_ids:
             self.init_renderer(self.get_camera(cam_id), "clean_mesh", "gray")
-            fragments = self.meshRas(self.mesh)
+            fragments = self.meshRas(self.meshes[0])
             depth_map = fragments.zbuf[..., 0].squeeze(0)
             if cam_id == 2:
                 depth_map = torch.fliplr(depth_map)
@@ -433,7 +299,7 @@ class Render:
 
         return depth_maps
 
-    def get_clean_image(self, cam_ids=[0, 2]):
+    def get_rgb_image(self, cam_ids=[0, 2]):
 
         images = []
         for cam_id in range(len(self.cam_pos)):
@@ -442,13 +308,13 @@ class Render:
                     cam_id), "clean_mesh", "gray")
                 if len(cam_ids) == 4:
                     rendered_img = (
-                        self.renderer(self.mesh)[
+                        self.renderer(self.meshes[0])[
                             0:1, :, :, :3].permute(0, 3, 1, 2)
                         - 0.5
                     ) * 2.0
                 else:
                     rendered_img = (
-                        self.renderer(self.mesh)[
+                        self.renderer(self.meshes[0])[
                             0:1, :, :, :3].permute(0, 3, 1, 2)
                         - 0.5
                     ) * 2.0
@@ -459,7 +325,7 @@ class Render:
         return images
 
     def get_rendered_video(self, images, save_path):
-
+        
         self.cam_pos = []
         for angle in range(360):
             self.cam_pos.append(
@@ -476,33 +342,32 @@ class Render:
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         video = cv2.VideoWriter(
-            save_path, fourcc, 30, (self.size +
+            save_path, fourcc, 30, (self.size * len(self.meshes) +
                                     new_shape[1] * len(images), self.size)
         )
 
-        print(
-            colored(
-                f"exporting video {os.path.basename(save_path)}, please wait for a while...",
-                "blue",
-            )
-        )
-
-        for cam_id in range(len(self.cam_pos)):
+        pbar = tqdm(range(len(self.cam_pos)))
+        pbar.set_description(colored(f"exporting video {os.path.basename(save_path)}...", "blue"))
+        for cam_id in pbar:
             self.init_renderer(self.get_camera(cam_id), "clean_mesh", "gray")
-            rendered_img = (
-                (self.renderer(self.mesh)[0, :, :, :3] * 255.0)
-                .detach()
-                .cpu()
-                .numpy()
-                .astype(np.uint8)
-            )
+
             img_lst = [
                 np.array(Image.fromarray(img).resize(new_shape[::-1])).astype(np.uint8)[
                     :, :, [2, 1, 0]
                 ]
                 for img in images
             ]
-            img_lst.append(rendered_img)
+
+            for mesh in self.meshes:
+                rendered_img = (
+                    (self.renderer(mesh)[0, :, :, :3] * 255.0)
+                    .detach()
+                    .cpu()
+                    .numpy()
+                    .astype(np.uint8)
+                )
+
+                img_lst.append(rendered_img)
             final_img = np.concatenate(img_lst, axis=1)
             video.write(final_img)
 
@@ -514,70 +379,9 @@ class Render:
         for cam_id in range(len(self.cam_pos)):
             if cam_id in cam_ids:
                 self.init_renderer(self.get_camera(cam_id), "silhouette")
-                rendered_img = self.renderer(self.mesh)[0:1, :, :, 3]
+                rendered_img = self.renderer(self.meshes[0])[0:1, :, :, 3]
                 if cam_id == 2 and len(cam_ids) == 2:
                     rendered_img = torch.flip(rendered_img, dims=[2])
                 images.append(rendered_img)
 
         return images
-
-    def get_image_pcd(self, pcd):
-        images = torch.zeros((self.size, self.size * len(self.cam_pos), 3)).to(
-            self.device
-        )
-        for cam_id in range(len(self.cam_pos)):
-            self.init_renderer(self.get_camera(cam_id), "pointcloud")
-            images[:, self.size * cam_id: self.size * (cam_id + 1), :] = self.renderer(
-                pcd
-            )[0, :, :, :3]
-
-        return images.cpu().numpy()
-
-    def get_texture(self, smpl_color=None):
-        """
-        warp vertices from world space to uv space
-        vertices: [bz, V, 3]
-        uv_vertices: [bz, 3, h, w]
-        """
-
-        if self.type == "color":
-            assert smpl_color is not None, "smpl_color argument should not be empty"
-
-        batch_size = self.verts.shape[0]
-        face_vertices = util.face_vertices(
-            self.verts, self.faces.expand(batch_size, -1, -1)
-        )
-        uv_vertices = self.uv_rasterizer(
-            self.uvcoords.expand(batch_size, -1, -1),
-            self.uvfaces.expand(batch_size, -1, -1),
-            face_vertices,
-        )[:, :3]
-        uv_vertices = uv_vertices.squeeze(0).permute(1, 2, 0).cpu().numpy()
-
-        if self.type == "dense":
-            face_vertices = util.face_vertices(
-                self.smpl_cmap[None, ...], self.faces.expand(
-                    batch_size, -1, -1)
-            )
-        elif self.type == "color":
-            face_vertices = util.face_vertices(
-                smpl_color[:, :, :3].to(self.device),
-                self.faces.expand(batch_size, -1, -1),
-            )
-        else:
-            face_vertices = util.face_vertices(
-                self.smpl_seg[None, ...], self.faces.expand(batch_size, -1, -1)
-            )
-
-        uv_vertices_cmap = self.uv_rasterizer(
-            self.uvcoords.expand(batch_size, -1, -1),
-            self.uvfaces.expand(batch_size, -1, -1),
-            face_vertices,
-        )[:, :3]
-
-        uv_vertices_cmap = uv_vertices_cmap.squeeze(
-            0).permute(1, 2, 0).cpu().numpy()
-
-        return np.concatenate(
-            (np.flip(uv_vertices, 0), np.flip(uv_vertices_cmap, 0)), axis=1
-        )

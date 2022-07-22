@@ -48,6 +48,10 @@ python -m apps.infer -cfg ./configs/icon-filter.yaml -gpu 0 -in_dir ./examples/s
 # output under results/icon-filter/clothes
 ```
 
+<div align="center">
+    <img src="../assets/garment.gif" alt="Logo" width="100%">
+  </div>
+
 ## Citation
 
 ```bibtex

@@ -14,11 +14,8 @@
   </p>
   <h2 align="center">CVPR 2022</h2>
   <div align="center">
+    <img src="./assets/teaser.gif" alt="Logo" width="100%">
   </div>
-
-  <a href="">
-    <img src="./assets/teaser.jpeg" alt="Logo" width="100%">
-  </a>
 
   <p align="center">
   <br>
@@ -40,6 +37,7 @@
 
 ## News :triangular_flag_on_post:
 
+- [2022/07/26] New cloth-refinement module is released, try `-loop_cloth`.
 - [2022/06/13] ETH Zürich students from 3DV course create an add-on for [garment-extraction](docs/garment-extraction.md).  
 - [2022/05/16] <a href="https://github.com/Arthur151/ROMP">BEV</a> is supported as optional HPS by <a href="https://scholar.google.com/citations?hl=en&user=fkGxgrsAAAAJ">Yu Sun</a>, see [commit #060e265](https://github.com/YuliangXiu/ICON/commit/060e265bd253c6a34e65c9d0a5288c6d7ffaf68e).
 - [2022/05/15] Training code is released, please check [Training Instruction](docs/training.md).
@@ -96,6 +94,9 @@
 
 ## Who needs ICON?
 
+- If you want to **Train & Evaluate** on **PIFu / PaMIR / ICON** using your own data, please check [dataset.md](./docs/dataset.md) to prepare dataset, [training.md](./docs/training.md) for training, and [evaluation.md](./docs/evaluation.md) for benchmark evaluation.
+
+
 - Given a raw RGB image, you could get:
   - image (png): 
     - segmented human RGB
@@ -104,6 +105,7 @@
   - mesh (obj):
     - SMPL-(X) body from *PyMAF, PIXIE, PARE, HybrIK, BEV*
     - 3D clothed human reconstruction
+    - 3D garments (requires 2D mask)
   - video (mp4): 
     - self-rotated clothed human
 
@@ -112,19 +114,12 @@
 |                       _ICON's intermediate results_                        |
 |               ![Iterative Refinement](assets/refinement.gif)               |
 |                       _ICON's SMPL Pose Refinement_                        |
-| ![Final Results](assets/overlap1.gif)![Final Results](assets/overlap2.gif) |
-|     _ICON's normal prediction + reconstructed mesh (w/o & w/ smooth)_      |
+|                   _![Final Results](assets/overlap.gif)_                   |
+|      _Image -- overlapped normal prediction -- ICON -- refined ICON_       |
+|                      ![3D Garment](assets/garment.gif)                     |
+|              _3D Garment extracted from ICON using 2D mask_                |
 
-- If you want to create a **realistic and animatable 3D clothed avatar** direclty from video / sequential images
-  - fully-textured with per-vertex color
-  - can be animated by SMPL pose parameters
-  - natural pose-dependent clothing deformation
 
-|                       ![ICON+SCANimate+AIST++](assets/scanimate.gif)                       |
-| :----------------------------------------------------------------------------------------: |
-| _3D Clothed Avatar, created from 400+ images using **ICON+SCANimate**, animated by AIST++_ |
-
-- If you want to **Train & Evaluate** on **PIFu/PaMIR/ICON** using your own data, please check [dataset.md](./docs/dataset.md) to prepare dataset, [training.md](./docs/training.md) for training, and [evaluation.md](./docs/evaluation.md) for benchmark evaluation.
 
 <br><br>
 ## Installation
@@ -153,16 +148,16 @@ Please follow the [Evaluation Instruction](docs/evaluation.md) to benchmark trai
 cd ICON
 
 # PIFu* (*: re-implementation)
-python -m apps.infer -cfg ./configs/pifu.yaml -gpu 0 -in_dir ./examples -out_dir ./results
+python -m apps.infer -cfg ./configs/pifu.yaml -gpu 0 -in_dir ./examples -out_dir ./results -loop_cloth 100 -export_video
 
 # PaMIR* (*: re-implementation)
-python -m apps.infer -cfg ./configs/pamir.yaml -gpu 0 -in_dir ./examples -out_dir ./results
+python -m apps.infer -cfg ./configs/pamir.yaml -gpu 0 -in_dir ./examples -out_dir ./results -loop_smpl 100 -loop_cloth 200 -export_video
 
 # ICON w/ global filter (better visual details --> lower Normal Error))
-python -m apps.infer -cfg ./configs/icon-filter.yaml -gpu 0 -in_dir ./examples -out_dir ./results -hps_type {pixie/pymaf/pare/hybrik/bev}
+python -m apps.infer -cfg ./configs/icon-filter.yaml -gpu 0 -in_dir ./examples -out_dir ./results -hps_type {pymaf/pixie/pare/hybrik/bev} -loop_smpl 100 -loop_cloth 200 -export_video
 
 # ICON w/o global filter (higher evaluation scores --> lower P2S/Chamfer Error))
-python -m apps.infer -cfg ./configs/icon-nofilter.yaml -gpu 0 -in_dir ./examples -out_dir ./results -hps_type {pixie/pymaf/pare/hybrik/bev}
+python -m apps.infer -cfg ./configs/icon-nofilter.yaml -gpu 0 -in_dir ./examples -out_dir ./results -hps_type {pymaf/pixie/pare/hybrik/bev} -loop_smpl 100 -loop_cloth 200 -export_video
 ```
 
 ## More Qualitative Results
@@ -201,6 +196,7 @@ Here are some great resources we benefit from:
 - [PaMIR](https://github.com/ZhengZerong/PaMIR), [PIFu](https://github.com/shunsukesaito/PIFu), [PIFuHD](https://github.com/facebookresearch/pifuhd), and [MonoPort](https://github.com/Project-Splinter/MonoPort) for Benchmark
 - [SCANimate](https://github.com/shunsukesaito/SCANimate) and [AIST++](https://github.com/google/aistplusplus_api) for Animation
 - [rembg](https://github.com/danielgatis/rembg) for Human Segmentation
+- [PyTorch-NICP](https://github.com/wuhaozhe/pytorch-nicp) for normal-based non-rigid refinement
 - [smplx](https://github.com/vchoutas/smplx), [PARE](https://github.com/mkocabas/PARE), [PyMAF](https://github.com/HongwenZhang/PyMAF), [PIXIE](https://github.com/YadiraF/PIXIE), [BEV](https://github.com/Arthur151/ROMP), and [HybrIK](https://github.com/Jeff-sjtu/HybrIK) for Human Pose & Shape Estimation
 - [CAPE](https://github.com/qianlim/CAPE) and [THuman](https://github.com/ZhengZerong/DeepHuman/tree/master/THUmanDataset) for Dataset
 - [PyTorch3D](https://github.com/facebookresearch/pytorch3d) for Differential Rendering

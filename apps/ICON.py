@@ -385,12 +385,12 @@ class ICON(pl.LightningModule):
                 smpl_verts, batch["calib"][0], format="tensor")
             smpl_verts[:, 1] *= -1
             # render optimized mesh (normal, T_normal, image [-1,1])
-            self.render.load_simple_mesh(
+            self.render.load_meshes(
                 smpl_verts, in_tensor_dict["smpl_faces"])
             (
                 in_tensor_dict["T_normal_F"],
                 in_tensor_dict["T_normal_B"],
-            ) = self.render.get_clean_image()
+            ) = self.render.get_rgb_image()
 
             T_mask_F, T_mask_B = self.render.get_silhouette_image()
 
@@ -474,12 +474,12 @@ class ICON(pl.LightningModule):
 
             optimizer_cloth.zero_grad()
 
-            self.render.load_simple_mesh(
+            self.render.load_meshes(
                 verts_pr.unsqueeze(0).to(self.device),
                 faces_pr.unsqueeze(0).to(self.device).long(),
                 deform_verts,
             )
-            P_normal_F, P_normal_B = self.render.get_clean_image()
+            P_normal_F, P_normal_B = self.render.get_rgb_image()
 
             update_mesh_shape_prior_losses(self.render.mesh, losses)
             diff_F_cloth = torch.abs(P_normal_F[0] - inter[:3])

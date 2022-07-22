@@ -52,6 +52,7 @@ class TestDataset():
         self.hps_type = cfg['hps_type']
         self.smpl_type = 'smpl' if cfg['hps_type'] != 'pixie' else 'smplx'
         self.smpl_gender = 'neutral'
+        self.colab = cfg['colab']
 
         self.device = device
 
@@ -68,6 +69,9 @@ class TestDataset():
 
         self.subject_list = sorted(
             [item for item in keep_lst if item.split(".")[-1] in img_fmts])
+        
+        if self.colab:
+            self.subject_list = [self.subject_list[0]]
 
         # smpl related
         self.smpl_data = SMPLX()
@@ -282,11 +286,17 @@ class TestDataset():
 
         return data_dict
 
-    def render_normal(self, verts, faces, deform_verts=None):
+    def render_normal(self, verts, faces):
 
         # render optimized mesh (normal, T_normal, image [-1,1])
-        self.render.load_simple_mesh(verts, faces, deform_verts)
-        return self.render.get_clean_image()
+        self.render.load_meshes(verts, faces)
+        return self.render.get_rgb_image()
+    
+    def render_depth(self, verts, faces):
+    
+        # render optimized mesh (normal, T_normal, image [-1,1])
+        self.render.load_meshes(verts, faces)
+        return self.render.get_depth_map(cam_ids=[0, 2])
 
     def visualize_alignment(self, data):
 
