@@ -27,7 +27,6 @@ from lib.dataset.mesh_util import (
     unwrap,
     remesh,
     tensor2variable,
-    normal_loss
 )
 
 from lib.dataset.TestDataset import TestDataset
@@ -156,7 +155,7 @@ if __name__ == "__main__":
             "nc": {"weight": 0, "value": 0.0},                  # Cloth: normal consistency
             "laplacian": {"weight": 1e2, "value": 0.0},         # Cloth: laplacian smoonth
             "normal": {"weight": 1e0, "value": 0.0},            # Body: Normal_pred - Normal_smpl
-            "silhouette": {"weight": 1e1, "value": 0.0},        # Body: Silhouette_pred - Silhouette_smpl
+            "silhouette": {"weight": 1e0, "value": 0.0},        # Body: Silhouette_pred - Silhouette_smpl
         }
 
         # smpl optimization
@@ -215,12 +214,7 @@ if __name__ == "__main__":
             diff_B_smpl = torch.abs(
                 in_tensor["T_normal_B"] - in_tensor["normal_B"])
 
-            loss_F_smpl = normal_loss(
-                in_tensor["T_normal_F"], in_tensor["normal_F"])
-            loss_B_smpl = normal_loss(
-                in_tensor["T_normal_B"], in_tensor["normal_B"])
-
-            losses["normal"]["value"] = (loss_F_smpl + loss_B_smpl).mean()
+            losses["normal"]["value"] = (diff_F_smpl + diff_F_smpl).mean()
 
             # silhouette loss
             smpl_arr = torch.cat([T_mask_F, T_mask_B], dim=-1)[0]

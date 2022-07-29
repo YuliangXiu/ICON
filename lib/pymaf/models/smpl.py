@@ -2,9 +2,9 @@
 
 import torch
 import numpy as np
-from smplx import SMPL as _SMPL
-from smplx.body_models import ModelOutput
-from smplx.lbs import vertices2joints
+from lib.smplx import SMPL as _SMPL
+from lib.smplx.body_models import ModelOutput
+from lib.smplx.lbs import vertices2joints
 from collections import namedtuple
 
 from lib.pymaf.core import path_config, constants

@@ -18,9 +18,9 @@ import torch
 import numpy as np
 import torch.nn as nn
 
-from smplx import SMPL as _SMPL
-from smplx.utils import SMPLOutput
-from smplx.lbs import vertices2joints
+from lib.smplx import SMPL as _SMPL
+from lib.smplx.utils import SMPLOutput
+from lib.smplx.lbs import vertices2joints
 
 from ...core import config, constants
 from ...utils.geometry import perspective_projection, convert_weak_perspective_to_perspective

@@ -47,19 +47,6 @@ def tensor2variable(tensor, device):
     # [1,23,3,3]
     return torch.tensor(tensor, device=device, requires_grad=True)
 
-
-def normal_loss(vec1, vec2):
-
-    # vec1_mask = vec1.sum(dim=1) != 0.0
-    # vec2_mask = vec2.sum(dim=1) != 0.0
-    # union_mask = vec1_mask * vec2_mask
-    vec_sim = torch.nn.CosineSimilarity(dim=1, eps=1e-6)(vec1, vec2)
-    # vec_diff = ((vec_sim-1.0)**2)[union_mask].mean()
-    vec_diff = ((vec_sim-1.0)**2).mean()
-
-    return vec_diff
-
-
 class GMoF(torch.nn.Module):
     def __init__(self, rho=1):
         super(GMoF, self).__init__()

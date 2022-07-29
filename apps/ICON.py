@@ -18,13 +18,12 @@ from lib.common.seg3d_lossless import Seg3dLossless
 from lib.dataset.Evaluator import Evaluator
 from lib.net import HGPIFuNet
 from lib.common.train_util import *
-from lib.renderer.gl.init_gl import initialize_GL_context
 from lib.common.render import Render
 from lib.dataset.mesh_util import SMPLX, update_mesh_shape_prior_losses, get_visibility
 import warnings
 import logging
 import torch
-import smplx
+import lib.smplx as smplx
 import numpy as np
 from torch import nn
 from skimage.transform import resize

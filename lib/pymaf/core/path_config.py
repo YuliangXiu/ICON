@@ -13,6 +13,7 @@ pymaf_data_dir = os.path.join(os.path.dirname(__file__),
 
 SMPL_MEAN_PARAMS = os.path.join(pymaf_data_dir, 'smpl_mean_params.npz')
 SMPL_MODEL_DIR = os.path.join(pymaf_data_dir, '../smpl_related/models/smpl')
+MESH_DOWNSAMPLEING = os.path.join(pymaf_data_dir, 'mesh_downsampling.npz')
 
 CUBE_PARTS_FILE = os.path.join(pymaf_data_dir, 'cube_parts.npy')
 JOINT_REGRESSOR_TRAIN_EXTRA = os.path.join(pymaf_data_dir,
@@ -20,7 +21,6 @@ JOINT_REGRESSOR_TRAIN_EXTRA = os.path.join(pymaf_data_dir,
 JOINT_REGRESSOR_H36M = os.path.join(pymaf_data_dir, 'J_regressor_h36m.npy')
 VERTEX_TEXTURE_FILE = os.path.join(pymaf_data_dir, 'vertex_texture.npy')
 SMPL_MEAN_PARAMS = os.path.join(pymaf_data_dir, 'smpl_mean_params.npz')
-SMPL_MODEL_DIR = os.path.join(pymaf_data_dir, '../smpl_related/models/smpl')
 CHECKPOINT_FILE = os.path.join(pymaf_data_dir,
                                'pretrained_model/PyMAF_model_checkpoint.pt')
 

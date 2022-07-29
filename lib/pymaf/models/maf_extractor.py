@@ -10,6 +10,7 @@ import torch.nn.functional as F
 
 from lib.common.config import cfg
 from lib.pymaf.utils.geometry import projection
+from lib.pymaf.core.path_config import MESH_DOWNSAMPLEING
 
 import logging
 
@@ -48,10 +49,7 @@ class MAF_Extractor(nn.Module):
 
         # downsample SMPL mesh and assign part labels
         # from https://github.com/nkolot/GraphCMR/blob/master/data/mesh_downsampling.npz
-        mesh_downsampling_path = os.path.join(
-            os.path.dirname(__file__),
-            "../../../data/pymaf_data/mesh_downsampling.npz")
-        smpl_mesh_graph = np.load(mesh_downsampling_path,
+        smpl_mesh_graph = np.load(MESH_DOWNSAMPLEING,
                                   allow_pickle=True,
                                   encoding='latin1')
 
