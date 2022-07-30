@@ -18,7 +18,7 @@
 from lib.hybrik.models.simple3dpose import HybrIKBaseSMPLCam
 from lib.pixielib.utils.config import cfg as pixie_cfg
 from lib.pixielib.pixie import PIXIE
-import smplx
+import lib.smplx as smplx
 from lib.pare.pare.core.tester import PARETester
 from lib.pymaf.utils.geometry import rotation_matrix_to_angle_axis, batch_rodrigues
 from lib.pymaf.utils.imutils import process_image

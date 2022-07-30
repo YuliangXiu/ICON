@@ -9,7 +9,6 @@ results/*
 !.gitignore
 force_push.sh
 .idea
-smplx/
 human_det/
 kaolin/
 neural_voxelization_layer/
