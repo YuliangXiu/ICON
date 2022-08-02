@@ -10,6 +10,8 @@ import pytorch_lightning as pl
 torch.backends.cudnn.benchmark = True
 
 logging.getLogger("lightning").setLevel(logging.ERROR)
+import warnings
+warnings.filterwarnings("ignore")
 
 
 class Normal(pl.LightningModule):

@@ -15,9 +15,11 @@
 #
 # Contact: ps-license@tuebingen.mpg.de
 
+import random
 import os.path as osp
 import numpy as np
 from PIL import Image
+from termcolor import colored
 import torchvision.transforms as transforms
 
 
@@ -26,14 +28,13 @@ class NormalDataset():
 
         self.split = split
         self.root = cfg.root
+        self.bsize = cfg.batch_size
         self.overfit = cfg.overfit
 
         self.opt = cfg.dataset
         self.datasets = self.opt.types
         self.input_size = self.opt.input_size
-        self.set_splits = self.opt.set_splits
         self.scales = self.opt.scales
-        self.pifu = self.opt.pifu
 
         # input data types and dimensions
         self.in_nml = [item[0] for item in cfg.net.in_nml]
@@ -44,19 +45,18 @@ class NormalDataset():
         if self.split != 'train':
             self.rotations = range(0, 360, 120)
         else:
-            self.rotations = np.arange(0, 360, 360 /
-                                       self.opt.rotation_num).astype(np.int)
+            self.rotations = np.arange(
+                0, 360, 360//self.opt.rotation_num).astype(np.int)
 
         self.datasets_dict = {}
+
         for dataset_id, dataset in enumerate(self.datasets):
-            dataset_dir = osp.join(self.root, dataset, "smplx")
+
+            dataset_dir = osp.join(self.root, dataset)
+
             self.datasets_dict[dataset] = {
-                "subjects":
-                np.loadtxt(osp.join(self.root, dataset, "all.txt"), dtype=str),
-                "path":
-                dataset_dir,
-                "scale":
-                self.scales[dataset_id]
+                "subjects": np.loadtxt(osp.join(dataset_dir, "all.txt"), dtype=str),
+                "scale": self.scales[dataset_id]
             }
 
         self.subject_list = self.get_subject_list(split)
@@ -81,65 +81,35 @@ class NormalDataset():
 
         for dataset in self.datasets:
 
-            if self.pifu:
-                txt = osp.join(self.root, dataset, f'{split}_pifu.txt')
+            split_txt = osp.join(self.root, dataset, f'{split}.txt')
+
+            if osp.exists(split_txt):
+                print(f"load from {split_txt}")
+                subject_list += np.loadtxt(split_txt, dtype=str).tolist()
             else:
-                txt = osp.join(self.root, dataset, f'{split}.txt')
+                full_txt = osp.join(self.root, dataset, 'all.txt')
+                print(f"split {full_txt} into train/val/test")
 
-            if osp.exists(txt):
-                print(f"load from {txt}")
-                subject_list += sorted(np.loadtxt(txt, dtype=str).tolist())
+                full_lst = np.loadtxt(full_txt, dtype=str)
+                full_lst = [dataset+"/"+item for item in full_lst]
+                [train_lst, test_lst, val_lst] = np.split(
+                    full_lst, [500, 500+5, ])
 
-                if self.pifu:
-                    miss_pifu = sorted(
-                        np.loadtxt(osp.join(self.root, dataset,
-                                            "miss_pifu.txt"),
-                                   dtype=str).tolist())
-                    subject_list = [
-                        subject for subject in subject_list
-                        if subject not in miss_pifu
-                    ]
-                    subject_list = [
-                        "renderpeople/" + subject for subject in subject_list
-                    ]
+                np.savetxt(full_txt.replace(
+                    "all", "train"), train_lst, fmt="%s")
+                np.savetxt(full_txt.replace("all", "test"), test_lst, fmt="%s")
+                np.savetxt(full_txt.replace("all", "val"), val_lst, fmt="%s")
 
-            else:
-                train_txt = osp.join(self.root, dataset, 'train.txt')
-                val_txt = osp.join(self.root, dataset, 'val.txt')
-                test_txt = osp.join(self.root, dataset, 'test.txt')
+                print(f"load from {split_txt}")
+                subject_list += np.loadtxt(split_txt, dtype=str).tolist()
 
-                print(
-                    f"generate lists of [train, val, test] \n {train_txt} \n {val_txt} \n {test_txt} \n"
-                )
+        if self.split != 'test':
+            subject_list += subject_list[:self.bsize -
+                                         len(subject_list) % self.bsize]
+            print(colored(f"total: {len(subject_list)}", "yellow"))
+            random.shuffle(subject_list)
 
-                split_txt = osp.join(self.root, dataset, f'{split}.txt')
-
-                subjects = self.datasets_dict[dataset]['subjects']
-                train_split = int(len(subjects) * self.set_splits[0])
-                val_split = int(
-                    len(subjects) * self.set_splits[1]) + train_split
-
-                with open(train_txt, "w") as f:
-                    f.write("\n".join(dataset + "/" + item
-                                      for item in subjects[:train_split]))
-                with open(val_txt, "w") as f:
-                    f.write("\n".join(
-                        dataset + "/" + item
-                        for item in subjects[train_split:val_split]))
-                with open(test_txt, "w") as f:
-                    f.write("\n".join(dataset + "/" + item
-                                      for item in subjects[val_split:]))
-
-                subject_list += sorted(
-                    np.loadtxt(split_txt, dtype=str).tolist())
-
-        bug_list = sorted(
-            np.loadtxt(osp.join(self.root, 'bug.txt'), dtype=str).tolist())
-
-        subject_list = [
-            subject for subject in subject_list if (subject not in bug_list)
-        ]
-
+        # subject_list = ["thuman2/0008"]
         return subject_list
 
     def __len__(self):
@@ -155,46 +125,38 @@ class NormalDataset():
         mid = index // len(self.rotations)
 
         rotation = self.rotations[rid]
-
-        # choose specific test sets
-        subject = self.subject_list[mid]
-
-        subject_render = "/".join(
-            [subject.split("/")[0] + "_12views",
-             subject.split("/")[1]])
+        subject = self.subject_list[mid].split("/")[1]
+        dataset = self.subject_list[mid].split("/")[0]
+        render_folder = "/".join([dataset +
+                                 f"_{self.opt.rotation_num}views", subject])
 
         # setup paths
         data_dict = {
-            'dataset':
-            subject.split("/")[0],
-            'subject':
-            subject,
-            'rotation':
-            rotation,
-            'image_path':
-            osp.join(self.root, subject_render, 'render',
-                     f'{rotation:03d}.png')
+            'dataset': dataset,
+            'subject': subject,
+            'rotation': rotation,
+            'scale': self.datasets_dict[dataset]["scale"],
+            'image_path': osp.join(self.root, render_folder, 'render', f'{rotation:03d}.png')
         }
 
         # image/normal/depth loader
         for name, channel in zip(self.in_total, self.in_total_dim):
 
-            if name != 'image':
+            if f'{name}_path' not in data_dict.keys():
                 data_dict.update({
-                    f'{name}_path':
-                    osp.join(self.root, subject_render, name,
-                             f'{rotation:03d}.png')
+                    f'{name}_path': osp.join(self.root, render_folder, name, f'{rotation:03d}.png')
                 })
+
+            # tensor update
             data_dict.update({
-                name:
-                self.imagepath2tensor(data_dict[f'{name}_path'],
-                                      channel,
-                                      inv='depth_B' in name)
+                name: self.imagepath2tensor(
+                    data_dict[f'{name}_path'], channel, inv=False)
             })
 
         path_keys = [
             key for key in data_dict.keys() if '_path' in key or '_dir' in key
         ]
+
         for key in path_keys:
             del data_dict[key]
 

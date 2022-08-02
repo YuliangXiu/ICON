@@ -1,0 +1,41 @@
+name: normal
+ckpt_dir: "./data/ckpt/"
+resume_path: "./data/ckpt/normal.ckpt"
+results_path: "./results"
+
+dataset:
+  root: "./data/"
+  rotation_num: 36
+  train_bsize: 1.0
+  val_bsize: 1.0
+  test_bsize: 1.0
+  types: ["thuman2"]
+  scales: [100.0]
+
+net:
+  in_nml: (('image',3), ('T_normal_F',3), ('T_normal_B',3))
+
+lr_N: 1e-4
+weight_decay: 0.0 
+momentum: 0.0
+batch_size: 4
+num_threads: 4
+gpus: [0]
+test_gpus: [0]
+
+fast_dev: 0
+resume: False
+test_mode: False
+num_sanity_val_steps: 1
+
+momentum: 0.0 
+optim: Adam
+
+# training (batch=4, set=agora, rot-6)
+overfit: False
+num_epoch: 20
+freq_show_train: 0.1
+freq_show_val: 0.01
+freq_plot: 0.01
+freq_eval: 0.1
+schedule: [18]

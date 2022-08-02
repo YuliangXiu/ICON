@@ -6,7 +6,6 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import loggers as pl_loggers
 import pytorch_lightning as pl
 from lib.common.config import get_cfg_defaults
-import sys
 import os
 import os.path as osp
 import argparse
@@ -21,8 +20,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-cfg", "--config_file", type=str, help="path of the yaml config file"
     )
-    argv = sys.argv[1: sys.argv.index("--")]
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     cfg = get_cfg_defaults()
     cfg.merge_from_file(args.config_file)
     cfg.freeze()
@@ -56,19 +54,14 @@ if __name__ == "__main__":
         freq_eval = cfg.fast_dev
 
     trainer_kwargs = {
-        # 'accelerator': 'dp',
-        # 'amp_level': 'O2',
-        # 'precision': 16,
-        # 'weights_summary': 'top',
-        # 'stochastic_weight_avg': False,
         "gpus": cfg.gpus,
         "auto_select_gpus": True,
         "reload_dataloaders_every_epoch": True,
         "sync_batchnorm": True,
         "benchmark": True,
-        "automatic_optimization": False,
         "logger": tb_logger,
         "track_grad_norm": -1,
+        "automatic_optimization": False,
         "num_sanity_val_steps": cfg.num_sanity_val_steps,
         "checkpoint_callback": checkpoint,
         "limit_train_batches": cfg.dataset.train_bsize,
@@ -94,14 +87,15 @@ if __name__ == "__main__":
                 else freq_eval,
             }
         )
+
         if cfg.overfit:
             cfg_show_list = ["freq_show_train", 200.0, "freq_show_val", 10.0]
         else:
             cfg_show_list = [
                 "freq_show_train",
-                cfg.freq_show_train * train_len / cfg.batch_size,
+                cfg.freq_show_train * train_len // cfg.batch_size,
                 "freq_show_val",
-                max(cfg.freq_show_val * val_len / cfg.batch_size, 1.0),
+                max(cfg.freq_show_val * val_len // cfg.batch_size, 1.0),
             ]
 
         cfg.merge_from_list(cfg_show_list)

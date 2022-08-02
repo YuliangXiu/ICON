@@ -40,6 +40,9 @@ CUDA_VISIBLE_DEVICES=0 python -m apps.train -cfg ./configs/train/pifu.yaml
 
 # PaMIR (name: pamir)
 CUDA_VISIBLE_DEVICES=0 python -m apps.train -cfg ./configs/train/pamir.yaml
+
+# Normal network Training
+CUDA_VISIBLE_DEVICES=0 python -m apps.train-normal -cfg ./configs/train/normal.yaml
 ```
 
 ## Tensorboard
